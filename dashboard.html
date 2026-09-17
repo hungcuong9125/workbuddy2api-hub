@@ -184,7 +184,7 @@ a:hover{text-decoration:underline}
 <body>
 <header>
   <div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap">
-    <h1><span class="dot" id="statusDot"></span>WorkBuddy Bảng Điều Khiển Cổng</h1>
+    <h1><span class="dot" id="statusDot"></span>Bảng Điều Khiển WorkBuddy</h1>
     <nav class="main-nav">
       <button class="main-nav-btn active" id="btnNavGateway" onclick="switchMainTab('gateway')">
         Cổng & Vận Hành
@@ -206,7 +206,7 @@ a:hover{text-decoration:underline}
      align-items:center;justify-content:center;padding:20px;background:var(--bg)">
   <div style="width:min(380px,100%);background:var(--panel);border:1px solid var(--line);
               border-radius:14px;padding:26px 24px;box-shadow:0 10px 30px rgba(15,23,42,.12)">
-    <div style="font-size:16px;font-weight:700;margin-bottom:6px">WorkBuddy Bảng Điều Khiển Cổng</div>
+    <div style="font-size:16px;font-weight:700;margin-bottom:6px">Bảng Điều Khiển WorkBuddy</div>
     <div style="font-size:12px;color:var(--dim);margin-bottom:18px">Vui lòng nhập mật khẩu truy cập bảng điều khiển</div>
     <input id="panelPwdInput" type="password" placeholder="mật khẩu bảng điều khiển" autocomplete="current-password"
            onkeydown="if(event.key==='Enter') submitPanelLogin()"
@@ -229,14 +229,14 @@ a:hover{text-decoration:underline}
         <div id="tabIntl" class="realm-tab active" onclick="switchViewRealm('intl')">
           
           <div class="tab-text">
-            <span class="tab-title">Chi Tiết Quốc Tế (Global)</span>
+            <span class="tab-title">Tài Khoản Quốc Tế (Global)</span>
             <span class="tab-desc">www.workbuddy.ai</span>
           </div>
         </div>
         <div id="tabCn" class="realm-tab" onclick="switchViewRealm('cn')">
           
           <div class="tab-text">
-            <span class="tab-title">Chi Tiết Trong Nước (China)</span>
+            <span class="tab-title">Tài Khoản Trong Nước (China)</span>
             <span class="tab-desc">copilot.tencent.com</span>
           </div>
         </div>
@@ -297,18 +297,18 @@ a:hover{text-decoration:underline}
   <!-- Danh mục mô hình & năng lực theo phiên bản -->
   <section>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-      <h2 style="margin:0">Danh Mục Mô Hình & Năng Lực Phiên Bản Hiện Tại <em id="availModelCount"></em></h2>
-      <div style="font-size:12px;color:var(--dim)">Hiển thị các mô hình hội thoại chính thức, dung lượng ngữ cảnh, khả năng suy luận/thị giác và tỷ lệ giá hiện hành trong giao diện hiện tại</div>
+      <h2 style="margin:0">Mô Hình <em id="availModelCount"></em></h2>
+      <div style="font-size:12px;color:var(--dim)">Danh sách các mô hình, dung lượng ngữ cảnh, khả năng suy luận/thị giác và tỷ lệ giá hiện hành trong giao diện hiện tại</div>
     </div>
     <div style="overflow-x:auto">
       <table id="modelsTable">
         <thead>
           <tr>
             <th>ID Mô Hình</th>
-            <th>Tỷ Lệ Tiêu Thụ / Ưu Đãi</th>
+            <th>Tỷ lệ giá</th>
             <th>Năng Lực Mô Hình</th>
-            <th>Cửa Sổ Ngữ Cảnh</th>
-            <th>Đầu Ra Tối Đa</th>
+            <th>Context</th>
+            <th>Max Output</th>
             <th>Khả Năng Suy Nghĩ / Cấp Độ Suy Luận</th>
           </tr>
         </thead>
@@ -376,22 +376,22 @@ a:hover{text-decoration:underline}
     <!-- Bảng KPI linh hoạt cốt lõi cấp cao nhất -->
     <div id="analyticsKpiCards" style="display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:8px;margin-bottom:20px">
       <div class="card think">
-        <div class="k">Token Tiêu Thụ Hôm Nay</div>
+        <div class="k">Số token đã tiêu thụ hôm nay</div>
         <div class="v" id="kpiTodayTokens">0</div>
         <div class="s" id="kpiTodayTokensDetail">Vào 0 · Ra 0</div>
       </div>
       <div class="card accent">
-        <div class="k">Token Tiêu Thụ Tích Lũy</div>
+        <div class="k">Tổng lượng tiêu thụ token</div>
         <div class="v" id="kpiTotalTokens">0</div>
         <div class="s" id="kpiTotalTokensDetail">Vào 0 · Ra 0</div>
       </div>
       <div class="card accent2">
-        <div class="k">Tốc Độ Sinh Trung Bình Cổng</div>
+        <div class="k">Tốc độ tạo cổng trung bình</div>
         <div class="v" id="kpiAvgSpeed">0.0 <span style="font-size:12px;font-weight:400;color:var(--dim)">tok/s</span></div>
         <div class="s" id="kpiAvgLatency">Độ trễ ký tự đầu TB 0 ms · thời gian 0 s</div>
       </div>
       <div class="card">
-        <div class="k">Tỷ Lệ Truy Cập Cache Ngữ Cảnh</div>
+        <div class="k">Tỷ lệ truy cập bộ nhớ đệm ngữ cảnh</div>
         <div class="v" id="kpiCacheRate">0.0%</div>
         <div class="s">Tỷ lệ tái sử dụng tiền tố prompt trùng khớp</div>
       </div>
@@ -486,7 +486,7 @@ a:hover{text-decoration:underline}
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
         <span id="logStatsBadge" style="font-size:12px;color:var(--dim);margin-right:6px">Đang tải...</span>
         <button class="sec mini" onclick="fetchNewLogs(true)" title="Lấy nhật ký mới nhất ngay">🔄 Làm Mới</button>
-        <button class="sec mini" id="btnToggleLogAuto" onclick="toggleLogAuto()" style="color:var(--accent2);font-weight:600">● Đang Lắng Nghe TT</button>
+        <button class="sec mini" id="btnToggleLogAuto" onclick="toggleLogAuto()" style="color:var(--accent2);font-weight:600">● Giám sát thời gian thực</button>
         <button class="sec mini" id="btnToggleLogScroll" onclick="toggleLogScroll()">↓ Tự động cuộn: Bật</button>
         <button class="sec mini" onclick="copyFilteredLogs()" title="Sao ChépSao chép nhật ký hiển thị của giao diện hiện tại">📋 Sao Chép</button>
         <button class="sec mini" onclick="exportLogsFile()" title="Tải xuống tệp .log">📥 Xuất</button>
@@ -817,13 +817,13 @@ function renderAvailableModels(){
     const caps = [];
     const hasVis = m.supports_vision || m.vision || m.multimodal || (m.input_modalities && m.input_modalities.includes('image'));
     if(hasVis){
-      caps.push('<span class="badge ok" style="font-size:11px">Thị Giác</span>');
+      caps.push('<span class="badge ok" style="font-size:11px">Vision</span>');
     } else {
       caps.push('<span class="badge" style="color:var(--dim);font-size:11px">Văn Bản</span>');
     }
     const hasTool = m.supports_tool_calls || (m.capabilities && m.capabilities.tool_calls);
     if(hasTool){
-      caps.push('<span class="badge ok" style="font-size:11px">Công Cụ</span>');
+      caps.push('<span class="badge ok" style="font-size:11px">Tools</span>');
     }
     const capHtml = caps.join(' ');
 
@@ -1021,9 +1021,15 @@ async function loadSchedulerStatus(){
     const btnTrig = document.getElementById("btnTriggerSched");
 
     if(dot) dot.className = s.enabled ? 'dot' : 'dot off';
-    const modeText = (window.VIEW_REALM === 'intl')
+    let modeText = (window.VIEW_REALM === 'intl')
       ? (s.mode_intl || 'Tự động duy trì Token tài khoản & thông tin thường trú (kiểm tra tập trung 22:00 hàng ngày)')
       : (s.mode_cn || s.mode || 'Lịch theo giờ chẵn');
+    // normalize any Chinese scheduler description returned by the server into Vietnamese
+    const MODE_MAP = {
+      '账号 Token 自动保活与凭证常驻 (每日 22:00 集中巡检)': 'Tự động duy trì Token tài khoản & thông tin thường trú (kiểm tra tập trung 22:00 hàng ngày)',
+      '整点排程': 'Lịch theo giờ chẵn',
+    };
+    if (MODE_MAP[modeText]) modeText = MODE_MAP[modeText];
     if(txt) txt.textContent = s.enabled ? ('Đang chạy · ' + modeText) : 'Đã tạm dừng';
     if(times) times.textContent = 'Lần trước: ' + (s.last_run_time || '-') + ' · Lần sau: ' + (s.next_run_time || '-');
     if(btn) btn.textContent = s.enabled ? 'Tạm Dừng Lịch' : 'Bật Lịch';
@@ -1229,7 +1235,7 @@ function renderAccounts(){
       + '</button>'
       + '<div style="color:var(--dim);font-size:12px;margin-top:16px;line-height:1.9">'
       +   'Nhấn nút bên trên sẽ bật liên kết đăng nhập，<br>'
-      +   'sau khi đăng nhập xong trong trình duyệtTài Khoảnsẽ tự động được thêm vào。'
+      +   'sau khi đăng nhập xong trong trình duyệt, tài khoản sẽ tự động được thêm vào.'
       + '</div>'
       + '</div>';
     return;
@@ -1661,7 +1667,7 @@ async function refreshInner(){
 
   document.getElementById('cards').innerHTML =
     card('Nhóm tài khoản khả dụng', activeAccts + ' <span style="font-size:13px;font-weight:400;color:var(--dim)">/ ' + totalAccts + ' bình thường</span>', (totalAccts - activeAccts > 0 ? (totalAccts - activeAccts) + ' tài khoảnTắt' : 'Tất cả bật · trạng thái khỏe mạnh'), 'accent') +
-    card('Số Dư Hạn Mức Điểm', hasCreds ? (fmt(totRemain) + ' <span style="font-size:13px;font-weight:400;color:var(--dim)">điểm</span>') : 'bình thườngKhả dụng', subCredit, 'accent2') +
+    card('Số Dư Hạn Mức Điểm', hasCreds ? (fmt(totRemain) + ' <span style="font-size:13px;font-weight:400;color:var(--dim)">điểm</span>') : 'bình thường · Khả dụng', subCredit, 'accent2') +
     card('Lượng Gọi Cổng', fmt(t.requests) + ' <span style="font-size:13px;font-weight:400;color:var(--dim)"> lượt</span>', 'Tích lũy tiêu thụ ' + fmt(t.total_tokens) + ' Token', '') +
     card('Tỷ Lệ Thành Công Yêu Cầu', succStr, errSub, perf.errors ? 'warn' : 'accent2');
 
@@ -1694,7 +1700,7 @@ async function refreshInner(){
   if(countEm) countEm.textContent = models.length ? "(mô hình có lượt gọi: " + models.length + " tài khoản)" : "";
 
   if(!models.length){
-    matrixEl.innerHTML = '<div class="empty">Phiên Bản Hiện TạiChưa có yêu cầu mô hình hoặc dữ liệu hiệu năng</div>';
+    matrixEl.innerHTML = '<div class="empty">Phiên Bản Hiện Tại: Chưa có yêu cầu mô hình hoặc dữ liệu hiệu năng</div>';
   } else {
     const maxTok = Math.max(1, ...models.map(m => m.total_tokens));
     // Dòng tổng hợp (Total / All Models)
@@ -2279,7 +2285,7 @@ function toggleLogAuto(){
   const btn = document.getElementById('btnToggleLogAuto');
   if(btn){
     if(logAutoRefresh){
-      btn.textContent = '● Đang Lắng Nghe TT';
+      btn.textContent = '● Giám sát thời gian thực';
       btn.style.color = 'var(--accent2)';
       startLogPolling();
     } else {
