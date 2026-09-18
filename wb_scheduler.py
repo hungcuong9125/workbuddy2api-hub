@@ -161,6 +161,12 @@ class Scheduler:
                     self.log(f"🐱 Tài khoản [{uid8}] xử lý mèo hàng ngày: {tr.get('msg')}")
                 time.sleep(1.0)
 
+                if time.localtime().tm_hour in self.cat_hours:
+                    night = wb_tasks.run_night_growth(acc)
+                    for line in night.get("logs", []):
+                        self.log(f"🌙 {line}")
+                    time.sleep(1.0)
+
         self.log(f"Hoàn tất kiểm tra: Token bảo lưu {refreshed_count}, điểm danh hàng ngày {checkin_count}, mèo hàng ngày {travel_count}")
 
     def status(self):

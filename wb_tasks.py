@@ -7,6 +7,7 @@
 4. 严格遵守 >= 1.0s 防风控间隔，并使用 wb_fingerprint 的稳定设备指纹。
 """
 import json
+import re
 import time
 import urllib.error
 import urllib.request
@@ -52,6 +53,49 @@ TASK_SPECS = {
     "Expert_Philanthropy": {"unforgeable": True, "reason": "真实捐款动作", "reward": 0, "name": "公益爱心捐赠"},
 }
 
+# ---------------------------------------------------------------------------
+# 逆向修复常量 (2026-09 实测校准)
+# ---------------------------------------------------------------------------
+# 这些任务上游只认桌面客户端的真实行为信号 (jump_url 均为 workbuddy:// 深链,
+# 需要真实点击进入对应页面)。伪造 /v2/report 事件会被忽略或落到 heartbeat,
+# 进度永远是 0/1, claim 必然返回 400 "task not completed"。诚实地跳过并给出深链。
+DESKTOP_ONLY_TASKS = {
+    "RichMeow_Chat": "在桌面端发起 1 次对话",
+    "Library_read": "在桌面端打开「资料库」并读完介绍文档",
+    "Buddy_App": "在桌面端左上角「发现应用」进入任意一个 Buddy 应用",
+    "Buddy_App_QQ": "在桌面端「发现应用」进入「企鹅教师助手」",
+}
+
+# 夜猫子任务只在 23:00-08:00 上报才计数, 且每天 1 次、累计 3 天。
+NIGHT_TASK_CODES = {"black_cat"}
+
+def in_night_window():
+    h = time.localtime().tm_hour
+    return h >= 23 or h < 8
+
+# 专家/团队事件必须彼此不同: 桌面端 appendGrowthEvent 按 (eventCode, id) 去重,
+# 上游同样只按不同 id 累加进度 —— 重复发同一个 id 进度永远不动。
+# 下列 id 已在 2026-09 实测中验证可推进任务进度。
+EXPERT_ID_POOL = [
+    ("ex_PZw8Gu81HfN4", "运维工程师"), ("ex_ROsDtJbzADFV", "产品经理"),
+    ("ex_SMUnl0nJbPix", "UI设计师"), ("ex_ZTR062oVBOCW", "数据分析师"),
+    ("ex_a3sSSFBy8qaC", "后端架构师"), ("ex_aG1kvKbq8lPx", "文案策划"),
+    ("ex_al1vxtUOYQ10", "测试专家"), ("ex_cZfiyuET9UQP", "安全顾问"),
+    ("ex_eggOvQuVP0hq", "算法工程师"), ("ex_hSwsQjkSKnkX", "前端工程师"),
+    ("ex_mMbwwmFA9n9P", "项目管理专家"), ("ex_uAQE5POfk7Zh", "增长运营专家"),
+    ("ex_uZzSAScSy7FZ", "行业研究员"), ("ex_LHywGrZOtG7G", "数据分析师"),
+    ("ex_NX5C8GBciVed", "测试架构师"), ("ex_DdCsaoq4AtcO", "云端运维专家"),
+    ("ex_KzqKQguubrNQ", "内容创作专家"), ("ex_2cvvUZQhDyeJ", "腾讯轻量云专家"),
+]
+# 团队 id 来自官方专家清单 expert_center.json (expertType=team, 共 53 个),
+# 前 3 个已在 2026-09 实测验证可推进 Expert_team_use_3。
+TEAM_ID_POOL = [
+    ("CloudOpsTeam", "运维专家团队"), ("CloudContentTeam", "内容专家团队"),
+    ("CloudDevTeam", "研发专家团队"), ("ProductStrategyTeam", "产品战略团队"),
+    ("MarketingCampaignTeam", "营销活动团队"), ("SalesBattleTeam", "销售作战团队"),
+    ("DesignEngineTeam", "设计引擎团队"), ("HrOperationsTeam", "人力运营团队"),
+]
+
 
 def fetch_growth_tasks(account):
     """查询成长任务列表及当前状态。"""
@@ -70,6 +114,7 @@ def fetch_growth_tasks(account):
                     "task_code": code,
                     "name": t.get("title") or spec.get("name") or code,
                     "description": t.get("description") or t.get("task_desc") or "",
+                    "jump_url": t.get("jump_url") or "",
                     "status": t.get("accept_status") or "not_accepted",
                     "current": prog.get("current", 0),
                     "target": prog.get("target", spec.get("target", 1)),
@@ -132,14 +177,23 @@ def accept_tasks(account, codes):
 def claim_task(account, code):
     """领取任务奖励。支持 copilot.tencent.com -> www.workbuddy.cn 自动降级。"""
     url = f"{CHAT_BASE}/activity/growth/tasks/{code}/claim"
-    req = urllib.request.Request(url, data=b"", method="POST", headers=account.headers("chat"))
+    req = urllib.request.Request(url, data=b"{}", method="POST", headers=account.headers("chat"))
     try:
         with urllib.request.urlopen(req, timeout=15) as resp:
             d = json.loads(resp.read().decode("utf-8"))
             if d.get("code") == 0:
                 data = d.get("data") or {}
                 return {"ok": True, "credit": data.get("credit", 0), "energy": data.get("energy", 0)}
+            # 200 + 非0码 (典型: 400 task not completed —— 进度还没落账就来领奖)
+            _log(f"task {code} claim rejected: {d.get('msg')}")
+            return {"ok": False, "credit": 0, "energy": 0, "msg": d.get("msg") or f"code={d.get('code')}"}
     except urllib.error.HTTPError as exc:
+        body = exc.read().decode("utf-8", "replace") if exc.fp else ""
+        err_msg = f"HTTP {exc.code}"
+        try:
+            err_msg = json.loads(body).get("msg") or err_msg
+        except Exception:
+            pass
         if exc.code == 400:
             # 降级到 web 域领奖
             web_url = f"{WEB_BASE}/activity/growth/tasks/{code}/claim"
@@ -155,22 +209,29 @@ def claim_task(account, code):
                 "X-Domain": WEB_BASE,
             }
             try:
-                req_web = urllib.request.Request(web_url, data=b"", method="POST", headers=web_hdrs)
+                req_web = urllib.request.Request(web_url, data=b"{}", method="POST", headers=web_hdrs)
                 with urllib.request.urlopen(req_web, timeout=15) as resp:
                     d = json.loads(resp.read().decode("utf-8"))
                     if d.get("code") == 0:
                         data = d.get("data") or {}
                         return {"ok": True, "credit": data.get("credit", 0), "energy": data.get("energy", 0)}
                     _log(f"task {code} web claim rejected: code={d.get('code')} msg={d.get('msg')}")
-            except Exception as exc:
-                _log(f"task {code} web claim failed: {exc}")
+                    return {"ok": False, "credit": 0, "energy": 0, "msg": d.get("msg") or err_msg}
+            except Exception as exc2:
+                _log(f"task {code} web claim failed: {exc2}")
+        _log(f"task {code} claim failed: {err_msg}")
+        return {"ok": False, "credit": 0, "energy": 0, "msg": err_msg}
     except Exception as exc:
         _log(f"task {code} claim failed: {exc}")
     return {"ok": False, "credit": 0, "energy": 0}
 
 
-def build_event(account, kind, idx=0):
-    """构造指定类型的真实规范事件数据。"""
+def build_event(account, kind, idx=0, expert=None):
+    """构造指定类型的真实规范事件数据。
+
+    expert: (expert_id, expert_name) —— 专家/团队类事件必须每次使用不同的 id,
+    上游按 (eventCode, id) 去重, 重复 id 不会推进任务进度。
+    """
     now = int(time.time() * 1000)
     cid = f"wb-task-{now}-{idx}"
     rid = f"{cid}-req"
@@ -188,8 +249,14 @@ def build_event(account, kind, idx=0):
                 "name": "幻灯片", "requestId": rid, "conversationId": cid, "userId": uid}
     if kind in ("expert", "team", "lighthouse"):
         etype = "team" if kind == "team" else "agent"
-        ex_id = "ex_2cvvUZQhDyeJ" if kind == "lighthouse" else ("CloudOpsTeam" if kind == "team" else "ContentCreator")
-        name = "腾讯轻量云专家" if kind == "lighthouse" else ("运维专家团队" if kind == "team" else "内容创作专家")
+        if expert:
+            ex_id, name = expert
+        elif kind == "lighthouse":
+            ex_id, name = "ex_2cvvUZQhDyeJ", "腾讯轻量云专家"
+        elif kind == "team":
+            ex_id, name = "CloudOpsTeam", "运维专家团队"
+        else:
+            ex_id, name = "ContentCreator", "内容创作专家"
         return {"eventCode": "expert_actual_use", "timestamp": now, "reportDelay": 0,
                 "mode": "CLOUD", "id": ex_id, "name": name, "expertTitle": name,
                 "type": "02-Engineering", "expertType": etype, "source": "builtin",
@@ -228,8 +295,15 @@ def build_event(account, kind, idx=0):
     return {"eventCode": "heartbeat", "timestamp": now, "userId": uid}
 
 
-def report_events(account, events, base=BILL_BASE):
-    """向上游上报事件数组。"""
+def report_events(account, events, base=None):
+    """向上游上报事件数组。
+
+    默认发 copilot.tencent.com (chat 侧) —— 与桌面客户端真实上报地址一致
+    (桌面 NetLog: POST https://copilot.tencent.com/v2/report), 2026-09 实测
+    该侧事件会实时推进成长任务进度。
+    """
+    if base is None:
+        base = CHAT_BASE
     url = base + "/v2/report"
     headers = account.headers("billing" if base == BILL_BASE else "chat")
     body = json.dumps(events).encode("utf-8")
@@ -256,8 +330,8 @@ def do_cat_travel(account):
 
     state = st.get("state")
     if state == "arrived":
-        # 领奖
-        req_cl = urllib.request.Request(CHAT_BASE + "/activity/growth/buddy/travel/claim", data=b"", method="POST", headers=headers)
+        # 领奖 (官方前端: POST travel/claim body {})
+        req_cl = urllib.request.Request(CHAT_BASE + "/activity/growth/buddy/travel/claim", data=b"{}", method="POST", headers=headers)
         try:
             with urllib.request.urlopen(req_cl, timeout=10) as resp:
                 c_res = json.loads(resp.read().decode("utf-8"))
@@ -270,13 +344,27 @@ def do_cat_travel(account):
     if state == "idle":
         if st.get("daily_limit_reached"):
             return {"ok": True, "action": "idle", "msg": "Mèo đã hoàn thành du lịch hôm nay, làm mới lúc 00:00 ngày mai"}
-        # 派出旅行
-        req_dep = urllib.request.Request(CHAT_BASE + "/activity/growth/buddy/travel/depart", data=b"", method="POST", headers=headers)
+        lid = None
+        try:
+            req_cfg = urllib.request.Request(CHAT_BASE + "/activity/growth/buddy/travel/config", headers=headers)
+            with urllib.request.urlopen(req_cfg, timeout=10) as resp:
+                cfg = json.loads(resp.read().decode("utf-8"))
+                locs = (cfg.get("data") or {}).get("locations") or []
+            if locs:
+                lid = locs[0].get("id")
+        except Exception as exc:
+            _log(f"buddy/travel/config query failed: {exc}")
+        if lid is None:
+            lid = 1
+        dep_body = json.dumps({"location_id": lid}).encode("utf-8")
+        req_dep = urllib.request.Request(CHAT_BASE + "/activity/growth/buddy/travel/depart", data=dep_body, method="POST", headers=headers)
         try:
             with urllib.request.urlopen(req_dep, timeout=10) as resp:
                 dep_res = json.loads(resp.read().decode("utf-8"))
                 if dep_res.get("code") == 0:
-                    return {"ok": True, "action": "depart", "msg": "Mèo đã được phái đi du lịch thành công, dự kiến vài giờ sau trở về!"}
+                    loc = ((dep_res.get("data") or {}).get("location") or {}).get("name") or ""
+                    return {"ok": True, "action": "depart", "msg": f"Mèo đã lên đường đến「{loc}」, dự kiến vài giờ sau trở về!"}
+                return {"ok": False, "msg": f"Phái đi du lịch bị từ chối: {dep_res.get('msg')}"}
         except Exception as e:
             return {"ok": False, "msg": f"Phái đi du lịch thất bại: {e}"}
 
@@ -321,6 +409,19 @@ def run_growth_tasks(account, gap=1.0):
         if status == "claimed":
             continue
 
+        # 只认桌面端真实行为的任务: 伪造事件不会推进进度, 诚实跳过并给出深链。
+        if code in DESKTOP_ONLY_TASKS:
+            jump = t.get("jump_url") or "workbuddy://chat"
+            logs.append(f"⏭ 任务 [{spec['name']}] 需真实操作完成: {DESKTOP_ONLY_TASKS[code]}"
+                        f" (深链 {jump}), 跳过事件伪造")
+            continue
+
+        # 夜猫子任务只在 23:00-08:00 计数 (每日 01:00 调度器也会自动执行)
+        if code in NIGHT_TASK_CODES and not in_night_window():
+            logs.append(f"🌙 任务 [{spec['name']}] 仅 23:00-08:00 上报计数, 当前不在窗口, 跳过"
+                        f" (每日 01:00 调度器自动执行, 累计 3 天)")
+            continue
+
         if status == "completed" or cur >= tgt:
             # 直接领奖
             res = claim_task(account, code)
@@ -329,20 +430,47 @@ def run_growth_tasks(account, gap=1.0):
                 total_earned += cr
                 logs.append(f"✓ Nhiệm vụ [{spec['name']}] nhận thưởng thành công: +{cr} điểm")
             else:
-                logs.append(f"! Nhiệm vụ [{spec['name']}] nhận thưởng thất bại")
+                logs.append(f"! Nhiệm vụ [{spec['name']}] nhận thưởng thất bại: {res.get('msg') or 'không rõ nguyên nhân'}")
             time.sleep(gap)
             continue
 
-        # 3. 需点亮上报
+        # 3. 需点亮上报 —— 专家/团队事件必须使用互不相同的 id, 否则上游按
+        #    (eventCode, id) 去重, 进度永远不动。
         need = max(1, tgt - cur)
         kind = spec.get("kind")
         logs.append(f"Đang thắp sáng nhiệm vụ [{spec['name']}] (cần báo cáo {need} lần)...")
+        report_ok = True
+        id_pool = None
+        if kind in ("expert", "team"):
+            id_pool = TEAM_ID_POOL if kind == "team" else EXPERT_ID_POOL
         for i in range(need):
-            ev = build_event(account, kind, idx=i)
-            report_events(account, [ev])
+            expert = None
+            if id_pool:
+                pid, pnm = id_pool[(cur + i) % len(id_pool)]
+                expert = (pid, pnm)
+            ev = build_event(account, kind, idx=i, expert=expert)
+            if not report_events(account, [ev]):
+                report_ok = False
             if i < need - 1:
                 time.sleep(gap)
+        if not report_ok:
+            logs.append(f"! 任务 [{spec['name']}] 部分事件上报失败 (上游拒绝), 继续尝试领奖")
         time.sleep(1.5)
+
+        # 等上游把进度落账再领奖: 上报到进度可见存在秒级延迟, 立刻领奖会吃
+        # 400 "task not completed", 表现为全部 +0。
+        prog = cur
+        for _ in range(5):
+            fresh = next((x for x in fetch_growth_tasks(account) if x["task_code"] == code), None)
+            if fresh:
+                prog = fresh.get("current", 0)
+                if prog >= tgt or fresh.get("status") in ("completed", "claimed"):
+                    break
+            time.sleep(4)
+        if prog < tgt:
+            logs.append(f"? 任务 [{spec['name']}] 已上报但进度 {prog}/{tgt} 未达成, 领奖顺延到下次运行")
+            time.sleep(gap)
+            continue
 
         # 领奖
         res = claim_task(account, code)
@@ -351,7 +479,7 @@ def run_growth_tasks(account, gap=1.0):
             total_earned += cr
             logs.append(f"✓ Nhiệm vụ [{spec['name']}] thắp sáng và nhận thưởng thành công: +{cr} điểm")
         else:
-            logs.append(f"? Nhiệm vụ [{spec['name']}] đã báo cáo thắp sáng, nhận thưởng sẽ được quyết toán sau")
+            logs.append(f"? Nhiệm vụ [{spec['name']}] đã báo cáo thắp sáng (tiến độ {prog}/{tgt}), nhận thưởng sẽ được quyết toán sau: {res.get('msg') or 'không rõ nguyên nhân'}")
         time.sleep(gap)
 
     # 4. 顺手检查猫猫旅行
@@ -365,3 +493,53 @@ def run_growth_tasks(account, gap=1.0):
     account.fetch_credits()
     logs.append(f"🎉 Hoàn tất tất cả! Lần này tích lũy thêm vào tài khoản: +{total_earned} điểm, tổng số dư hiện tại: {account.credits.get('remain', 0)} điểm")
     return {"ok": True, "logs": logs, "earned_credit": total_earned, "credits": account.credits}
+
+
+def run_night_growth(account):
+    """夜猫子任务 (black_cat): 每日 23:00-08:00 上报 1 次 GLM-5.2 夜间对话事件,
+    每天计 1 次、累计 3 天后可领奖。白天调用会诚实跳过。"""
+    if account.realm != "cn":
+        return {"ok": False, "msg": "国际版不适用国内成长任务中心", "logs": [], "earned_credit": 0}
+    logs = []
+    name = account.nickname or account.uid[:8]
+    if not in_night_window():
+        return {"ok": True, "earned_credit": 0, "logs": [
+            f"[{name}] 当前不在 23:00-08:00 夜间窗口, 夜猫子任务跳过 (每日 01:00 自动执行)"]}
+    tasks = fetch_growth_tasks(account)
+    t = next((x for x in tasks if x["task_code"] == "black_cat"), None)
+    if not t:
+        return {"ok": False, "earned_credit": 0, "logs": [f"[{name}] 未获取到夜猫子任务清单"]}
+    if t["status"] == "claimed":
+        return {"ok": True, "earned_credit": 0, "logs": [f"[{name}] 夜猫子任务已领奖"]}
+    cur, tgt = t.get("current", 0), t.get("target", 3)
+    if cur >= tgt:
+        res = claim_task(account, "black_cat")
+        cr = res.get("credit", 0) if res.get("ok") else 0
+        account.fetch_credits()
+        logs.append(f"[{name}] 夜猫子任务达标, 领奖 {'✓ +' + str(cr) + ' 积分' if res.get('ok') else '! 失败: ' + (res.get('msg') or '')}")
+        return {"ok": res.get("ok", False), "earned_credit": cr, "logs": logs}
+    ev = build_event(account, "cat", idx=0)
+    ok = report_events(account, [ev])
+    logs.append(f"[{name}] 上报夜间 GLM-5.2 对话事件: {'成功' if ok else '失败'} (进度 {cur}/{tgt})")
+    fresh = None
+    for _ in range(4):
+        time.sleep(4)
+        fresh = next((x for x in fetch_growth_tasks(account) if x["task_code"] == "black_cat"), None)
+        if fresh and fresh.get("current", 0) > cur:
+            break
+    new_cur = fresh.get("current", cur) if fresh else cur
+    if new_cur >= tgt:
+        res = claim_task(account, "black_cat")
+        cr = res.get("credit", 0) if res.get("ok") else 0
+        logs.append(f"[{name}] 夜猫子任务完成 {new_cur}/{tgt}, 领奖 {'✓ +' + str(cr) + ' 积分' if res.get('ok') else '! 失败: ' + (res.get('msg') or '')}")
+    elif new_cur > cur:
+        logs.append(f"[{name}] 今晚 +1 ({new_cur}/{tgt}), 明晚继续, 累计 3 天可领奖")
+    else:
+        logs.append(f"[{name}] 已上报但进度暂未变化 ({new_cur}/{tgt}), 明晚调度器会继续累计")
+    account.fetch_credits()
+    earned = 0
+    for line in logs:
+        m = re.search(r"\+(\d+) 积分", line)
+        if m:
+            earned = int(m.group(1))
+    return {"ok": True, "earned_credit": earned, "logs": logs}

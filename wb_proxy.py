@@ -920,7 +920,7 @@ def runtime_settings_view():
         "accounts_dir": ACCOUNTS_DIR,
         "usage_dir": USAGE_DIR,
         "settings_file": wb_settings.settings_path(ACCOUNTS_DIR),
-        "version": "1.4.1",
+        "version": "1.4.2",
     }
 def current_account():
     """Account used for display purposes (health / usage summaries)."""
@@ -2634,7 +2634,7 @@ class Handler(BaseHTTPRequestHandler):
             super().finish()
         except (ConnectionResetError, BrokenPipeError, ConnectionAbortedError):
             pass
-    server_version = "wb-proxy/1.4.1"
+    server_version = "wb-proxy/1.4.2"
     def log_message(self, fmt, *args):
         # 静默过滤前端看板高频定时心跳的正常 200 GET 请求（/logs、/usage、/accounts 轮询等）
         # 避免自增死循环刷屏与日志污染。遇 4xx/5xx 异常或所有非 GET 业务操作依然如实记录。
@@ -3729,6 +3729,28 @@ def main():
             timeout=2,
         )
         existing = json.loads(probe.read().decode("utf-8"))
+    except Exception:
+        existing = None  # nothing answering /health - let the bind below decide
+    if isinstance(existing, dict):
+        # Only OUR /health carries the account-pool fields ("accounts"). Other
+        # services can occupy the same port and also answer /health with JSON
+        # (a dev proxy, another gateway); treating that as "already running" made this
+        # launcher exit silently while the port belonged to someone else - the
+        # dashboard then showed a foreign UI and API calls failed with 401/404.
+        foreign = existing.get("service") or "accounts" not in existing
+        if foreign:
+            who = existing.get("service") or "an unknown HTTP service"
+            print()
+            print(f"  [ERROR] port {args.port} is already taken by another program: {who}")
+            print("          wb-proxy itself is NOT running - nothing was started.")
+            print()
+            print("  Fix: start wb-proxy on a different port, e.g.")
+            print(f"          start-wb-proxy.bat {args.port + 1}")
+            print(f"          python wb_proxy.py --port {args.port + 1}")
+            print()
+            print("  Check who owns the port:  netstat -ano | findstr :%d" % args.port)
+            print()
+            raise SystemExit(1)
         print()
         print(f"  [Đã có một proxy ngược chạy trên cổng {args.port}, không cần khởi động lại]")
         print(f"  Tài khoản: {existing.get('uid', '?')} @ {existing.get('domain', '?')}")
@@ -3737,8 +3759,6 @@ def main():
         print("  Nếu muốn khởi động lại: hãy đóng cửa sổ cũ (hoặc kết thúc tiến trình python), rồi chạy lại chương trình này.")
         print()
         return
-    except Exception:
-        pass  # nothing listening - good, carry on
     API_KEY = args.api_key
     SYSTEM_PROMPT = args.system_prompt
     if args.accounts_dir:
@@ -3812,8 +3832,6 @@ def main():
         CURRENT_REALM,
         "www.workbuddy.ai" if CURRENT_REALM == "intl" else "copilot.tencent.com"))
     log("user-agent : %s" % wb_accounts.USER_AGENT)
-    log(f"listening  : http://{args.host}:{args.port}/v1  (api key: {'on' if API_KEY else 'off'})")
-    log(f"dashboard  : http://{args.host}:{args.port}/")
     if args.host == "0.0.0.0":
         ips = local_ip_addresses() or ["<this-pc-ip>"]
         print()
@@ -3853,7 +3871,26 @@ def main():
         print("  " + "=" * 62)
         print()
         sys.stdout.flush()
-    server = ThreadingHTTPServer((args.host, args.port), Handler)
+    try:
+        server = ThreadingHTTPServer((args.host, args.port), Handler)
+    except OSError as exc:
+        # Port stolen between the probe above and this bind, or held by
+        # something that does not answer /health: report it in plain words
+        # instead of dumping a raw socketserver traceback.
+        print()
+        print(f"  [ERROR] failed to listen on {args.host}:{args.port} - {exc}")
+        print("          the port is reserved or held by another program;")
+        print("          wb-proxy did NOT start.")
+        print()
+        print("  Fix: stop the program holding the port, or pick another port:")
+        print(f"          netstat -ano | findstr :{args.port}")
+        print(f"          start-wb-proxy.bat {args.port + 1}")
+        print()
+        raise SystemExit(1)
+    # Only claim the address once the socket really exists, so a failed bind
+    # never prints a "listening" line that contradicts the error below.
+    log(f"listening  : http://{args.host}:{args.port}/v1  (api key: {'on' if API_KEY else 'off'})")
+    log(f"dashboard  : http://{args.host}:{args.port}/")
     # Keep the handler referenced for the process lifetime: SetConsoleCtrlHandler
     # stores a raw pointer, so a collected callback would crash on close.
     _ctrl_handler = install_console_close_handler()

@@ -1,7 +1,7 @@
 # WorkBuddy2API-Hub — 国际版、国内版多账号网关中枢
 
 <p align="center">
-  <a href="https://github.com/ardeyouxipianyi/workbuddy2api-hub/releases"><img src="https://img.shields.io/badge/Release-v1.4.1-2496ED?style=flat-square" alt="Version 1.4.1"></a>
+  <a href="https://github.com/ardeyouxipianyi/workbuddy2api-hub/releases"><img src="https://img.shields.io/badge/Release-v1.4.2-2496ED?style=flat-square" alt="Version 1.4.2"></a>
   <img src="https://img.shields.io/badge/Python-3.9+-blue.svg?style=flat-square" alt="Python">
   <img src="https://img.shields.io/badge/API-OpenAI_Compatible-412991?style=flat-square" alt="OpenAI API">
   <img src="https://img.shields.io/badge/Dual_Realm-Intl_&_CN-0DBD8B?style=flat-square" alt="Dual Realm">
@@ -199,6 +199,12 @@ export OPENAI_API_KEY="你在看板设置中添加并绑定的API_Key"
   - **账号池 JSON 导出/导入支持**（PR #5）：实现了全量/单账号导出与 Dry-Run 安全导入机制。
 - **[@wylftw0314-glitch](https://github.com/wylftw0314-glitch)**：
   - **Responses API custom 工具协议双向转译**（PR #12）：出站降级与入站重构还原 freeform 工具调用，彻底解决 Codex CLI (`apply_patch`) 工具调用静默失效问题，并补充了完整单元测试。
+- **[@shuishuipingan](https://github.com/shuishuipingan)**：
+  - **成长任务领取竞态修复**（PR #21）：上报事件后改为轮询任务进度、达成后再领奖，解决「一轮跑完全部 +0 积分」；并透传上游拒绝原因，失败不再无从诊断；
+  - **专家/团队事件 id 去重**：按任务进度轮换互不相同的专家与团队 id，修复上游按 `(eventCode, id)` 去重导致进度永远不动的问题；
+  - **猫猫旅行派出修复**：对齐官方前端协议，先取 `travel/config` 目的地再携带 `location_id` 派出，解决 `HTTP 400 invalid request`；
+  - **夜猫子任务接入调度器**：23:00-08:00 夜间窗口判定与每日 01:00 自动上报，此前该整点从未真正上报过夜猫事件；
+  - **启动端口误判修复**：端口自检校验回包特征，区分「本服务已在运行」与「端口被其他程序占用」，并为绑定失败补充友好提示。
 
 ---
 
