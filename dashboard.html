@@ -217,7 +217,7 @@ a:hover{text-decoration:underline}
 <body>
 <header>
   <div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap">
-    <h1><span class="dot" id="statusDot"></span>Bảng Điều Khiển WorkBuddy</h1>
+    <h1><span class="dot" id="statusDot"></span>Bảng Điều Khiển</h1>
     <nav class="main-nav">
       <button class="main-nav-btn active" id="btnNavGateway" onclick="switchMainTab('gateway')">
         Cổng & Vận Hành
@@ -239,7 +239,7 @@ a:hover{text-decoration:underline}
      align-items:center;justify-content:center;padding:20px;background:var(--bg)">
   <div style="width:min(380px,100%);background:var(--panel);border:1px solid var(--line);
               border-radius:14px;padding:26px 24px;box-shadow:0 10px 30px rgba(15,23,42,.12)">
-    <div style="font-size:16px;font-weight:700;margin-bottom:6px">Bảng Điều Khiển WorkBuddy</div>
+    <div style="font-size:16px;font-weight:700;margin-bottom:6px">Bảng Điều Khiển</div>
     <div style="font-size:12px;color:var(--dim);margin-bottom:18px">Vui lòng nhập mật khẩu truy cập bảng điều khiển</div>
     <input id="panelPwdInput" type="password" placeholder="mật khẩu bảng điều khiển" autocomplete="current-password"
            onkeydown="if(event.key==='Enter') submitPanelLogin()"
@@ -333,7 +333,7 @@ a:hover{text-decoration:underline}
     <div class="toolbar">
     <button onclick="openLoginModal()">+ Thêm Tài Khoản (OAuth)</button>
     <button class="sec" id="btnCheckin" onclick="doCheckin(this)" style="display:none">Điểm Danh Hàng Ngày (Trong Nước)</button>
-    <button class="sec" id="btnScanDesktop" onclick="scanDesktop(this)">Quét tài khoản client máy tính</button>
+    <button class="sec" id="btnScanDesktop" onclick="scanDesktop(this)">Quét tài khoản ở máy tính</button>
     <button class="sec" onclick="exportAccounts(this)">Xuất Tài Khoản</button>
     <button class="sec" onclick="openImport()">Nhập Tài Khoản</button>
     <button class="sec" onclick="fetchCredits(this)">Làm Mới điểm</button>
@@ -375,7 +375,7 @@ a:hover{text-decoration:underline}
   <section>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
       <h2 style="margin:0">Mô Hình <em id="availModelCount"></em></h2>
-      <div style="font-size:12px;color:var(--dim)">Hiển thị các mô hình hội thoại chính thức, dung lượng ngữ cảnh, khả năng suy luận/thị giác và tỷ lệ giá hiện hành trong giao diện hiện tại</div>
+      <div style="font-size:12px;color:var(--dim)">Hiển thị các mô hình hội thoại chính thức, dung lượng ngữ cảnh, khả năng Thinking/thị giác và tỷ lệ giá hiện hành trong giao diện hiện tại</div>
     </div>
     <div style="overflow-x:auto">
       <table id="modelsTable">
@@ -442,7 +442,7 @@ a:hover{text-decoration:underline}
         <h2 style="margin:0;font-size:16px;color:var(--fg);display:flex;align-items:center;gap:8px">
           Phân Tích Tiêu Thụ Token & Chỉ Số Suy Luận
         </h2>
-        <div style="font-size:12px;color:var(--dim);margin-top:4px">Thống kê toàn diện Token vào/ra/suy luận, hiệu quả tiết kiệm cache và lượng dùng từng tài khoản/mô hình</div>
+        <div style="font-size:12px;color:var(--dim);margin-top:4px">Thống kê toàn diện Token vào/ra/Thinking, hiệu quả tiết kiệm cache và lượng dùng từng tài khoản/mô hình</div>
       </div>
       <div style="display:flex;gap:4px;background:var(--panel2);padding:3px;border-radius:8px;border:1px solid var(--line)">
         <button id="btnRangeToday" class="range-btn active" onclick="setAnalyticsRange('today')">Dữ Liệu Hôm Nay (Today)</button>
@@ -491,7 +491,7 @@ a:hover{text-decoration:underline}
     <div id="perfMatrix" style="overflow-x:auto"></div>
     <div class="legend" style="margin-top:12px">
       <span><i style="background:var(--accent2)"></i>Tốc độ sinh: số ký tự sinh mỗi giây TB (tok/s)</span>
-      <span><i style="background:var(--think)"></i>Token suy nghĩ: lượng suy nghĩ của các mô hình suy luận như DeepSeek/R1</span>
+      <span><i style="background:var(--think)"></i>Token suy nghĩ: lượng suy nghĩ của các mô hình Thinking như DeepSeek/R1</span>
       <span><i style="background:var(--accent)"></i>Thanh tiến trình tỷ lệ Token tổng</span>
     </div>
   </section>
@@ -555,7 +555,7 @@ a:hover{text-decoration:underline}
   <div id="pageLogs" style="display:none">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:12px">
       <div>
-        <h2 style="margin:0;font-size:16px;color:var(--fg)">Nhật Ký Vận Hành Cổng</h2>
+        <h2 style="margin:0;font-size:16px;color:var(--fg)">Nhật Ký Vận Hành</h2>
         <div style="font-size:12px;color:var(--dim);margin-top:4px">Ghi lại theo thời gian thực các yêu cầu reverse proxy, chuyển tiếp stream, kiểm tra lịch, điểm danh nhiệm vụ và cảnh báo lỗi (lưu 2000 dòng mới nhất trong bộ nhớ)</div>
       </div>
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
@@ -959,7 +959,7 @@ function renderAvailableModels(){
     }
     const hasReasoning = m.supports_reasoning || m.reasoning_fixed_effort || (m.reasoning_efforts && m.reasoning_efforts.length);
     if(hasReasoning){
-      caps.push('<span class="badge" style="background:rgba(124,58,237,.12);color:var(--think);border-color:rgba(124,58,237,.3);font-size:11px;font-weight:600">suy luận</span>');
+      caps.push('<span class="badge" style="background:rgba(124,58,237,.12);color:var(--think);border-color:rgba(124,58,237,.3);font-size:11px;font-weight:600">Thinking</span>');
     }
     const capHtml = caps.join(' ');
 
@@ -1165,7 +1165,7 @@ async function loadSchedulerStatus(){
     if(txt) txt.textContent = s.enabled ? ('Đang chạy · ' + modeText) : 'Đã tạm dừng';
     if(times) times.textContent = 'Lần trước: ' + (s.last_run_time || '-') + ' · Lần sau: ' + (s.next_run_time || '-');
     if(btn) btn.textContent = s.enabled ? 'Tạm Dừng Lịch' : 'Bật Lịch';
-    if(btnTrig) btnTrig.textContent = (window.VIEW_REALM === 'intl') ? 'Làm Mới Duy Trì Ngay' : 'Kiểm Tra & Duy Trì Ngay';
+    if(btnTrig) btnTrig.textContent = (window.VIEW_REALM === 'intl') ? 'Làm Mới Tài Khoản' : 'Kiểm Tra & Duy Trì Ngay';
   }catch(e){}
 }
 
@@ -1178,7 +1178,7 @@ async function triggerSchedulerNow(btn){
   }catch(e){
     toast("Kích hoạt thất bại: " + e.message, "bad");
   }finally{
-    if(btn){ btn.disabled = false; btn.textContent = (window.VIEW_REALM === 'intl') ? 'Làm Mới Duy Trì Ngay' : 'Kiểm Tra & Duy Trì Ngay'; }
+    if(btn){ btn.disabled = false; btn.textContent = (window.VIEW_REALM === 'intl') ? 'Làm Mới Tài Khoản' : 'Kiểm Tra & Duy Trì Ngay'; }
   }
 }
 
@@ -1699,7 +1699,7 @@ async function scanDesktop(btn){
     const body = document.getElementById('desktopScanBody');
     if(body) body.innerHTML = '<p class="hint" style="color:var(--warn)">Quét thất bại: ' + esc(e.message) + '</p>';
   }finally{
-    if(btn){ btn.disabled = false; btn.textContent = 'Quét tài khoản client máy tính'; }
+    if(btn){ btn.disabled = false; btn.textContent = 'Quét tài khoản ở máy tính'; }
   }
 }
 
@@ -1877,10 +1877,10 @@ async function refreshInner(){
   const errSub = perf.errors ? (perf.errors + ' lượt chặn ngoại lệ') : 'Dịch vụ vận hành ổn định';
 
   document.getElementById('cards').innerHTML =
-    card('Nhóm tài khoản khả dụng', activeAccts + ' <span style="font-size:13px;font-weight:400;color:var(--dim)">/ ' + totalAccts + ' bình thường</span>', (totalAccts - activeAccts > 0 ? (totalAccts - activeAccts) + ' tài khoảnTắt' : 'Tất cả bật · trạng thái khỏe mạnh'), 'accent') +
-    card('điểm số dư', hasCreds ? (fmt(totRemain) + ' <span style="font-size:13px;font-weight:400;color:var(--dim)">điểm</span>') : 'bình thườngKhả dụng', subCredit, 'accent2') +
-    card('Lượng Gọi Cổng', fmt(t.requests) + ' <span style="font-size:13px;font-weight:400;color:var(--dim)"> lượt</span>', 'Tích lũy tiêu thụ ' + fmt(t.total_tokens) + ' Token', '') +
-    card('Tỷ Lệ Thành Công Yêu Cầu', succStr, errSub, perf.errors ? 'warn' : 'accent2');
+    card('Tài khoản khả dụng', activeAccts + ' <span style="font-size:13px;font-weight:400;color:var(--dim)">/ ' + totalAccts + ' bình thường</span>', (totalAccts - activeAccts > 0 ? (totalAccts - activeAccts) + ' tài khoản Tắt' : 'Tất cả bật · trạng thái khỏe mạnh'), 'accent') +
+    card('Credit còn lại', hasCreds ? (fmt(totRemain) + ' <span style="font-size:13px;font-weight:400;color:var(--dim)">điểm</span>') : 'Khả dụng', subCredit, 'accent2') +
+    card('Số lượng request', fmt(t.requests) + ' <span style="font-size:13px;font-weight:400;color:var(--dim)"> lượt</span>', 'Tích lũy tiêu thụ ' + fmt(t.total_tokens) + ' Token', '') +
+    card('Tỷ Lệ Thành Công', succStr, errSub, perf.errors ? 'warn' : 'accent2');
 
   const matrixEl = document.getElementById("perfMatrix");
   const bmPerf = (perf && perf.by_model) || {};
