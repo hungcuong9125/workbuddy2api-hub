@@ -332,7 +332,7 @@ a:hover{text-decoration:underline}
     <h2>Tài Khoản<em id="acctCount"></em></h2>
     <div class="toolbar">
     <button onclick="openLoginModal()">+ Thêm Tài Khoản (OAuth)</button>
-    <button class="sec" id="btnCheckin" onclick="doCheckin(this)" style="display:none">Điểm Danh Hàng Ngày (Trong Nước)</button>
+    <button class="sec" id="btnCheckin" onclick="doCheckin(this)" style="display:none">Điểm Danh Hàng Ngày</button>
     <button class="sec" id="btnScanDesktop" onclick="scanDesktop(this)">Quét tài khoản ở máy tính</button>
     <button class="sec" onclick="exportAccounts(this)">Xuất Tài Khoản</button>
     <button class="sec" onclick="openImport()">Nhập Tài Khoản</button>
@@ -351,7 +351,7 @@ a:hover{text-decoration:underline}
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
       <h2 style="margin:0">Yêu Cầu Gần Đây <em id="recentCount"></em></h2>
       <div style="display:inline-flex;align-items:center;gap:8px">
-        <span style="font-size:12px;color:var(--dim)">hiển thịdòngsố:</span>
+        <span style="font-size:12px;color:var(--dim)">hiển thị số dòng:</span>
         <div style="display:inline-flex;gap:3px;background:var(--panel2);padding:3px;border-radius:8px;border:1px solid var(--line)">
           <button class="range-btn" id="btnRecentLimit10" onclick="setRecentLimit(10)">10</button>
           <button class="range-btn" id="btnRecentLimit20" onclick="setRecentLimit(20)">20</button>
@@ -375,7 +375,7 @@ a:hover{text-decoration:underline}
   <section>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
       <h2 style="margin:0">Mô Hình <em id="availModelCount"></em></h2>
-      <div style="font-size:12px;color:var(--dim)">Hiển thị các mô hình hội thoại chính thức, dung lượng ngữ cảnh, khả năng Thinking/thị giác và tỷ lệ giá hiện hành trong giao diện hiện tại</div>
+      <div style="font-size:12px;color:var(--dim)">Hiển thị các mô hình hội thoại chính thức, dung lượng ngữ cảnh, khả năng Vision/Thinking và tỷ lệ giá hiện hành trong giao diện hiện tại</div>
     </div>
     <div style="overflow-x:auto">
       <table id="modelsTable">
@@ -1163,7 +1163,7 @@ async function loadSchedulerStatus(){
       ? (s.mode_intl || 'Tự động duy trì Token tài khoản & thông tin thường trú (kiểm tra tập trung 22:00 hàng ngày)')
       : (s.mode_cn || s.mode || 'Lịch theo giờ chẵn');
     if(txt) txt.textContent = s.enabled ? ('Đang chạy · ' + modeText) : 'Đã tạm dừng';
-    if(times) times.textContent = 'Lần trước: ' + (s.last_run_time || '-') + ' · Lần sau: ' + (s.next_run_time || '-');
+    if(times) times.textContent = 'Cũ: ' + (s.last_run_time || '-') + ' · Mới: ' + (s.next_run_time || '-');
     if(btn) btn.textContent = s.enabled ? 'Tạm Dừng Lịch' : 'Bật Lịch';
     if(btnTrig) btnTrig.textContent = (window.VIEW_REALM === 'intl') ? 'Làm Mới Tài Khoản' : 'Kiểm Tra & Duy Trì Ngay';
   }catch(e){}
@@ -1381,9 +1381,9 @@ function renderAccounts(){
   if(!list.length){
     box.innerHTML =
       '<div style="text-align:center;padding:30px 16px">'
-      + '<div style="font-size:15px;margin-bottom:8px">hiện tại' + viewName + 'Chưa có tài khoản</div>'
+      + '<div style="font-size:15px;margin-bottom:8px">Hiện tại chưa có tài khoản</div>'
       + '<div style="color:var(--dim);font-size:13px;margin-bottom:18px">'
-      +   'Vui lòng đăng nhập hoặc nhập một tài khoản ' + viewName + ' Tài Khoản，sau đó cácYêu cầuđều đi quaTài Khoản'
+      +   'Vui lòng đăng nhập hoặc nhập một tài khoản ' + viewName + ', sau đó các yêu cầu đều đi qua Tài Khoản'
       + '</div>'
       + '<button onclick="startLogin()" style="font-size:14px;padding:10px 22px">'
       +   'Đăng nhập tài khoản mới (OAuth)'
@@ -2002,7 +2002,7 @@ async function refreshInner(){
 
   const pageInfo = document.getElementById('recentPageInfo');
   if(pageInfo){
-    pageInfo.textContent = 'thứ ' + RECENT_PAGE + ' / ' + RECENT_TOTAL_PAGES + ' trang · Tổng ' + fmt(total) + ' dòngbản ghi';
+    pageInfo.textContent = 'thứ ' + RECENT_PAGE + ' / ' + RECENT_TOTAL_PAGES + ' trang · Tổng ' + fmt(total) + ' bản ghi';
   }
   const btnPrev = document.getElementById('btnRecentPrev');
   if(btnPrev) btnPrev.disabled = (RECENT_PAGE <= 1);
