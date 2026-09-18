@@ -262,15 +262,15 @@ a:hover{text-decoration:underline}
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
         <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
           <span class="realm-badge-intl">Quốc Tế (Global)</span>
-          <span id="tabIntlDefaultBadge" class="badge ok mini" style="font-weight:600;display:none">Cổng mặc định</span>
-          <span id="tabIntlViewBadge" class="badge s mini" style="display:inline-block">giao diện hiện tại</span>
+          <span id="tabIntlDefaultBadge" class="badge ok mini" style="font-weight:600;display:none">Cổng Mặc Định</span>
+          <span id="tabIntlViewBadge" class="badge s mini" style="display:inline-block">Lựa Chọn Hiện Tại</span>
         </div>
       </div>
       <div class="mono" style="font-size:11px;color:var(--dim);margin-bottom:8px">www.workbuddy.ai</div>
       <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:8px">
         <div style="display:flex;align-items:baseline;gap:6px">
           <span id="tabIntlCredits" style="font-size:22px;font-weight:700;color:var(--accent2);letter-spacing:-.5px">0</span>
-          <span style="font-size:12px;color:var(--dim)">còn lại điểm · <b id="tabIntlAccts" style="color:var(--fg)">0</b> Tài Khoản</span>
+          <span style="font-size:12px;color:var(--dim)">Điểm · <b id="tabIntlAccts" style="color:var(--fg)">0</b> Tài Khoản</span>
         </div>
         <span id="tabIntlKeyBadge" class="badge s mini" style="font-weight:600">0 tài khoản Key</span>
       </div>
@@ -281,15 +281,15 @@ a:hover{text-decoration:underline}
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
         <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
           <span class="realm-badge-cn">Trong Nước (China)</span>
-          <span id="tabCnDefaultBadge" class="badge ok mini" style="font-weight:600;display:none">Cổng mặc định</span>
-          <span id="tabCnViewBadge" class="badge warn mini" style="display:none">giao diện hiện tại</span>
+          <span id="tabCnDefaultBadge" class="badge ok mini" style="font-weight:600;display:none">Cổng Mặc Định</span>
+          <span id="tabCnViewBadge" class="badge warn mini" style="display:none">Lựa Chọn Hiện Tại</span>
         </div>
       </div>
       <div class="mono" style="font-size:11px;color:var(--dim);margin-bottom:8px">copilot.tencent.com</div>
       <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:8px">
         <div style="display:flex;align-items:baseline;gap:6px">
           <span id="tabCnCredits" style="font-size:22px;font-weight:700;color:var(--accent2);letter-spacing:-.5px">0</span>
-          <span style="font-size:12px;color:var(--dim)">còn lại điểm · <b id="tabCnAccts" style="color:var(--fg)">0</b> Tài Khoản</span>
+          <span style="font-size:12px;color:var(--dim)">Điểm · <b id="tabCnAccts" style="color:var(--fg)">0</b> Tài Khoản</span>
         </div>
         <span id="tabCnKeyBadge" class="badge warn mini" style="font-weight:600">0 tài khoản Key</span>
       </div>
@@ -333,10 +333,10 @@ a:hover{text-decoration:underline}
     <div class="toolbar">
     <button onclick="openLoginModal()">+ Thêm Tài Khoản (OAuth)</button>
     <button class="sec" id="btnCheckin" onclick="doCheckin(this)" style="display:none">Điểm Danh Hàng Ngày</button>
-    <button class="sec" id="btnScanDesktop" onclick="scanDesktop(this)">Quét tài khoản ở máy tính</button>
+    <button class="sec" id="btnScanDesktop" onclick="scanDesktop(this)">Quét Tài Khoản Ở Máy Tính</button>
     <button class="sec" onclick="exportAccounts(this)">Xuất Tài Khoản</button>
     <button class="sec" onclick="openImport()">Nhập Tài Khoản</button>
-    <button class="sec" onclick="fetchCredits(this)">Làm Mới điểm</button>
+    <button class="sec" onclick="fetchCredits(this)">Làm Mới Credit</button>
     <button class="sec" onclick="setAll(true, this)">Bật Tất Cả</button>
     <button class="sec" onclick="setAll(false, this)">Tắt Tất Cả</button>
     
@@ -386,7 +386,7 @@ a:hover{text-decoration:underline}
             <th style="text-align:center;width:160px">Năng Lực Mô Hình</th>
             <th style="text-align:center;width:110px">Context</th>
             <th style="text-align:center;width:100px">Max Output</th>
-            <th style="text-align:left">suy nghĩcấp độ</th>
+            <th style="text-align:left">Cấp Độ Thinking</th>
           </tr>
         </thead>
         <tbody></tbody>
@@ -473,7 +473,7 @@ a:hover{text-decoration:underline}
         <div class="s">Tỷ lệ tái sử dụng tiền tố prompt trùng khớp</div>
       </div>
       <div class="card">
-        <div class="k" id="kpiReqTitle">Số yêu cầu & Tỷ lệ thành công Hôm nay</div>
+        <div class="k" id="kpiReqTitle">Số yêu cầu & Tỷ lệ thành công</div>
         <div class="v" id="kpiReqCount">0  lượt</div>
         <div class="s" id="kpiReqSuccess">Tỷ lệ thành công 100% · thất bại 0</div>
       </div>
@@ -935,7 +935,7 @@ function renderAvailableModels(){
     let credBadge = '-';
     const c = (m.credits || '').toString().toLowerCase().replace('x', '');
     if(c === '0.00' || c === '0' || m.id === 'hy3' || m.id === 'hy4-preview-f' || (m.id === 'deepseek-v4.1-flash' && window.VIEW_REALM === 'intl')){
-      credBadge = '<span class="badge ok" style="background:rgba(38,187,130,.15);color:#26bb82">Miễn phí có hạn 0.00x</span>';
+      credBadge = '<span class="badge ok" style="background:rgba(38,187,130,.15);color:#26bb82">Miễn Phí 0.00x</span>';
     } else if(m.id === 'deepseek-v4.1-flash' && window.VIEW_REALM === 'cn'){
       credBadge = '<span class="badge" style="background:rgba(255,77,79,.15);color:#ff4d4f;border:1px solid rgba(255,77,79,.3)">Ưu đãi độc quyền 0.03x</span>';
     } else if((m.id === 'glm-5.2' || m.id === 'deepseek-v4-pro') && window.VIEW_REALM === 'cn'){
@@ -1359,7 +1359,7 @@ function accountRow(a){
     + '<div style="display:flex;flex-direction:column;gap:5px;align-items:center;justify-content:center">'
     +   '<div style="display:flex;gap:4px;justify-content:center">'
     +     '<button class="sec mini" onclick="toggleAccount(&quot;' + uidAttr + '&quot;,' + (!a.enabled) + ', this)">' + (a.enabled ? 'Tắt' : 'Bật') + '</button>'
-    +     '<button class="sec mini" onclick="testAccount(&quot;' + uidAttr + '&quot;, this)">kiểm tra</button>'
+    +     '<button class="sec mini" onclick="testAccount(&quot;' + uidAttr + '&quot;, this)">Kiểm Tra</button>'
     +     '<button class="sec mini" onclick="refreshOne(&quot;' + uidAttr + '&quot;, this)">Làm Mới</button>'
     +   '</div>'
     +   '<div style="display:flex;gap:4px;justify-content:center">'
@@ -1377,7 +1377,7 @@ function renderAccounts(){
   const usable = list.filter(a => a.enabled).length;
   const viewName = currentView === 'cn' ? 'Trong Nước' : 'Quốc Tế';
   document.getElementById('acctCount').textContent =
-    list.length ? ('（' + viewName + 'Tổng ' + list.length + '  tài khoản, bật ' + usable + ' tài khoản）') : '';
+    list.length ? ('（' + viewName + ' Tổng ' + list.length + ' tài khoản, bật ' + usable + ' tài khoản）') : '';
   if(!list.length){
     box.innerHTML =
       '<div style="text-align:center;padding:30px 16px">'
@@ -1393,14 +1393,14 @@ function renderAccounts(){
   }
   box.innerHTML = '<table><thead><tr>'
   box.innerHTML = '<div class="table-wrap"><table><thead><tr>'
-    + '<th style="text-align:center;width:76px">phiên bản</th>'
+    + '<th style="text-align:center;width:76px">Khu Vực</th>'
     + '<th style="text-align:left">Tài Khoản</th>'
     + '<th style="text-align:center;width:84px">Trạng Thái</th>'
-    + '<th style="text-align:left;width:120px">điểm</th>'
-    + '<th style="text-align:right;width:70px">Yêu cầu</th>'
-    + '<th style="text-align:right;width:88px">Tổng token</th>'
+    + '<th style="text-align:left;width:120px">Credit</th>'
+    + '<th style="text-align:right;width:70px">Yêu Cầu</th>'
+    + '<th style="text-align:right;width:88px">Tổng Token</th>'
     + '<th style="text-align:right;width:80px">Cache</th>'
-    + '<th style="text-align:center;width:150px">thao tác</th>'
+    + '<th style="text-align:center;width:150px">Thao Tác</th>'
     + '</tr></thead><tbody>' + list.map(accountRow).join('') + '</tbody></table></div>'
     + '<div class="legend"><span>Nhiều tài khoản dùng theo độ dính phiên + luân phiên; khi một tài khoản bị upstream từ chối sẽ tự chuyển sang kế tiếp</span></div>';
 }
@@ -1434,9 +1434,9 @@ async function fetchCredits(btn){
     const count = (r.results || []).length;
     toast('đã làm mới thành công' + viewName + ' ' + count + ' tài khoản (điểm)', 'ok');
   }catch(e){
-    toast('Làm Mới điểm thất bại: ' + e.message, 'bad');
+    toast('Làm Mới Credit thất bại: ' + e.message, 'bad');
   }finally{
-    if(btn){ btn.disabled = false; btn.textContent = 'Làm Mới điểm'; }
+    if(btn){ btn.disabled = false; btn.textContent = 'Làm Mới Credit'; }
   }
 }
 const queryCredits = fetchCredits;
@@ -1699,7 +1699,7 @@ async function scanDesktop(btn){
     const body = document.getElementById('desktopScanBody');
     if(body) body.innerHTML = '<p class="hint" style="color:var(--warn)">Quét thất bại: ' + esc(e.message) + '</p>';
   }finally{
-    if(btn){ btn.disabled = false; btn.textContent = 'Quét tài khoản ở máy tính'; }
+    if(btn){ btn.disabled = false; btn.textContent = 'Quét Tài Khoản Ở Máy Tính'; }
   }
 }
 
@@ -1872,13 +1872,13 @@ async function refreshInner(){
   const activeAccts = (window.ACCOUNTS || []).filter(a => a.enabled).length;
   const totalAccts = (window.ACCOUNTS || []).length;
   const pctRemain = totSize > 0 ? ((totRemain / totSize) * 100).toFixed(1) + '%' : '';
-  const subCredit = totSize > 0 ? ('tổng điểm ' + fmt(totSize) + ' · còn lại ' + pctRemain) : 'Tài khoản hiện tại bình thường';
+  const subCredit = totSize > 0 ? ('tổng Credit ' + fmt(totSize) + ' · còn lại ' + pctRemain) : 'Tài khoản hiện tại bình thường';
   const succStr = perf.success_rate_pct != null ? pct(perf.success_rate_pct) : '100.0%';
   const errSub = perf.errors ? (perf.errors + ' lượt chặn ngoại lệ') : 'Dịch vụ vận hành ổn định';
 
   document.getElementById('cards').innerHTML =
     card('Tài khoản khả dụng', activeAccts + ' <span style="font-size:13px;font-weight:400;color:var(--dim)">/ ' + totalAccts + ' bình thường</span>', (totalAccts - activeAccts > 0 ? (totalAccts - activeAccts) + ' tài khoản Tắt' : 'Tất cả bật · trạng thái khỏe mạnh'), 'accent') +
-    card('Credit còn lại', hasCreds ? (fmt(totRemain) + ' <span style="font-size:13px;font-weight:400;color:var(--dim)">điểm</span>') : 'Khả dụng', subCredit, 'accent2') +
+    card('Credit còn lại', hasCreds ? (fmt(totRemain) + ' <span style="font-size:13px;font-weight:400;color:var(--dim)">Credit</span>') : 'Khả dụng', subCredit, 'accent2') +
     card('Số lượng request', fmt(t.requests) + ' <span style="font-size:13px;font-weight:400;color:var(--dim)"> lượt</span>', 'Tích lũy tiêu thụ ' + fmt(t.total_tokens) + ' Token', '') +
     card('Tỷ Lệ Thành Công', succStr, errSub, perf.errors ? 'warn' : 'accent2');
 
@@ -2024,7 +2024,7 @@ async function refreshInner(){
   const countEl = document.getElementById('recentCount');
   if(countEl) countEl.textContent = '(thứ ' + RECENT_PAGE + ' trang / Tổng ' + fmt(total) + ' dòng)';
   document.getElementById('recent').innerHTML = rows.length ?
-    '<table><thead><tr><th>thời gian</th><th>mô hình</th><th>Tài Khoản</th><th>chế độ</th><th>thời gian</th><th>ký tự đầu</th><th>tốc độ</th><th>vào</th><th>ra</th><th>suy nghĩ</th><th>Cache</th><th>Tổng token</th></tr></thead><tbody>'
+    '<table><thead><tr><th>Thời gian</th><th>Mô hình</th><th>Tài Khoản</th><th>Chế độ</th><th>Thời gian</th><th>Ký tự đầu</th><th>Speed</th><th>Input</th><th>Output</th><th>Suy nghĩ</th><th>Cache</th><th>Tổng Token</th></tr></thead><tbody>'
     + rows.map(r => '<tr>'
         + '<td class="mono">' + esc((r.iso||'').replace('T',' ').slice(5)) + '</td>'
         + '<td class="mono">' + esc(r.model) + '</td>'
@@ -2898,7 +2898,7 @@ function renderAnalytics(data){
   const elReqTitle = document.getElementById('kpiReqTitle');
   const elReqCount = document.getElementById('kpiReqCount');
   const elReqSuccess = document.getElementById('kpiReqSuccess');
-  if(elReqTitle) elReqTitle.textContent = 'Số yêu cầu & Tỷ lệ thành công ' + (isToday ? 'Hôm nay' : 'Tích luỹ');
+  if(elReqTitle) elReqTitle.textContent = 'Số yêu cầu & Tỷ lệ thành công';
   const totalReq = (currentSum.requests || 0) + (currentSum.errors || 0);
   const successPct = totalReq > 0 ? ((currentSum.requests / totalReq) * 100).toFixed(1) : '100.0';
   if(elReqCount) elReqCount.textContent = fmt(currentSum.requests || 0) + '  lượt';
@@ -2939,9 +2939,9 @@ function renderAnalytics(data){
         let creditStr = '<span style="color:var(--dim)">—</span>';
         if(a.credits && a.credits.remain != null){
           if(a.credits.size){
-            creditStr = '<b style="color:var(--accent2)">' + fmt(a.credits.remain) + '</b> <span style="color:var(--dim);font-size:11px">/ ' + fmt(a.credits.size) + ' điểm</span>';
+            creditStr = '<b style="color:var(--accent2)">' + fmt(a.credits.remain) + '</b> <span style="color:var(--dim);font-size:11px">/ ' + fmt(a.credits.size) + ' Credit</span>';
           } else {
-            creditStr = '<b style="color:var(--accent2)">' + fmt(a.credits.remain) + '</b> <span style="color:var(--dim);font-size:11px">điểm</span>';
+            creditStr = '<b style="color:var(--accent2)">' + fmt(a.credits.remain) + '</b> <span style="color:var(--dim);font-size:11px">Credit</span>';
           }
         }
 
