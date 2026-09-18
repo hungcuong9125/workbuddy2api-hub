@@ -262,7 +262,7 @@ a:hover{text-decoration:underline}
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
         <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
           <span class="realm-badge-intl">Quốc Tế (Global)</span>
-          <span id="tabIntlDefaultBadge" class="badge ok mini" style="font-weight:600;display:none">Cổng xuất mặc định</span>
+          <span id="tabIntlDefaultBadge" class="badge ok mini" style="font-weight:600;display:none">Cổng mặc định</span>
           <span id="tabIntlViewBadge" class="badge s mini" style="display:inline-block">giao diện hiện tại</span>
         </div>
       </div>
@@ -281,7 +281,7 @@ a:hover{text-decoration:underline}
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
         <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
           <span class="realm-badge-cn">Trong Nước (China)</span>
-          <span id="tabCnDefaultBadge" class="badge ok mini" style="font-weight:600;display:none">Cổng xuất mặc định</span>
+          <span id="tabCnDefaultBadge" class="badge ok mini" style="font-weight:600;display:none">Cổng mặc định</span>
           <span id="tabCnViewBadge" class="badge warn mini" style="display:none">giao diện hiện tại</span>
         </div>
       </div>
@@ -298,7 +298,7 @@ a:hover{text-decoration:underline}
     <!-- Thẻ 3: Điều khiển cổng xuất -->
     <div id="cardGatewayCtrl" class="realm-card gateway-ctrl" style="cursor:default">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-        <span style="font-size:11px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:.5px">Cổng xuất mặc định của cổng</span>
+        <span style="font-size:11px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:.5px">Cổng xuất mặc định</span>
         <span id="activeGatewayKeyCount" class="badge ok mini" style="font-weight:600">0 tài khoản Key có hiệu lực</span>
       </div>
       <div style="display:flex;align-items:center;gap:8px;margin:2px 0 8px">
@@ -317,7 +317,7 @@ a:hover{text-decoration:underline}
   <div id="schedulerBar" style="background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 14px;margin-bottom:16px;font-size:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
     <div style="display:flex;align-items:center;gap:8px">
       <span class="dot" id="schedDot"></span>
-      <span>Bộ Lên Lịch Nền Định Kỳ: <b id="schedStatusText">Đang chạy</b></span>
+      <span>Lịch Chạy Ngầm Định Kỳ: <b id="schedStatusText">Đang chạy</b></span>
       <span style="color:var(--dim);font-size:11px" id="schedTimes"></span>
     </div>
     <div style="display:flex;gap:8px">
@@ -351,7 +351,7 @@ a:hover{text-decoration:underline}
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
       <h2 style="margin:0">Yêu Cầu Gần Đây <em id="recentCount"></em></h2>
       <div style="display:inline-flex;align-items:center;gap:8px">
-        <span style="font-size:12px;color:var(--dim)">hiển thị số dòng:</span>
+        <span style="font-size:12px;color:var(--dim)">Hiển thị số dòng:</span>
         <div style="display:inline-flex;gap:3px;background:var(--panel2);padding:3px;border-radius:8px;border:1px solid var(--line)">
           <button class="range-btn" id="btnRecentLimit10" onclick="setRecentLimit(10)">10</button>
           <button class="range-btn" id="btnRecentLimit20" onclick="setRecentLimit(20)">20</button>
@@ -473,7 +473,7 @@ a:hover{text-decoration:underline}
         <div class="s">Tỷ lệ tái sử dụng tiền tố prompt trùng khớp</div>
       </div>
       <div class="card">
-        <div class="k" id="kpiReqTitle">Số Yêu Cầu Hôm Nay & Tỷ Lệ Thành Công</div>
+        <div class="k" id="kpiReqTitle">Số yêu cầu & Tỷ lệ thành công Hôm nay</div>
         <div class="v" id="kpiReqCount">0  lượt</div>
         <div class="s" id="kpiReqSuccess">Tỷ lệ thành công 100% · thất bại 0</div>
       </div>
@@ -485,14 +485,14 @@ a:hover{text-decoration:underline}
     <!-- Bảng 2: Phân tích lượng dùng mô hình & chỉ số phản hồi -->
     <section>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-      <h2 style="margin:0">Tổng Quan Hiệu Năng & Lượng Dùng Mô Hình <em id="matrixModelCount"></em></h2>
+      <h2 style="margin:0">Tóm tắt các chỉ số hiệu suất và cách sử dụng mô hình <em id="matrixModelCount"></em></h2>
       <div style="font-size:12px;color:var(--dim)">Kết hợp độ trễ ký tự đầu (TTFT), tốc độ sinh, thời gian và thống kê Token</div>
     </div>
     <div id="perfMatrix" style="overflow-x:auto"></div>
     <div class="legend" style="margin-top:12px">
       <span><i style="background:var(--accent2)"></i>Tốc độ sinh: số ký tự sinh mỗi giây TB (tok/s)</span>
       <span><i style="background:var(--think)"></i>Token suy nghĩ: lượng suy nghĩ của các mô hình Thinking như DeepSeek/R1</span>
-      <span><i style="background:var(--accent)"></i>Thanh tiến trình tỷ lệ Token tổng</span>
+      <span><i style="background:var(--accent)"></i>Token suy luận: Tỷ lệ phần trăm tổng số token được tạo ra</span>
     </div>
   </section>
   </div>
@@ -540,9 +540,9 @@ a:hover{text-decoration:underline}
       <table>
         <tbody>
           <tr><td>Phiên Bản Hiện Tại</td><td class="mono" id="setVersion">-</td></tr>
-          <tr><td>Tài Khoản · Thư Mục Lưu</td><td class="mono" id="setAccountsDir">-</td></tr>
+          <tr><td>Thư Mục Lưu Tài Khoản</td><td class="mono" id="setAccountsDir">-</td></tr>
           <tr><td>Thư Mục Nhật Ký Sử Dụng</td><td class="mono" id="setUsageDir">-</td></tr>
-          <tr><td>Cài Đặttệp</td><td class="mono" id="setFile">-</td></tr>
+          <tr><td>Tệp Cài Đặt</td><td class="mono" id="setFile">-</td></tr>
         </tbody>
       </table>
       <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
@@ -1160,7 +1160,7 @@ async function loadSchedulerStatus(){
 
     if(dot) dot.className = s.enabled ? 'dot' : 'dot off';
     const modeText = (window.VIEW_REALM === 'intl')
-      ? (s.mode_intl || 'Tự động duy trì Token tài khoản & thông tin thường trú (kiểm tra tập trung 22:00 hàng ngày)')
+      ? (s.mode_intl || 'Tự động duy trì mã thông báo tài khoản và thông tin đăng nhập vĩnh viễn (Kiểm tra 22:00 hàng ngày)')
       : (s.mode_cn || s.mode || 'Lịch theo giờ chẵn');
     if(txt) txt.textContent = s.enabled ? ('Đang chạy · ' + modeText) : 'Đã tạm dừng';
     if(times) times.textContent = 'Cũ: ' + (s.last_run_time || '-') + ' · Mới: ' + (s.next_run_time || '-');
@@ -2898,7 +2898,7 @@ function renderAnalytics(data){
   const elReqTitle = document.getElementById('kpiReqTitle');
   const elReqCount = document.getElementById('kpiReqCount');
   const elReqSuccess = document.getElementById('kpiReqSuccess');
-  if(elReqTitle) elReqTitle.textContent = (isToday ? 'Hôm nay ' : 'Tích lũy ') + 'Số yêu cầu & Tỷ lệ thành công';
+  if(elReqTitle) elReqTitle.textContent = 'Số yêu cầu & Tỷ lệ thành công ' + (isToday ? 'Hôm nay' : 'Tích luỹ');
   const totalReq = (currentSum.requests || 0) + (currentSum.errors || 0);
   const successPct = totalReq > 0 ? ((currentSum.requests / totalReq) * 100).toFixed(1) : '100.0';
   if(elReqCount) elReqCount.textContent = fmt(currentSum.requests || 0) + '  lượt';
