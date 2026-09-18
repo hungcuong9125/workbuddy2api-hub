@@ -362,10 +362,10 @@ a:hover{text-decoration:underline}
     </div>
     <div id="recent" class="table-wrap"></div>
     <div id="recentPagination" style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;padding-top:12px;border-top:1px solid var(--line);font-size:12px;color:var(--dim);flex-wrap:wrap;gap:8px">
-      <div id="recentPageInfo">thứ 1 / 1 trang · Tổng 0 dòngbản ghi</div>
-      <div style="display:inline-flex;gap:6px;align-items:center">
+      <div id="recentPageInfo">thứ 1 / 1 trang · Tổng 0 dòng bản ghi</div>
+      <div style="display:inline-flex;gap:5px;align-items:center">
         <button class="sec mini" id="btnRecentPrev" onclick="changeRecentPage(-1)">Trang trước</button>
-        <span id="recentPageIndicator" class="mono" style="font-weight:600;color:var(--fg);padding:0 6px">1</span>
+        <div id="recentPageButtons" style="display:inline-flex;gap:3px;align-items:center"></div>
         <button class="sec mini" id="btnRecentNext" onclick="changeRecentPage(1)">Trang sau</button>
       </div>
     </div>
@@ -904,6 +904,10 @@ async function initRealm(){
     if(r && r.current) window.ACTIVE_GATEWAY_REALM = r.current;
   } catch(e){}
   window.VIEW_REALM = window.ACTIVE_GATEWAY_REALM;
+  const viewFromUrl = new URLSearchParams(window.location.search).get('view');
+  if(viewFromUrl && ['intl', 'cn'].includes(viewFromUrl)) window.VIEW_REALM = viewFromUrl;
+  const limitFromUrl = new URLSearchParams(window.location.search).get('limit');
+  if(limitFromUrl && [10, 20, 50, 100].includes(parseInt(limitFromUrl, 10))) RECENT_LIMIT = parseInt(limitFromUrl, 10);
   window.updateUI();
 }
 
@@ -2000,14 +2004,21 @@ async function refreshInner(){
   if(pageInfo){
     pageInfo.textContent = 'thứ ' + RECENT_PAGE + ' / ' + RECENT_TOTAL_PAGES + ' trang · Tổng ' + fmt(total) + ' dòngbản ghi';
   }
-  const pageIndicator = document.getElementById('recentPageIndicator');
-  if(pageIndicator){
-    pageIndicator.textContent = RECENT_PAGE;
-  }
   const btnPrev = document.getElementById('btnRecentPrev');
   if(btnPrev) btnPrev.disabled = (RECENT_PAGE <= 1);
   const btnNext = document.getElementById('btnRecentNext');
   if(btnNext) btnNext.disabled = (RECENT_PAGE >= RECENT_TOTAL_PAGES);
+  const btnBox = document.getElementById('recentPageButtons');
+  if(btnBox){
+    const pages = generatePageList(RECENT_PAGE, RECENT_TOTAL_PAGES);
+    btnBox.innerHTML = pages.map(p => {
+      if(p === '...'){
+        return '<span style="color:var(--dim);padding:0 3px">…</span>';
+      }
+      const active = (p === RECENT_PAGE);
+      return '<button class="range-btn' + (active ? ' active' : '') + '" style="min-width:26px;padding:3px 6px;font-size:11px" onclick="gotoRecentPage(' + p + ')">' + p + '</button>';
+    }).join('');
+  }
 
   const rows = recent.rows || [];
   const countEl = document.getElementById('recentCount');
@@ -2060,6 +2071,34 @@ async function changeRecentPage(delta){
   if(next < 1 || next > RECENT_TOTAL_PAGES) return;
   RECENT_PAGE = next;
   await refresh();
+}
+
+async function gotoRecentPage(p){
+  if(p < 1 || p > RECENT_TOTAL_PAGES || p === RECENT_PAGE) return;
+  RECENT_PAGE = p;
+  await refresh();
+}
+
+function generatePageList(current, total){
+  if(total <= 7){
+    return Array.from({length: total}, (_, i) => i + 1);
+  }
+  const pages = [1];
+  let start = Math.max(2, current - 2);
+  let end = Math.min(total - 1, current + 2);
+  if(current <= 4){
+    end = 5;
+  }
+  if(current >= total - 3){
+    start = total - 4;
+  }
+  if(start > 2) pages.push('...');
+  for(let i = start; i <= end; i++){
+    pages.push(i);
+  }
+  if(end < total - 1) pages.push('...');
+  pages.push(total);
+  return pages;
 }
 
 let currentMainTab = 'gateway';
@@ -2482,16 +2521,6 @@ async function writeClipboard(text){
   if(!ok) throw new Error('trình duyệt từ chốiSao Chépthao tác');
 }
 
-function addApiKeyRow(){
-  API_KEY_ROWS.push({id: '', name: '', key: '', realm: '', enabled: true, masked: ''});
-  renderKeyRows();
-}
-
-function removeKeyRow(index){
-  API_KEY_ROWS.splice(index, 1);
-  renderKeyRows();
-}
-
 async function saveApiKeys(btn){
   const payload = API_KEY_ROWS.map(row => ({
     id: row.id || '',
@@ -2506,7 +2535,9 @@ async function saveApiKeys(btn){
     toast('Dòng mới thêm chưa điền Key', 'warn');
     return;
   }
-  btn.disabled = true;
+  // Several callers save without going through a button (saveSingleKey,
+  // toggleKeyRow, removeKeyRow), so a missing button must not abort the save.
+  if(btn) btn.disabled = true;
   try {
     await postJSON('/settings/save', {api_keys: payload});
     toast('Đã lưu ' + payload.length + ' tài khoản Key', 'ok');
@@ -2514,7 +2545,7 @@ async function saveApiKeys(btn){
   } catch(e) {
     toast('Lưu thất bại: ' + e.message, 'bad');
   } finally {
-    btn.disabled = false;
+    if(btn) btn.disabled = false;
   }
 }
 
