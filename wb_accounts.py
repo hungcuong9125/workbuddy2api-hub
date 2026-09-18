@@ -153,6 +153,12 @@ class Account(object):
         self.enabled = data.get("enabled", True)
         self.last_error = str(data.get("lastError") or "")
         self.cooldown_until = float(data.get("cooldownUntil") or 0)
+        # Per-model throttling. Upstream rate limits (code 6004 "usage exceeds
+        # frequency limit") apply to ONE model for one account, not to the whole
+        # account: other models keep working. Cooldown the offending model only,
+        # otherwise a single throttled model blackholes every request on the pool.
+        # Deliberately runtime-only (not persisted): see VOLATILE_FIELDS.
+        self.model_cooldowns = {}
         self.credits = data.get("credits") or None
         self.last_checkin = data.get("lastCheckin") or None
 
@@ -220,10 +226,12 @@ class Account(object):
         if self.path and os.path.exists(self.path):
             os.remove(self.path)
 
-    def ready(self):
+    def ready(self, model=None):
         if not self.enabled or not self.access_token:
             return False
         if self.cooldown_until > time.time():
+            return False
+        if model and self.model_cooldowns.get(model, 0.0) > time.time():
             return False
         exp = self.expires_at or jwt_exp(self.access_token)
         if not exp:
@@ -395,12 +403,32 @@ class Account(object):
             self.save(os.path.dirname(self.path))
         return {"ok": True, "credits": self.credits}
 
-    def note_error(self, message, cooldown=60, single_account=False):
+    def note_error(self, message, cooldown=60, single_account=False, model=None, until=None):
         self.last_error = str(message)[:200]
+        if model:
+            # Model-scoped throttle: keep the account usable for every other model.
+            wait = max(1.0, float(until) - time.time()) if until else (
+                3.0 if single_account else float(cooldown))
+            self.model_cooldowns[model] = time.time() + wait
+            return
         actual_cooldown = 3 if single_account else cooldown
         self.cooldown_until = time.time() + actual_cooldown
 
-    def clear_error(self):
+    def throttle_wait(self, model=None):
+        """Seconds until this account can serve `model` again (0 = right now)."""
+        if not self.enabled or not self.access_token:
+            return 0.0
+        now = time.time()
+        wait = max(0.0, self.cooldown_until - now)
+        if model:
+            wait = max(wait, max(0.0, self.model_cooldowns.get(model, 0.0) - now))
+        return wait
+
+    def clear_error(self, model=None):
+        if model:
+            self.model_cooldowns.pop(model, None)
+        else:
+            self.model_cooldowns.clear()
         if self.last_error or self.cooldown_until:
             self.last_error = ""
             self.cooldown_until = 0
@@ -595,26 +623,26 @@ class AccountPool(object):
                 if enabled: account.clear_error()
                 account.save(self.dir)
 
-    def count_ready(self, realm=None):
+    def count_ready(self, realm=None, model=None):
         with self._lock:
             snapshot = [a for a in self.accounts if not realm or a.realm == realm]
-        return sum(1 for a in snapshot if a.enabled and a.access_token)
+        return sum(1 for a in snapshot if a.enabled and a.access_token and a.ready(model=model))
 
-    def pick_for_session(self, realm=None, session_key=None, exclude=None):
+    def pick_for_session(self, realm=None, session_key=None, exclude=None, model=None):
         exclude = exclude or set()
         if session_key:
             bound_uid = self.affinity.get(session_key)
             if bound_uid and bound_uid not in exclude:
                 account = self.get(bound_uid)
-                if account and account.realm == realm and account.ready():
+                if account and account.realm == realm and account.ready(model=model):
                     return account
                 self.affinity.unbind(session_key)
-        account = self.pick(realm=realm, exclude=exclude)
+        account = self.pick(realm=realm, exclude=exclude, model=model)
         if account and session_key:
             self.affinity.bind(session_key, account.uid)
         return account
 
-    def pick(self, realm=None, exclude=None):
+    def pick(self, realm=None, exclude=None, model=None):
         exclude = exclude or set()
         with self._lock:
             snapshot = [a for a in self.accounts if not realm or a.realm == realm]
@@ -625,7 +653,7 @@ class AccountPool(object):
             index = (start + offset) % total
             account = snapshot[index]
             if account.uid in exclude: continue
-            if account.ready():
+            if account.ready(model=model):
                 with self._lock: self._cursor = (index + 1) % total
                 return account
         return None

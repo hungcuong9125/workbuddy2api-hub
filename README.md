@@ -1,7 +1,7 @@
 # WorkBuddy2API-Hub — 国际版、国内版多账号网关中枢
 
 <p align="center">
-  <a href="https://github.com/ardeyouxipianyi/workbuddy2api-hub/releases"><img src="https://img.shields.io/badge/Release-v1.4.2-2496ED?style=flat-square" alt="Version 1.4.2"></a>
+  <a href="https://github.com/ardeyouxipianyi/workbuddy2api-hub/releases"><img src="https://img.shields.io/badge/Release-v1.4.3-2496ED?style=flat-square" alt="Version 1.4.3"></a>
   <img src="https://img.shields.io/badge/Python-3.9+-blue.svg?style=flat-square" alt="Python">
   <img src="https://img.shields.io/badge/API-OpenAI_Compatible-412991?style=flat-square" alt="OpenAI API">
   <img src="https://img.shields.io/badge/Dual_Realm-Intl_&_CN-0DBD8B?style=flat-square" alt="Dual Realm">
@@ -205,6 +205,7 @@ export OPENAI_API_KEY="你在看板设置中添加并绑定的API_Key"
   - **猫猫旅行派出修复**：对齐官方前端协议，先取 `travel/config` 目的地再携带 `location_id` 派出，解决 `HTTP 400 invalid request`；
   - **夜猫子任务接入调度器**：23:00-08:00 夜间窗口判定与每日 01:00 自动上报，此前该整点从未真正上报过夜猫事件；
   - **启动端口误判修复**：端口自检校验回包特征，区分「本服务已在运行」与「端口被其他程序占用」，并为绑定失败补充友好提示。
+  - **上游限频按模型冷却**（PR #22）：识别上游 429（code 6004）为模型级限流而非账号失效，将冷却粒度从账号级细化为账号加模型级，冷却时长优先采用上游返回的 reset 时间，并直接返回 429 与 Retry-After 头；修复单账号场景下一个模型被限频就连带拖垮同账号其它模型的问题。
 
 ---
 
