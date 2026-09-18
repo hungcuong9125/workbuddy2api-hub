@@ -162,6 +162,7 @@ def _clean_key_entry(entry):
         "key": key,
         "realm": realm,
         "enabled": entry.get("enabled", True) is not False,
+        "created_at": entry.get("created_at") or time.strftime("%Y/%m/%d %H:%M"),
     }
 
 

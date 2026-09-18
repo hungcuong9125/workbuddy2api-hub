@@ -34,15 +34,15 @@ h1 span{color:var(--dim);font-weight:400;font-size:13px;margin-left:8px}
 .meta b{color:var(--fg);font-weight:600}
 main{padding:24px 24px 60px;max-width:1280px;margin:0 auto}
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(158px,1fr));gap:12px;margin-bottom:22px}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 18px;box-shadow:var(--shadow)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 18px;box-shadow:var(--shadow);min-width:0}
 .card .k{color:var(--dim);font-size:12px;margin-bottom:6px;font-weight:500}
-.card .v{font-size:24px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.5px;color:var(--fg)}
-.card .s{color:var(--dim);font-size:11px;margin-top:4px}
+.card .v{font-size:24px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.5px;color:var(--fg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card .s{color:var(--dim);font-size:11px;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .card.think .v{color:var(--think)}
 .card.accent .v{color:var(--accent)}
 .card.accent2 .v{color:var(--accent2)}
 .card.err .v{color:var(--bad)}
-#cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+#cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:20px}
 #cards .card{padding:14px 18px;min-width:0;border-radius:12px;background:var(--panel);border:1px solid var(--line);box-shadow:var(--shadow)}
 #cards .card .k{font-size:12px;color:var(--dim);margin-bottom:6px;font-weight:500}
 #cards .card .v{font-size:22px;font-weight:700;white-space:nowrap;letter-spacing:-.3px}
@@ -54,7 +54,7 @@ section h2{margin:0 0 14px;font-size:13px;font-weight:700;color:var(--dim);
 section h2 em{color:var(--fg);font-style:normal;text-transform:none;letter-spacing:0;margin-left:6px}
 table{width:100%;border-collapse:collapse;font-size:13px}
 th,td{text-align:right;padding:9px 12px;border-bottom:1px solid var(--line);
-  font-variant-numeric:tabular-nums}
+  font-variant-numeric:tabular-nums;vertical-align:middle}
 th{color:var(--dim);font-weight:600;font-size:12px;white-space:nowrap;background:var(--panel2)}
 th:first-child{border-top-left-radius:8px;border-bottom-left-radius:8px}
 th:last-child{border-top-right-radius:8px;border-bottom-right-radius:8px}
@@ -64,13 +64,25 @@ tbody tr:hover{background:rgba(241,245,249,.6)}
 .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px}
 .bar-fill{height:6px;border-radius:3px;background:var(--accent);min-width:2px;display:inline-block;vertical-align:middle}
 .bar-fill.think{background:var(--think)}
+.table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;width:100%;border-radius:8px}
+.table-wrap table{min-width:720px}
+@media (max-width: 860px){
+  header{padding:12px 16px}
+  main{padding:16px 12px 60px}
+  section{padding:14px 14px;border-radius:12px}
+  #cards{grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}
+  #cards .card{padding:10px 12px}
+  #cards .card .v{font-size:18px}
+  .toolbar{gap:6px}
+  .toolbar button{padding:5px 10px;font-size:11px}
+}
 .badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;
-  background:var(--panel2);border:1px solid var(--line);color:var(--dim);white-space:nowrap;font-weight:500}
-.badge.ok{color:#15803d;background:rgba(22,163,74,.1);border-color:rgba(22,163,74,.25)}
-.badge.s{color:#1d4ed8;background:rgba(37,99,235,.08);border-color:rgba(37,99,235,.25)}
-.badge.off{color:var(--dim)}
-.badge.warn{color:#b45309;background:rgba(217,119,6,.1);border-color:rgba(217,119,6,.25)}
-.badge.bad{color:#b91c1c;background:rgba(220,38,38,.1);border-color:rgba(220,38,38,.25)}
+  background:var(--panel2);border:1px solid var(--line);color:var(--dim);white-space:nowrap;font-weight:600}
+.badge.ok{color:#15803d;background:rgba(34,197,94,.14);border-color:rgba(34,197,94,.32)}
+.badge.s{color:#1d4ed8;background:rgba(37,99,235,.1);border-color:rgba(37,99,235,.25)}
+.badge.off{color:#64748b;background:#e2e8f0;border-color:#cbd5e1}
+.badge.warn{color:#b45309;background:rgba(245,158,11,.14);border-color:rgba(245,158,11,.35)}
+.badge.bad{color:#b91c1c;background:rgba(239,68,68,.14);border-color:rgba(239,68,68,.35)}
 .badge.mini{padding:1px 6px;font-size:10px}
 .empty{color:var(--dim);text-align:center;padding:28px 0;font-size:13px}
 .legend{display:flex;gap:16px;color:var(--dim);font-size:11px;margin-top:12px;flex-wrap:wrap}
@@ -117,37 +129,58 @@ a:hover{text-decoration:underline}
 .realm-pill{background:transparent;border:none;color:var(--dim);font-size:12px;padding:6px 16px;border-radius:8px;cursor:pointer;transition:all .15s}
 .realm-pill:hover{color:var(--fg)}
 .realm-pill.active{background:var(--accent);color:#fff;font-weight:600;box-shadow:var(--shadow-sm)}
-.realm-badge-intl{color:#0284c7;background:rgba(2,132,199,.1);border:1px solid rgba(2,132,199,.25);padding:2px 8px;border-radius:999px;font-size:11px;font-weight:500}
-.realm-badge-cn{color:#dc2626;background:rgba(220,38,38,.1);border:1px solid rgba(220,38,38,.25);padding:2px 8px;border-radius:999px;font-size:11px;font-weight:500}
+.key-card{
+  background:#ffffff;border:1px solid var(--line);border-radius:12px;
+  padding:16px 20px;margin-bottom:12px;box-shadow:var(--shadow);
+  transition:all .15s ease;
+}
+.key-card:hover{border-color:var(--line-hover);box-shadow:var(--shadow-md)}
+.key-card.disabled{opacity:.75;background:rgba(241,245,249,.5)}
+.key-card-main{
+  display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
+}
+.key-action-btn{
+  display:inline-flex;align-items:center;gap:5px;padding:5px 14px;border-radius:20px;
+  font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--line);
+  background:#ffffff;color:var(--fg);transition:all .15s ease;box-shadow:var(--shadow-sm);
+}
+.key-action-btn:hover{background:var(--panel2);border-color:var(--line-hover)}
+.key-action-btn.danger{
+  color:#dc2626;border-color:rgba(220,38,38,.28);background:rgba(220,38,38,.03);
+}
+.key-action-btn.danger:hover{
+  background:#dc2626;color:#ffffff;border-color:#dc2626;
+}
+.realm-badge-intl{color:#0369a1;background:rgba(2,132,199,.12);border:1px solid rgba(2,132,199,.3);padding:2px 9px;border-radius:999px;font-size:11px;font-weight:600}
+.realm-badge-cn{color:#b91c1c;background:rgba(220,38,38,.12);border:1px solid rgba(220,38,38,.3);padding:2px 9px;border-radius:999px;font-size:11px;font-weight:600}
+.badge-effort{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;line-height:1.4;white-space:nowrap;margin:1px 2px;background:rgba(124,58,237,.12);color:var(--think);border:1px solid rgba(124,58,237,.3);font-weight:600}
 .realm-filter{display:inline-flex;gap:6px;margin-left:8px}
 .realm-filter button{background:var(--panel2);border:1px solid var(--line);color:var(--dim);padding:3px 9px;font-size:11px}
 .realm-filter button.active{border-color:var(--accent);color:var(--accent);background:#fff}
 
-.realm-banner{
-  background:var(--panel);border:1px solid var(--line);border-radius:14px;
-  padding:16px 20px;margin-bottom:20px;display:flex;align-items:center;
-  justify-content:space-between;gap:18px;flex-wrap:wrap;box-shadow:var(--shadow);
+.realm-card{
+  background:var(--panel);border:1px solid var(--line);border-radius:12px;
+  padding:14px 18px;box-shadow:var(--shadow);cursor:pointer;transition:all .15s ease;
+  position:relative;display:flex;flex-direction:column;justify-content:space-between;min-height:104px;
 }
-.realm-tabs{display:flex;gap:10px;flex-wrap:wrap}
-.realm-tab{
-  display:flex;align-items:center;gap:12px;padding:10px 18px;border-radius:10px;
-  background:var(--panel2);border:1px solid var(--line);color:var(--dim);
-  cursor:pointer;text-align:left;transition:all .15s;
+.realm-card:hover{border-color:var(--line-hover);transform:translateY(-1px);box-shadow:var(--shadow-md)}
+.realm-card.active{
+  border-color:var(--accent);background:#ffffff;
+  box-shadow:0 0 0 1px var(--accent), var(--shadow-md);
 }
-.realm-tab:hover{border-color:var(--line-hover);color:var(--fg);background:#fff}
-.realm-tab.active{
-  background:#fff;border-color:var(--accent);color:var(--fg);
-  box-shadow:0 2px 8px rgba(37,99,235,.15);
+.realm-card.active#tabCn{
+  border-color:#ef4444;box-shadow:0 0 0 1px #ef4444, var(--shadow-md);
 }
-.realm-tab .tab-icon{font-size:22px;line-height:1}
-.realm-tab .tab-title{font-size:14px;font-weight:700;display:block;color:var(--fg)}
-.realm-tab .tab-desc{font-size:11px;color:var(--dim);display:block;margin-top:2px}
-.realm-banner-right{display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+.realm-card.gateway-ctrl{
+  background:var(--panel2);cursor:default;border-color:var(--line);
+}
+.realm-card.gateway-ctrl:hover{transform:none;border-color:var(--line);box-shadow:var(--shadow)}
 .toggle-realm-btn{
   background:#fff;border:1px solid var(--accent);color:var(--accent);
   padding:8px 18px;font-size:13px;font-weight:600;border-radius:8px;box-shadow:var(--shadow-sm);cursor:pointer;
+  transition:all .15s ease;
 }
-.toggle-realm-btn:hover{background:var(--accent);color:#fff}
+.toggle-realm-btn:hover{background:rgba(0,0,0,.04);box-shadow:var(--shadow-md)}
 .realm-endpoint-info{font-size:12px;color:var(--dim)}
 
 .main-nav{display:inline-flex;gap:4px;background:var(--panel2);padding:4px;border-radius:10px;border:1px solid var(--line)}
@@ -221,35 +254,64 @@ a:hover{text-decoration:underline}
 </div>
 <main>
   <div id="pageGateway">
-  <!-- Thanh điều khiển trung tâm phiên bản -->
-  <div class="realm-banner">
-    <div>
-      <div style="font-size:11px;color:var(--dim);margin-bottom:6px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">Xem chi tiết (nhấn để chuyển giao diện)</div>
-      <div class="realm-tabs">
-        <div id="tabIntl" class="realm-tab active" onclick="switchViewRealm('intl')">
-          
-          <div class="tab-text">
-            <span class="tab-title">Tài Khoản Quốc Tế (Global)</span>
-            <span class="tab-desc">www.workbuddy.ai</span>
-          </div>
-        </div>
-        <div id="tabCn" class="realm-tab" onclick="switchViewRealm('cn')">
-          
-          <div class="tab-text">
-            <span class="tab-title">Tài Khoản Trong Nước (China)</span>
-            <span class="tab-desc">copilot.tencent.com</span>
-          </div>
+  <!-- Thanh điều khiển trung tâm phiên bản (lưới 3 cột cao bằng nhau) -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-bottom:18px">
+    
+    <!-- Thẻ 1: Quốc Tế (Global) -->
+    <div id="tabIntl" class="realm-card active" onclick="switchViewRealm('intl')">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+          <span class="realm-badge-intl">Quốc Tế (Global)</span>
+          <span id="tabIntlDefaultBadge" class="badge ok mini" style="font-weight:600;display:none">Cổng xuất mặc định</span>
+          <span id="tabIntlViewBadge" class="badge s mini" style="display:inline-block">giao diện hiện tại</span>
         </div>
       </div>
-    </div>
-    <div class="realm-banner-right" style="background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:12px 16px">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-        <span id="gatewayDot" class="dot"></span>
-        <span style="font-size:13px">Cổng upstream hiện tại: <b id="activeGatewayName" style="color:var(--accent)">Quốc Tế</b></span>
+      <div class="mono" style="font-size:11px;color:var(--dim);margin-bottom:8px">www.workbuddy.ai</div>
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:8px">
+        <div style="display:flex;align-items:baseline;gap:6px">
+          <span id="tabIntlCredits" style="font-size:22px;font-weight:700;color:var(--accent2);letter-spacing:-.5px">0</span>
+          <span style="font-size:12px;color:var(--dim)">còn lại điểm · <b id="tabIntlAccts" style="color:var(--fg)">0</b> Tài Khoản</span>
+        </div>
+        <span id="tabIntlKeyBadge" class="badge s mini" style="font-weight:600">0 tài khoản Key</span>
       </div>
-      <div style="font-size:11px;color:var(--dim);margin-bottom:8px">Địa chỉ xuất: <span id="activeEndpoint" class="mono" style="color:var(--fg)">https://www.workbuddy.ai/v2</span> (đã lưu cục bộ)</div>
-      <button class="toggle-realm-btn" id="btnToggleRealm" onclick="toggleActiveGatewayRealm()" style="cursor:pointer;width:100%">Chuyển upstream cổng sang 【Trong Nước】</button>
     </div>
+
+    <!-- Thẻ 2: Trong Nước (China) -->
+    <div id="tabCn" class="realm-card" onclick="switchViewRealm('cn')">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+          <span class="realm-badge-cn">Trong Nước (China)</span>
+          <span id="tabCnDefaultBadge" class="badge ok mini" style="font-weight:600;display:none">Cổng xuất mặc định</span>
+          <span id="tabCnViewBadge" class="badge warn mini" style="display:none">giao diện hiện tại</span>
+        </div>
+      </div>
+      <div class="mono" style="font-size:11px;color:var(--dim);margin-bottom:8px">copilot.tencent.com</div>
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:8px">
+        <div style="display:flex;align-items:baseline;gap:6px">
+          <span id="tabCnCredits" style="font-size:22px;font-weight:700;color:var(--accent2);letter-spacing:-.5px">0</span>
+          <span style="font-size:12px;color:var(--dim)">còn lại điểm · <b id="tabCnAccts" style="color:var(--fg)">0</b> Tài Khoản</span>
+        </div>
+        <span id="tabCnKeyBadge" class="badge warn mini" style="font-weight:600">0 tài khoản Key</span>
+      </div>
+    </div>
+
+    <!-- Thẻ 3: Điều khiển cổng xuất -->
+    <div id="cardGatewayCtrl" class="realm-card gateway-ctrl" style="cursor:default">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+        <span style="font-size:11px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:.5px">Cổng xuất mặc định của cổng</span>
+        <span id="activeGatewayKeyCount" class="badge ok mini" style="font-weight:600">0 tài khoản Key có hiệu lực</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin:2px 0 8px">
+        <span id="gatewayDot" class="dot" style="width:9px;height:9px"></span>
+        <span id="activeGatewayName" style="font-size:20px;font-weight:700;color:var(--accent);letter-spacing:-.4px">Quốc Tế (Global)</span>
+      </div>
+      <div style="margin-top:auto">
+        <button class="toggle-realm-btn" id="btnToggleRealm" onclick="toggleActiveGatewayRealm()" style="cursor:pointer;width:100%;padding:7px 12px;font-size:12px">
+          ⇄ Chuyển cổng xuất mặc định thành【Trong Nước】
+        </button>
+      </div>
+    </div>
+
   </div>
   <!-- Thanh trạng thái bộ lên lịch nền -->
   <div id="schedulerBar" style="background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 14px;margin-bottom:16px;font-size:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
@@ -274,42 +336,57 @@ a:hover{text-decoration:underline}
     <button class="sec" id="btnScanDesktop" onclick="scanDesktop(this)">Quét tài khoản client máy tính</button>
     <button class="sec" onclick="exportAccounts(this)">Xuất Tài Khoản</button>
     <button class="sec" onclick="openImport()">Nhập Tài Khoản</button>
-    <button class="sec" onclick="fetchCredits(this)">Làm Mới Hạn Mức/Điểm</button>
-    <button class="sec" onclick="setAll(true)">Bật Tất Cả</button>
-    <button class="sec" onclick="setAll(false)">Tắt Tất Cả</button>
+    <button class="sec" onclick="fetchCredits(this)">Làm Mới điểm</button>
+    <button class="sec" onclick="setAll(true, this)">Bật Tất Cả</button>
+    <button class="sec" onclick="setAll(false, this)">Tắt Tất Cả</button>
     
-  </div>
-  <div id="realmNotice" style="background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 12px;margin-bottom:14px;font-size:12px;color:var(--dim);display:flex;justify-content:space-between">
-    <span>Cổng đang hoạt động：<b id="activeGateway" style="color:var(--fg)"></b></span>
-    <span id="activeModelCount"></span>
   </div>
     <div id="accounts"></div>
   </section>
 
-  <!-- Đã hợp nhất: Ma trận hiệu năng mô hình & ma trận lượng dùng -->
+  <!-- Đã hợp nhất: Ma trận hiệu năng & lượng dùng mô hình -->
   
 
   <section>
-    <h2>Yêu Cầu Gần Đây</h2>
-    <div id="recent"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+      <h2 style="margin:0">Yêu Cầu Gần Đây <em id="recentCount"></em></h2>
+      <div style="display:inline-flex;align-items:center;gap:8px">
+        <span style="font-size:12px;color:var(--dim)">hiển thịdòngsố:</span>
+        <div style="display:inline-flex;gap:3px;background:var(--panel2);padding:3px;border-radius:8px;border:1px solid var(--line)">
+          <button class="range-btn" id="btnRecentLimit10" onclick="setRecentLimit(10)">10</button>
+          <button class="range-btn" id="btnRecentLimit20" onclick="setRecentLimit(20)">20</button>
+          <button class="range-btn" id="btnRecentLimit50" onclick="setRecentLimit(50)">50</button>
+          <button class="range-btn" id="btnRecentLimit100" onclick="setRecentLimit(100)">100</button>
+        </div>
+      </div>
+    </div>
+    <div id="recent" class="table-wrap"></div>
+    <div id="recentPagination" style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;padding-top:12px;border-top:1px solid var(--line);font-size:12px;color:var(--dim);flex-wrap:wrap;gap:8px">
+      <div id="recentPageInfo">thứ 1 / 1 trang · Tổng 0 dòngbản ghi</div>
+      <div style="display:inline-flex;gap:6px;align-items:center">
+        <button class="sec mini" id="btnRecentPrev" onclick="changeRecentPage(-1)">Trang trước</button>
+        <span id="recentPageIndicator" class="mono" style="font-weight:600;color:var(--fg);padding:0 6px">1</span>
+        <button class="sec mini" id="btnRecentNext" onclick="changeRecentPage(1)">Trang sau</button>
+      </div>
+    </div>
   </section>
 
   <!-- Danh mục mô hình & năng lực theo phiên bản -->
   <section>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
       <h2 style="margin:0">Mô Hình <em id="availModelCount"></em></h2>
-      <div style="font-size:12px;color:var(--dim)">Danh sách các mô hình, dung lượng ngữ cảnh, khả năng suy luận/thị giác và tỷ lệ giá hiện hành trong giao diện hiện tại</div>
+      <div style="font-size:12px;color:var(--dim)">Hiển thị các mô hình hội thoại chính thức, dung lượng ngữ cảnh, khả năng suy luận/thị giác và tỷ lệ giá hiện hành trong giao diện hiện tại</div>
     </div>
     <div style="overflow-x:auto">
       <table id="modelsTable">
         <thead>
           <tr>
-            <th>ID Mô Hình</th>
-            <th>Tỷ lệ giá</th>
-            <th>Năng Lực Mô Hình</th>
-            <th>Context</th>
-            <th>Max Output</th>
-            <th>Khả Năng Suy Nghĩ / Cấp Độ Suy Luận</th>
+            <th style="text-align:left;width:220px">ID Mô Hình</th>
+            <th style="text-align:center;width:140px">Tỷ lệ giá</th>
+            <th style="text-align:center;width:160px">Năng Lực Mô Hình</th>
+            <th style="text-align:center;width:110px">Context</th>
+            <th style="text-align:center;width:100px">Max Output</th>
+            <th style="text-align:left">suy nghĩcấp độ</th>
           </tr>
         </thead>
         <tbody></tbody>
@@ -425,7 +502,6 @@ a:hover{text-decoration:underline}
   <div id="pageSettings" style="display:none">
     <div style="margin-bottom:16px">
       <h2 style="margin:0;font-size:16px;color:var(--fg)">Cài Đặt Cổng</h2>
-      <div style="font-size:12px;color:var(--dim);margin-top:4px">mật khẩu bảng điều khiểnvà API Key đều lưu trên máy <span class="mono" id="setSettingsFile">settings.json</span>，vẫn có hiệu lực sau khởi động lại</div>
     </div>
 
     <section>
@@ -447,17 +523,16 @@ a:hover{text-decoration:underline}
     </section>
 
     <section>
-      <h2>API Key & Gán Cổng Xuất <em id="setKeyState"></em></h2>
-      <div style="font-size:12px;color:var(--dim);margin-bottom:14px">
-        Có thể cấu hình nhiều Key，và chỉ định cho mỗi Key một cổng xuất。Sau khi gán，dùng Key khởi tạoYêu cầusẽ cố định đi qua cổng tương ứng，
-        hai cổng có thể phục vụ đồng thời，mà không cần chuyển đổi cổng toàn cục。
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+        <div>
+          <h2 style="margin:0">API Key & Gán Cổng Xuất <em id="setKeyState"></em></h2>
+          <div style="font-size:12px;color:var(--dim);margin-top:4px">
+            cho mỗitài khoản Key Gán cổng xuất riêng。Client khiếndùng Key Yêu cầusẽ cố định đi qua khu vực tương ứng，Thực hiện song song hai cổng xuất。
+          </div>
+        </div>
+        <button onclick="addApiKeyRow()">+ thêm API Key</button>
       </div>
       <div id="keyList"></div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
-        <button class="sec" onclick="addApiKeyRow()">+ Thêm Một Key</button>
-        <button onclick="saveApiKeys(this)">Lưu Tất Cả</button>
-      </div>
-      <div style="font-size:11px;color:var(--dim);margin-top:10px" id="setKeyHint"></div>
     </section>
 
     <section>
@@ -465,7 +540,7 @@ a:hover{text-decoration:underline}
       <table>
         <tbody>
           <tr><td>Phiên Bản Hiện Tại</td><td class="mono" id="setVersion">-</td></tr>
-          <tr><td>Tài KhoảnThư Mục Lưu</td><td class="mono" id="setAccountsDir">-</td></tr>
+          <tr><td>Tài Khoản · Thư Mục Lưu</td><td class="mono" id="setAccountsDir">-</td></tr>
           <tr><td>Thư Mục Nhật Ký Sử Dụng</td><td class="mono" id="setUsageDir">-</td></tr>
           <tr><td>Cài Đặttệp</td><td class="mono" id="setFile">-</td></tr>
         </tbody>
@@ -485,12 +560,12 @@ a:hover{text-decoration:underline}
       </div>
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
         <span id="logStatsBadge" style="font-size:12px;color:var(--dim);margin-right:6px">Đang tải...</span>
-        <button class="sec mini" onclick="fetchNewLogs(true)" title="Lấy nhật ký mới nhất ngay">🔄 Làm Mới</button>
-        <button class="sec mini" id="btnToggleLogAuto" onclick="toggleLogAuto()" style="color:var(--accent2);font-weight:600">● Giám sát thời gian thực</button>
-        <button class="sec mini" id="btnToggleLogScroll" onclick="toggleLogScroll()">↓ Tự động cuộn: Bật</button>
-        <button class="sec mini" onclick="copyFilteredLogs()" title="Sao ChépSao chép nhật ký hiển thị của giao diện hiện tại">📋 Sao Chép</button>
-        <button class="sec mini" onclick="exportLogsFile()" title="Tải xuống tệp .log">📥 Xuất</button>
-        <button class="danger mini" onclick="clearServerLogs()" title="Xóa sạch tất cả nhật ký">🗑️ Xóa sạch</button>
+        <button class="sec mini" onclick="fetchNewLogs(true)" title="Lấy nhật ký mới nhất ngay">Làm Mới</button>
+        <button class="sec mini" id="btnToggleLogAuto" onclick="toggleLogAuto()" style="color:var(--accent2);font-weight:600">Giám sát thời gian thực</button>
+        <button class="sec mini" id="btnToggleLogScroll" onclick="toggleLogScroll()">Tự động cuộn: Bật</button>
+        <button class="sec mini" onclick="copyFilteredLogs()" title="Sao Chép nhật ký hiển thị của giao diện hiện tại">Sao Chép</button>
+        <button class="sec mini" onclick="exportLogsFile()" title="Tải xuống tệp .log">Xuất</button>
+        <button class="danger mini" onclick="clearServerLogs()" title="Xóa sạch tất cả nhật ký">Xóa sạch</button>
       </div>
     </div>
 
@@ -505,11 +580,11 @@ a:hover{text-decoration:underline}
 
       <div style="display:inline-flex;gap:3px;background:var(--panel2);padding:3px;border-radius:8px;border:1px solid var(--line)">
         <button class="range-btn active" id="btnLogTagAll" onclick="setLogFilterTag('')">Tất Cả Module</button>
-        <button class="range-btn" id="btnLogTagChat" onclick="setLogFilterTag('chat')">💬 Hội Thoại</button>
-        <button class="range-btn" id="btnLogTagTasks" onclick="setLogFilterTag('tasks')">🐱 Nhiệm Vụ & Ưu Đãi</button>
-        <button class="range-btn" id="btnLogTagSched" onclick="setLogFilterTag('scheduler')">⏰ Bộ Lịch</button>
-        <button class="range-btn" id="btnLogTagAcct" onclick="setLogFilterTag('accounts')">👤 Tài Khoản</button>
-        <button class="range-btn" id="btnLogTagSys" onclick="setLogFilterTag('system')">⚙️ Hệ Thống</button>
+        <button class="range-btn" id="btnLogTagChat" onclick="setLogFilterTag('chat')">Hội Thoại</button>
+        <button class="range-btn" id="btnLogTagTasks" onclick="setLogFilterTag('tasks')">Nhiệm Vụ & Ưu Đãi</button>
+        <button class="range-btn" id="btnLogTagSched" onclick="setLogFilterTag('scheduler')">Bộ Lịch</button>
+        <button class="range-btn" id="btnLogTagAcct" onclick="setLogFilterTag('accounts')">Tài Khoản</button>
+        <button class="range-btn" id="btnLogTagSys" onclick="setLogFilterTag('system')">Hệ Thống</button>
       </div>
 
       <div style="flex:1;min-width:180px;position:relative">
@@ -600,7 +675,7 @@ a:hover{text-decoration:underline}
     </div>
     <div class="modal-bd">
       <p class="hint" style="margin-top:0">
-        Chọn mộtTài Khoản JSON tệp。Hỗ trợ tệp xuất từ cổng nàyXuất、Tài Khoảnmảng、đơnTài Khoảnđối tượng，
+        Chọn một Tài Khoản JSON tệp. Hỗ trợ tệp xuất từ cổng này, mảng Tài Khoản, đối tượng Tài Khoản đơn, 
         và định dạng của client máy tính <code>{"account":…,"auth":…}</code> 。
       </p>
       <div id="importBody"><p class="hint">Chưa chọn tệp.</p></div>
@@ -721,30 +796,83 @@ function updateUI(){
   const isIntlView = (window.VIEW_REALM === "intl");
   const tIntl = document.getElementById("tabIntl");
   const tCn = document.getElementById("tabCn");
-  if(tIntl) tIntl.className = "realm-tab" + (isIntlView ? " active" : "");
-  if(tCn) tCn.className = "realm-tab" + (!isIntlView ? " active" : "");
+  if(tIntl) tIntl.className = "realm-card" + (isIntlView ? " active" : "");
+  if(tCn) tCn.className = "realm-card" + (!isIntlView ? " active" : "");
+  const vbIntl = document.getElementById("tabIntlViewBadge");
+  if(vbIntl) vbIntl.style.display = isIntlView ? "inline-block" : "none";
+  const vbCn = document.getElementById("tabCnViewBadge");
+  if(vbCn) vbCn.style.display = !isIntlView ? "inline-block" : "none";
 
   const isIntlGw = (window.ACTIVE_GATEWAY_REALM === "intl");
+  const dbIntl = document.getElementById("tabIntlDefaultBadge");
+  if(dbIntl) dbIntl.style.display = isIntlGw ? "inline-block" : "none";
+  const dbCn = document.getElementById("tabCnDefaultBadge");
+  if(dbCn) dbCn.style.display = !isIntlGw ? "inline-block" : "none";
+
   const gwName = document.getElementById("activeGatewayName");
   if(gwName) {
-    gwName.textContent = isIntlGw ? "Quốc Tế" : "Trong Nước";
-    gwName.style.color = isIntlGw ? "var(--accent)" : "var(--warn)";
+    gwName.textContent = isIntlGw ? "Quốc Tế (Global)" : "Trong Nước (China)";
+    gwName.style.color = isIntlGw ? "var(--accent)" : "#dc2626";
   }
   const ep = document.getElementById("activeEndpoint");
   if(ep) ep.textContent = isIntlGw ? "https://www.workbuddy.ai/v2" : "https://copilot.tencent.com/v2";
 
   const btnToggle = document.getElementById("btnToggleRealm");
   if(btnToggle) {
-    btnToggle.textContent = isIntlGw ? "Chuyển upstream cổng sang 【Trong Nước】" : "Chuyển upstream cổng sang 【Quốc Tế】";
+    btnToggle.textContent = isIntlGw ? "Chuyển cổng xuất mặc định thành【Trong Nước】" : "Chuyển cổng xuất mặc định thành【Quốc Tế】";
+    btnToggle.style.borderColor = isIntlGw ? "#dc2626" : "var(--accent)";
+    btnToggle.style.color = isIntlGw ? "#dc2626" : "var(--accent)";
+  }
+  const cardGw = document.getElementById("cardGatewayCtrl");
+  if(cardGw){
+    cardGw.style.borderColor = isIntlGw ? "rgba(37,99,235,.28)" : "rgba(220,38,38,.28)";
+    cardGw.style.background = isIntlGw ? "rgba(37,99,235,.03)" : "rgba(220,38,38,.03)";
   }
 
   const btnCheckin = document.getElementById("btnCheckin");
   if(btnCheckin) btnCheckin.style.display = (window.VIEW_REALM === "cn" ? "inline-block" : "none");
+
+  // Tính số Key đang gán & có hiệu lực
+  const keys = (typeof API_KEY_ROWS !== 'undefined' && API_KEY_ROWS.length) ? API_KEY_ROWS : (window.API_KEY_ROWS || []);
+  const intlKeys = keys.filter(k => k.enabled !== false && k.realm === 'intl').length;
+  const cnKeys = keys.filter(k => k.enabled !== false && k.realm === 'cn').length;
+  const followKeys = keys.filter(k => k.enabled !== false && !k.realm).length;
+  const activeKeysTotal = isIntlGw ? (intlKeys + followKeys) : (cnKeys + followKeys);
+
+  const elGwKeyBadge = document.getElementById("activeGatewayKeyCount");
+  if(elGwKeyBadge) elGwKeyBadge.textContent = activeKeysTotal + ' tài khoản Key có hiệu lực';
+
+  const elIntlKey = document.getElementById("tabIntlKeyBadge");
+  if(elIntlKey) elIntlKey.textContent = intlKeys + ' tài khoản Key';
+
+  const elCnKey = document.getElementById("tabCnKeyBadge");
+  if(elCnKey) elCnKey.textContent = cnKeys + ' tài khoản Key';
+
+  // Thống kê số tài khoản & điểm ở thẻ bên trái
+  const allAccts = window.ACCOUNTS || [];
+  const intlAccts = allAccts.filter(a => a.realm === 'intl' || !a.realm);
+  const cnAccts = allAccts.filter(a => a.realm === 'cn');
+
+  let intlCred = 0, hasIntlCred = false;
+  intlAccts.forEach(a => { if(a.credits && a.credits.remain != null){ intlCred += a.credits.remain; hasIntlCred = true; } });
+  let cnCred = 0, hasCnCred = false;
+  cnAccts.forEach(a => { if(a.credits && a.credits.remain != null){ cnCred += a.credits.remain; hasCnCred = true; } });
+
+  const elIntlCred = document.getElementById("tabIntlCredits");
+  if(elIntlCred) elIntlCred.textContent = hasIntlCred ? fmt(intlCred) : "—";
+  const elIntlAcct = document.getElementById("tabIntlAccts");
+  if(elIntlAcct) elIntlAcct.textContent = intlAccts.length;
+
+  const elCnCred = document.getElementById("tabCnCredits");
+  if(elCnCred) elCnCred.textContent = hasCnCred ? fmt(cnCred) : "—";
+  const elCnAcct = document.getElementById("tabCnAccts");
+  if(elCnAcct) elCnAcct.textContent = cnAccts.length;
 };
 
 async function switchViewRealm(r){
   if(window.VIEW_REALM === r) return;
   window.VIEW_REALM = r;
+  RECENT_PAGE = 1;
   window.updateUI();
   await loadAccounts();
   await loadModels();
@@ -825,6 +953,10 @@ function renderAvailableModels(){
     if(hasTool){
       caps.push('<span class="badge ok" style="font-size:11px">Tools</span>');
     }
+    const hasReasoning = m.supports_reasoning || m.reasoning_fixed_effort || (m.reasoning_efforts && m.reasoning_efforts.length);
+    if(hasReasoning){
+      caps.push('<span class="badge" style="background:rgba(124,58,237,.12);color:var(--think);border-color:rgba(124,58,237,.3);font-size:11px;font-weight:600">suy luận</span>');
+    }
     const capHtml = caps.join(' ');
 
     const fmtK = v => {
@@ -844,27 +976,29 @@ function renderAvailableModels(){
     // 4. Đầu ra tối đa
     const maxOut = m.max_output_tokens ? ('<b>' + fmtK(m.max_output_tokens) + '</b>') : '-';
 
-    // 5. Khả năng suy nghĩ/suy luận
+    // 5. Cấp độ suy nghĩ
     let effort = '<span style="color:var(--dim)">—</span>';
+    const renderEffortBadge = e => {
+      const lvl = String(e || '').toLowerCase();
+      return '<span class="badge-effort">' + esc(lvl) + '</span>';
+    };
     if(m.reasoning_fixed_effort){
-      effort = '<span class="badge ok" style="font-size:11px">Suy luận cố định ' + esc(m.reasoning_fixed_effort) + '</span>';
+      effort = renderEffortBadge(m.reasoning_fixed_effort);
     } else if(m.reasoning_efforts && m.reasoning_efforts.length === 1){
-      effort = '<span class="badge ok" style="font-size:11px">Suy luận cố định ' + esc(m.reasoning_efforts[0]) + '</span>';
+      effort = renderEffortBadge(m.reasoning_efforts[0]);
     } else if(m.reasoning_efforts && m.reasoning_efforts.length){
-      const effBadges = m.reasoning_efforts.map(e => '<span class="badge" style="background:rgba(217,119,6,.15);color:var(--think);font-size:11px">' + e + '</span>').join(' ');
-      const canDis = m.reasoning_can_disable ? ' <span style="font-size:11px;color:var(--dim)">(có thể tắt)</span>' : ' <span style="font-size:11px;color:var(--think)">(bắt buộc suy nghĩ)</span>';
-      effort = effBadges + canDis;
+      effort = m.reasoning_efforts.map(renderEffortBadge).join(' ');
     } else if(m.supports_reasoning){
-      effort = '<span class="badge" style="background:rgba(217,119,6,.15);color:var(--think);font-size:11px">Hỗ trợ suy nghĩ</span>';
+      effort = '<span class="badge-effort">nguyên bản</span>';
     }
 
     return '<tr>'
-      + '<td class="mono"><b>' + esc(m.id) + '</b></td>'
-      + '<td>' + credBadge + '</td>'
-      + '<td>' + capHtml + '</td>'
-      + '<td>' + ctx + '</td>'
-      + '<td>' + maxOut + '</td>'
-      + '<td>' + effort + '</td>'
+      + '<td style="text-align:left" class="mono"><b>' + esc(m.id) + '</b></td>'
+      + '<td style="text-align:center">' + credBadge + '</td>'
+      + '<td style="text-align:center">' + capHtml + '</td>'
+      + '<td style="text-align:center">' + ctx + '</td>'
+      + '<td style="text-align:center">' + maxOut + '</td>'
+      + '<td style="text-align:left">' + effort + '</td>'
       + '</tr>';
   }).join('');
 }
@@ -992,20 +1126,20 @@ async function runGrowthTasks(btn){
 }
 
 async function triggerCatTravel(btn){
-  btn.disabled = true;
+  if(btn){ btn.disabled = true; btn.textContent = 'Đang du lịch...'; }
   try{
     const payload = {};
     if(CURRENT_GROWTH_UID && CURRENT_GROWTH_UID !== 'all'){
       payload.uid = CURRENT_GROWTH_UID;
     }
     const r = await postJSON("/tasks/travel", payload);
-    alert(r.msg || (r.ok ? "Thao tác thành công" : "Thao tác thất bại"));
+    toast(r.msg || (r.ok ? "Mèo Du Lịch thanh toán hoàn tất" : "Thao tác thất bại"), r.ok ? "ok" : "warn");
     await loadAccounts();
     await loadGrowthTasks();
   }catch(e){
-    alert("Mèo du lịch thất bại: " + e.message);
+    toast("Mèo du lịch thất bại: " + e.message, "bad");
   }finally{
-    btn.disabled = false;
+    if(btn){ btn.disabled = false; btn.textContent = 'Mèo Du Lịch'; }
   }
 }
 
@@ -1021,15 +1155,9 @@ async function loadSchedulerStatus(){
     const btnTrig = document.getElementById("btnTriggerSched");
 
     if(dot) dot.className = s.enabled ? 'dot' : 'dot off';
-    let modeText = (window.VIEW_REALM === 'intl')
+    const modeText = (window.VIEW_REALM === 'intl')
       ? (s.mode_intl || 'Tự động duy trì Token tài khoản & thông tin thường trú (kiểm tra tập trung 22:00 hàng ngày)')
       : (s.mode_cn || s.mode || 'Lịch theo giờ chẵn');
-    // normalize any Chinese scheduler description returned by the server into Vietnamese
-    const MODE_MAP = {
-      '账号 Token 自动保活与凭证常驻 (每日 22:00 集中巡检)': 'Tự động duy trì Token tài khoản & thông tin thường trú (kiểm tra tập trung 22:00 hàng ngày)',
-      '整点排程': 'Lịch theo giờ chẵn',
-    };
-    if (MODE_MAP[modeText]) modeText = MODE_MAP[modeText];
     if(txt) txt.textContent = s.enabled ? ('Đang chạy · ' + modeText) : 'Đã tạm dừng';
     if(times) times.textContent = 'Lần trước: ' + (s.last_run_time || '-') + ' · Lần sau: ' + (s.next_run_time || '-');
     if(btn) btn.textContent = s.enabled ? 'Tạm Dừng Lịch' : 'Bật Lịch';
@@ -1038,27 +1166,28 @@ async function loadSchedulerStatus(){
 }
 
 async function triggerSchedulerNow(btn){
-  btn.disabled = true;
+  if(btn){ btn.disabled = true; btn.textContent = 'đang kiểm tra...'; }
   try{
     const r = await postJSON("/scheduler/trigger", {});
-    toast(r.msg || "Đã kích hoạt kiểm tra");
+    toast(r.msg || "Đã kích hoạt kiểm traduy trì", "ok");
     setTimeout(loadSchedulerStatus, 2000);
   }catch(e){
-    alert("Kích hoạt thất bại: " + e.message);
+    toast("Kích hoạt thất bại: " + e.message, "bad");
   }finally{
-    btn.disabled = false;
+    if(btn){ btn.disabled = false; btn.textContent = (window.VIEW_REALM === 'intl') ? 'Làm Mới Duy Trì Ngay' : 'Kiểm Tra & Duy Trì Ngay'; }
   }
 }
 
 async function toggleScheduler(btn){
-  btn.disabled = true;
+  if(btn){ btn.disabled = true; }
   try{
-    await postJSON("/scheduler/toggle", {});
+    const r = await postJSON("/scheduler/toggle", {});
     await loadSchedulerStatus();
+    toast("nềnBộ Lịchđã" + (r.enabled ? "Bật" : "tạm dừng"), "ok");
   }catch(e){
-    alert("Chuyển đổi thất bại: " + e.message);
+    toast("Chuyển đổi thất bại: " + e.message, "bad");
   }finally{
-    btn.disabled = false;
+    if(btn){ btn.disabled = false; }
   }
 }
 function filterRealm(m){
@@ -1073,12 +1202,13 @@ async function doCheckin(btn){
   try {
     const r = await postJSON("/accounts/checkin", {});
     const res = r.results || [];
-    if(!res.length) toast("Không phát hiện tài khoản Trong Nước");
+    if(!res.length) toast("Không phát hiện tài khoản Trong Nước", "warn");
     else {
-      alert("Kết quả điểm danh hàng ngày:\n" + res.map(x => (x.nickname||x.uid.slice(0,6)) + ": " + (x.ok ? "Điểm danh thành công" : (x.error||x.msg))).join("\n"));
+      const summary = res.map(x => (x.nickname||x.uid.slice(0,6)) + ": " + (x.ok ? "Điểm danh thành công" : (x.error||x.msg))).join("；");
+      toast("điểm danh hàng ngàyđến: " + summary, res.some(x => x.ok) ? "ok" : "warn");
     }
     await initRealm(); loadAccounts(); loadModels();
-  }catch(e){ toast("Điểm danh thất bại: " + e.message); }
+  }catch(e){ toast("Điểm danh thất bại: " + e.message, "bad"); }
   finally { btn.disabled = false; btn.textContent = ot; }
 }
 
@@ -1157,25 +1287,36 @@ async function postJSON(url, body){
   return parsed;
 }
 function toast(msg, kind){
-  // Visible, self-dismissing notification (the old version only wrote to the
-  // console, so actions like "Đã nhập" looked like they did nothing).
   console.log('[wb]', msg);
   let box = document.getElementById('toastBox');
   if(!box){
     box = document.createElement('div');
     box.id = 'toastBox';
-    box.style.cssText = 'position:fixed;right:18px;bottom:18px;z-index:200;'
-      + 'display:flex;flex-direction:column;gap:8px;align-items:flex-end';
+    box.style.cssText = 'position:fixed;right:20px;bottom:20px;z-index:9999;'
+      + 'display:flex;flex-direction:column;gap:10px;align-items:flex-end;pointer-events:none';
     document.body.appendChild(box);
   }
   const item = document.createElement('div');
-  item.textContent = msg;
-  item.style.cssText = 'background:var(--panel);border:1px solid var(--line);'
-    + 'border-left:3px solid ' + (kind === 'err' ? 'var(--bad)' : 'var(--accent2)') + ';'
-    + 'border-radius:8px;padding:9px 14px;font-size:13px;color:var(--fg);'
-    + 'box-shadow:0 6px 20px rgba(0,0,0,.35);max-width:360px';
+  const isBad = (kind === 'bad' || kind === 'err' || kind === 'error');
+  const isWarn = (kind === 'warn' || kind === 'warning');
+  const isOk = (kind === 'ok' || kind === 'success');
+  const borderColor = isBad ? 'var(--bad)' : (isWarn ? 'var(--warn)' : (isOk ? 'var(--accent2)' : 'var(--accent)'));
+  const textColor = isBad ? '#b91c1c' : (isWarn ? '#b45309' : (isOk ? '#15803d' : 'var(--fg)'));
+  const icon = '';
+  const bg = isBad ? 'rgba(254,242,242,.98)' : (isWarn ? 'rgba(255,251,235,.98)' : 'var(--panel)');
+
+  item.textContent = icon + msg;
+  item.style.cssText = 'background:' + bg + ';border:1px solid var(--line);'
+    + 'border-left:4px solid ' + borderColor + ';'
+    + 'border-radius:8px;padding:10px 16px;font-size:13px;font-weight:500;color:' + textColor + ';'
+    + 'box-shadow:0 10px 25px -5px rgba(0,0,0,.15),0 8px 10px -6px rgba(0,0,0,.1);'
+    + 'max-width:380px;word-break:break-all;pointer-events:auto;transition:all .2s ease;';
   box.appendChild(item);
-  setTimeout(() => item.remove(), 4200);
+  setTimeout(() => {
+    item.style.opacity = '0';
+    item.style.transform = 'translateY(6px)';
+    setTimeout(() => item.remove(), 250);
+  }, 4200);
 }
 
 /* ------------------------------- accounts ------------------------------- */
@@ -1199,20 +1340,29 @@ function accountRow(a){
   const cred = a.credits;
   const credText = cred ? ('<b style="color:var(--accent2)">' + fmt(cred.remain) + '</b> / ' + fmt(cred.size)) : '<span style="color:var(--dim)">Chưa truy vấn</span>';
   return '<tr>'
-    + '<td><div>' + esc(a.nickname) + ' ' + state + ' ' + realmBadge + '</div>'
+    + '<td style="text-align:center;white-space:nowrap">' + realmBadge + '</td>'
+    + '<td style="text-align:left">'
+    +   '<div style="font-weight:600;font-size:13px;color:var(--fg)">' + esc(a.nickname) + '</div>'
     + '<div class="mono" style="color:var(--dim);font-size:11px">' + esc(a.uid.slice(0,8)) + ' · ' + esc(a.source) + ' · hết hạn ' + esc(a.expiresIn || '?') + '</div>'
     + (a.machineId ? ('<div class="mono" style="color:var(--dim);font-size:10px;margin-top:2px" title="bởiTài KhoảnUIDmã thiết bị riêng biệt được dẫn xuất ổn định，chống rủi ro liên kết nhiều tài khoản">Mã thiết bị: ' + esc(a.machineId.slice(0,14)) + '...</div>') : '')
     + err + '</td>'
-    + '<td class="mono" style="font-size:11px">' + esc(a.domain) + '</td>'
-    + '<td style="white-space:nowrap">' + credText + '</td>'
-    + '<td>' + fmt(usage.requests) + '</td>'
-    + '<td>' + fmt(usage.total_tokens) + '</td>'
-    + '<td>' + fmt(usage.cached_tokens) + '</td>'
-    + '<td style="white-space:nowrap">'
-    + '<button class="sec mini" onclick="toggleAccount(&quot;' + uidAttr + '&quot;,' + (!a.enabled) + ')">' + (a.enabled ? 'Tắt' : 'Bật') + '</button> '
-    + '<button class="sec mini" onclick="refreshOne(&quot;' + uidAttr + '&quot;)">Làm Mới</button> '
-    + '<button class="sec mini" onclick="exportOne(&quot;' + uidAttr + '&quot;)">Xuất</button> '
-    + '<button class="danger mini" onclick="deleteAccount(&quot;' + uidAttr + '&quot;,&quot;' + nameAttr + '&quot;)">Xóa</button>'
+    + '<td style="text-align:center">' + state + '</td>'
+    + '<td style="text-align:left;white-space:nowrap">' + credText + '</td>'
+    + '<td style="text-align:right">' + fmt(usage.requests) + '</td>'
+    + '<td style="text-align:right">' + fmt(usage.total_tokens) + '</td>'
+    + '<td style="text-align:right">' + fmt(usage.cached_tokens) + '</td>'
+    + '<td style="text-align:center;white-space:nowrap;vertical-align:middle">'
+    + '<div style="display:flex;flex-direction:column;gap:5px;align-items:center;justify-content:center">'
+    +   '<div style="display:flex;gap:4px;justify-content:center">'
+    +     '<button class="sec mini" onclick="toggleAccount(&quot;' + uidAttr + '&quot;,' + (!a.enabled) + ', this)">' + (a.enabled ? 'Tắt' : 'Bật') + '</button>'
+    +     '<button class="sec mini" onclick="testAccount(&quot;' + uidAttr + '&quot;, this)">kiểm tra</button>'
+    +     '<button class="sec mini" onclick="refreshOne(&quot;' + uidAttr + '&quot;, this)">Làm Mới</button>'
+    +   '</div>'
+    +   '<div style="display:flex;gap:4px;justify-content:center">'
+    +     '<button class="sec mini" onclick="exportOne(&quot;' + uidAttr + '&quot;)">Xuất</button>'
+    +     '<button class="danger mini" onclick="deleteAccount(&quot;' + uidAttr + '&quot;,&quot;' + nameAttr + '&quot;, this)">Xóa</button>'
+    +   '</div>'
+    + '</div>'
     + '</td></tr>';
 }
 
@@ -1221,38 +1371,44 @@ function renderAccounts(){
   const currentView = (window.VIEW_REALM || "intl");
   let list = (window.ACCOUNTS || []).filter(a => !a.realm || a.realm === currentView);
   const usable = list.filter(a => a.enabled).length;
+  const viewName = currentView === 'cn' ? 'Trong Nước' : 'Quốc Tế';
   document.getElementById('acctCount').textContent =
-    window.ACCOUNTS.length ? ('Tổng ' + window.ACCOUNTS.length + '  tài khoản, bật ' + usable + ' tài khoản') : '';
-  if(!window.ACCOUNTS.length){
+    list.length ? ('（' + viewName + 'Tổng ' + list.length + '  tài khoản, bật ' + usable + ' tài khoản）') : '';
+  if(!list.length){
     box.innerHTML =
       '<div style="text-align:center;padding:30px 16px">'
-      + '<div style="font-size:15px;margin-bottom:8px">Chưa có tài khoản</div>'
+      + '<div style="font-size:15px;margin-bottom:8px">hiện tại' + viewName + 'Chưa có tài khoản</div>'
       + '<div style="color:var(--dim);font-size:13px;margin-bottom:18px">'
-      +   'Hãy đăng nhập một tài khoản WorkBuddy trước, sau đó mọi yêu cầu sẽ đi qua tài khoản này'
+      +   'Vui lòng đăng nhập hoặc nhập một tài khoản ' + viewName + ' Tài Khoản，sau đó cácYêu cầuđều đi quaTài Khoản'
       + '</div>'
       + '<button onclick="startLogin()" style="font-size:14px;padding:10px 22px">'
-      +   'Đăng nhập tài khoản mới'
+      +   'Đăng nhập tài khoản mới (OAuth)'
       + '</button>'
-      + '<div style="color:var(--dim);font-size:12px;margin-top:16px;line-height:1.9">'
-      +   'Nhấn nút bên trên sẽ bật liên kết đăng nhập，<br>'
-      +   'sau khi đăng nhập xong trong trình duyệt, tài khoản sẽ tự động được thêm vào.'
-      + '</div>'
       + '</div>';
     return;
   }
   box.innerHTML = '<table><thead><tr>'
-    + '<th>Tài Khoản</th><th>Tên miền</th><th>Hạn mức điểm</th><th>Yêu cầu</th><th>Tổng token</th><th>Cache</th><th></th>'
-    + '</tr></thead><tbody>' + list.map(accountRow).join('') + '</tbody></table>'
+  box.innerHTML = '<div class="table-wrap"><table><thead><tr>'
+    + '<th style="text-align:center;width:76px">phiên bản</th>'
+    + '<th style="text-align:left">Tài Khoản</th>'
+    + '<th style="text-align:center;width:84px">Trạng Thái</th>'
+    + '<th style="text-align:left;width:120px">điểm</th>'
+    + '<th style="text-align:right;width:70px">Yêu cầu</th>'
+    + '<th style="text-align:right;width:88px">Tổng token</th>'
+    + '<th style="text-align:right;width:80px">Cache</th>'
+    + '<th style="text-align:center;width:150px">thao tác</th>'
+    + '</tr></thead><tbody>' + list.map(accountRow).join('') + '</tbody></table></div>'
     + '<div class="legend"><span>Nhiều tài khoản dùng theo độ dính phiên + luân phiên; khi một tài khoản bị upstream từ chối sẽ tự chuyển sang kế tiếp</span></div>';
 }
 
 async function loadAccounts(){
   try{
-    const [acct, byAcct] = await Promise.all([getJSON('/accounts?realm=' + encodeURIComponent(window.VIEW_REALM)), getJSON('/usage/by-account')]);
+    const [acct, byAcct] = await Promise.all([getJSON('/accounts?realm=all'), getJSON('/usage/by-account')]);
     window.ACCOUNTS = acct.accounts || [];
     USAGE_BY_ACCOUNT = {};
     (byAcct.accounts || []).forEach(a => { USAGE_BY_ACCOUNT[a.account] = a; });
     renderAccounts();
+    updateUI();
     // Auto-fetch credits once if not present
     if(window.ACCOUNTS.length && window.ACCOUNTS.some(a => !a.credits)){
       postJSON('/accounts/credits', {}).then(r => {
@@ -1260,30 +1416,67 @@ async function loadAccounts(){
         renderAccounts();
       }).catch(()=>{});
     }
-  }catch(e){ toast('Tài Khoảntảithất bại: ' + e.message); }
+  }catch(e){ toast('Tài Khoản tạo thất bại: ' + e.message); }
 }
 
-async function queryCredits(btn){
-  btn.disabled = true;
+async function fetchCredits(btn){
+  if(btn){ btn.disabled = true; btn.textContent = 'Làm Mới đang...'; }
+  const currentView = (window.VIEW_REALM || "intl");
+  const viewName = currentView === 'cn' ? 'Trong Nước' : 'Quốc Tế';
   try{
-    const r = await postJSON('/accounts/credits', {});
-    window.ACCOUNTS = r.accounts || ACCOUNTS;
-    renderAccounts();
+    const r = await postJSON('/accounts/credits', {realm: currentView});
+    await loadAccounts();
     refresh();
-  }catch(e){ toast('điểmtruy vấnthất bại: ' + e.message); }
-  finally{ btn.disabled = false; }
+    const count = (r.results || []).length;
+    toast('đã làm mới thành công' + viewName + ' ' + count + ' tài khoản (điểm)', 'ok');
+  }catch(e){
+    toast('Làm Mới điểm thất bại: ' + e.message, 'bad');
+  }finally{
+    if(btn){ btn.disabled = false; btn.textContent = 'Làm Mới điểm'; }
+  }
 }
+const queryCredits = fetchCredits;
 
-async function toggleAccount(uid, enable){
-  try{ await postJSON('/accounts/set', {uid: uid, enabled: enable}); await loadAccounts(); }
-  catch(e){ toast(e.message); }
+async function toggleAccount(uid, enable, btn){
+  if(btn) btn.disabled = true;
+  try{
+    await postJSON('/accounts/set', {uid: uid, enabled: enable});
+    await loadAccounts();
+    toast(enable ? 'Tài Khoản đã bật thành công' : 'Tài Khoản đã tắt', 'ok');
+  }catch(e){
+    toast('Thao tác thất bại: ' + e.message, 'bad');
+  }finally{
+    if(btn) btn.disabled = false;
+  }
 }
-async function refreshOne(uid){
-  try{ const r = await postJSON('/accounts/refresh', {uid: uid});
-       const ok = (r.results||[])[0];
-       toast(ok && ok.ok ? 'Làm Mớithành công' : ('Làm Mớithất bại: ' + (ok && ok.error)));
-       await loadAccounts(); }
-  catch(e){ toast(e.message); }
+async function refreshOne(uid, btn){
+  if(btn){ btn.disabled = true; btn.textContent = 'Làm Mới đang...'; }
+  try{
+    const r = await postJSON('/accounts/refresh', {uid: uid});
+    const ok = (r.results||[])[0];
+    toast(ok && ok.ok ? 'Tài Khoản thông tin làm mới thành công' : ('Làm Mớithất bại: ' + (ok && ok.error || 'không rõlỗi')), ok && ok.ok ? 'ok' : 'bad');
+    await loadAccounts();
+  }catch(e){
+    toast('Làm Mớithất bại: ' + e.message, 'bad');
+  }finally{
+    if(btn){ btn.disabled = false; btn.textContent = 'Làm Mới'; }
+  }
+}
+async function testAccount(uid, btn){
+  if(btn){ btn.disabled = true; btn.textContent = 'kiểm tra đang...'; }
+  try{
+    const r = await postJSON('/accounts/test', {uid: uid});
+    if(r.ok){
+      toast('kiểm traqua (' + r.elapsed_ms + 'ms) [' + r.model + ']: ' + (r.reply || 'bình thường'), 'ok');
+    } else {
+      toast('kiểm trathất bại: ' + (r.error || r.status || 'ngoại lệ'), 'bad');
+    }
+    await loadAccounts();
+  }catch(e){
+    toast('kiểm traYêu cầuthất bại: ' + e.message, 'bad');
+  }finally{
+    if(btn){ btn.disabled = false; btn.textContent = 'kiểm tra'; }
+  }
 }
 async function refreshAccounts(){
   try{ const r = await postJSON('/accounts/refresh', {});
@@ -1292,14 +1485,30 @@ async function refreshAccounts(){
        await loadAccounts(); }
   catch(e){ toast(e.message); }
 }
-async function setAll(enable){
-  try{ await postJSON('/accounts/set-all', {enabled: enable}); await loadAccounts(); }
-  catch(e){ toast(e.message); }
+async function setAll(enable, btn){
+  if(btn) btn.disabled = true;
+  try{
+    await postJSON('/accounts/set-all', {enabled: enable});
+    await loadAccounts();
+    toast(enable ? 'đãBật Tất Cảtất cảTài Khoản' : 'đãTắt Tất Cảtất cảTài Khoản', 'ok');
+  }catch(e){
+    toast('hàng loạt thao tác thất bại: ' + e.message, 'bad');
+  }finally{
+    if(btn) btn.disabled = false;
+  }
 }
-async function deleteAccount(uid, name){
+async function deleteAccount(uid, name, btn){
   if(!confirm("xác địnhXóaTài Khoản " + name + "？")) return;
-  try{ await postJSON('/accounts/delete', {uid: uid}); await loadAccounts(); }
-  catch(e){ toast(e.message); }
+  if(btn) btn.disabled = true;
+  try{
+    await postJSON('/accounts/delete', {uid: uid});
+    await loadAccounts();
+    toast('đã xóa tài khoản thành công ' + name, 'ok');
+  }catch(e){
+    toast('Xóathất bại: ' + e.message, 'bad');
+  }finally{
+    if(btn) btn.disabled = false;
+  }
 }
 
 /* ---- Xuất / Nhập tài khoản ---- */
@@ -1333,7 +1542,7 @@ async function exportAccounts(btn){
   if(btn){ btn.disabled = true; btn.textContent = 'Đang xuất...'; }
   try{
     const r = await downloadExport('', '');
-    toast('Đã xuất ' + r.count + ' tài khoảnTài Khoản → ' + r.name);
+    toast('Đã xuất ' + r.count + ' tài khoản → ' + r.name);
   }catch(e){
     toast('Xuất thất bại: ' + e.message, 'err');
   }finally{
@@ -1346,7 +1555,7 @@ async function exportOne(uid){
   // the file can be re-imported on another instance without editing.
   try{
     const r = await downloadExport('?uid=' + encodeURIComponent(uid), uid.slice(0,8) + '-');
-    toast('Đã xuất 1 tài khoảnTài Khoản → ' + r.name);
+    toast('Đã xuất 1 tài khoản → ' + r.name);
   }catch(e){
     toast('Xuất thất bại: ' + e.message, 'err');
   }
@@ -1628,7 +1837,7 @@ async function refreshInner(){
   try{
     [usage, recent, perf] = await Promise.all([
       getJSON('/usage?realm=' + encodeURIComponent(window.VIEW_REALM)),
-      getJSON('/usage/recent?limit=60&realm=' + encodeURIComponent(window.VIEW_REALM)),
+      getJSON('/usage/recent?limit=' + RECENT_LIMIT + '&page=' + RECENT_PAGE + '&realm=' + encodeURIComponent(window.VIEW_REALM)),
       getJSON('/usage/perf?realm=' + encodeURIComponent(window.VIEW_REALM)),
     ]);
     document.getElementById('statusDot').className = 'dot';
@@ -1641,10 +1850,8 @@ async function refreshInner(){
   }
 
   const t = usage;
-  document.getElementById('meta').innerHTML =
-    'Tài Khoản <b>' + esc((t.account && t.account.uid || '—').slice(0,8)) + '</b>'
-    + (t.accounts ? ' · nhóm <b>' + t.accounts_ready + '/' + t.accounts + '</b>' : '')
-    + '<br>Thống kê bắt đầu từ <b>' + esc(t.since || '—') + '</b> · chi tiết <b>' + fmt(recent.total) + '</b> dòng';
+  const metaEl = document.getElementById('meta');
+  if(metaEl) metaEl.innerHTML = '';
   document.getElementById('logfile').textContent = t.log_file || '';
   const rEl = document.getElementById('realm'); if(rEl) rEl.textContent = t.realm ? ' · ' + t.realm : '';
 
@@ -1661,13 +1868,13 @@ async function refreshInner(){
   const activeAccts = (window.ACCOUNTS || []).filter(a => a.enabled).length;
   const totalAccts = (window.ACCOUNTS || []).length;
   const pctRemain = totSize > 0 ? ((totRemain / totSize) * 100).toFixed(1) + '%' : '';
-  const subCredit = totSize > 0 ? ('Tổng hạn mức ' + fmt(totSize) + ' · còn lại ' + pctRemain) : 'Tài khoản hiện tại bình thường';
+  const subCredit = totSize > 0 ? ('tổng điểm ' + fmt(totSize) + ' · còn lại ' + pctRemain) : 'Tài khoản hiện tại bình thường';
   const succStr = perf.success_rate_pct != null ? pct(perf.success_rate_pct) : '100.0%';
   const errSub = perf.errors ? (perf.errors + ' lượt chặn ngoại lệ') : 'Dịch vụ vận hành ổn định';
 
   document.getElementById('cards').innerHTML =
     card('Nhóm tài khoản khả dụng', activeAccts + ' <span style="font-size:13px;font-weight:400;color:var(--dim)">/ ' + totalAccts + ' bình thường</span>', (totalAccts - activeAccts > 0 ? (totalAccts - activeAccts) + ' tài khoảnTắt' : 'Tất cả bật · trạng thái khỏe mạnh'), 'accent') +
-    card('Số Dư Hạn Mức Điểm', hasCreds ? (fmt(totRemain) + ' <span style="font-size:13px;font-weight:400;color:var(--dim)">điểm</span>') : 'bình thường · Khả dụng', subCredit, 'accent2') +
+    card('điểm số dư', hasCreds ? (fmt(totRemain) + ' <span style="font-size:13px;font-weight:400;color:var(--dim)">điểm</span>') : 'bình thườngKhả dụng', subCredit, 'accent2') +
     card('Lượng Gọi Cổng', fmt(t.requests) + ' <span style="font-size:13px;font-weight:400;color:var(--dim)"> lượt</span>', 'Tích lũy tiêu thụ ' + fmt(t.total_tokens) + ' Token', '') +
     card('Tỷ Lệ Thành Công Yêu Cầu', succStr, errSub, perf.errors ? 'warn' : 'accent2');
 
@@ -1709,8 +1916,9 @@ async function refreshInner(){
     const totWall = perf.wall_ms ? ms(perf.wall_ms.avg) : "-";
     const totCache = perf.cache_hit_pct ? (perf.cache_hit_pct.avg.toFixed(1) + "%") : "-";
     const summaryRow = '<tr style="background:rgba(37,99,235,.06);font-weight:600">'
-      + '<td><b>Tổng hợp tất cả mô hình (Total)</b></td>'
-      + '<td><span style="color:var(--dim)">Tất cả tài khoản</span></td>'
+      + '<td style="text-align:left"><b>Tổng hợp tất cả mô hình (Total)</b></td>'
+      + '<td style="text-align:center"><span style="color:var(--dim)">—</span></td>'
+      + '<td style="text-align:left"><span style="color:var(--dim)">Tất cả tài khoản</span></td>'
       + '<td>' + fmt(t.requests) + '</td>'
       + '<td><b style="color:var(--accent)">' + fmt(t.total_tokens) + '</b></td>'
       + '<td>' + fmt(t.prompt_tokens) + ' / ' + fmt(t.completion_tokens) + (t.reasoning_tokens ? (' (<span style="color:var(--think)">' + fmt(t.reasoning_tokens) + '</span>)') : '') + '</td>'
@@ -1732,24 +1940,38 @@ async function refreshInner(){
       const acctsMap = t.accounts_map || {};
       const mAccts = m.accounts || {};
       const acctEntries = Object.entries(mAccts);
+      let realmCell = '<span style="color:var(--dim)">—</span>';
       let acctCell = '<span style="color:var(--dim)">—</span>';
+      const realms = new Set();
+      acctEntries.forEach(([uid]) => {
+        const info = acctsMap[uid] || {};
+        if(info.realm) realms.add(info.realm);
+      });
+      if(realms.size === 1){
+        const r = Array.from(realms)[0];
+        realmCell = r === 'cn' ? '<span class="realm-badge-cn">Trong Nước</span>' : '<span class="realm-badge-intl">Quốc Tế</span>';
+      } else if(realms.size > 1){
+        realmCell = '<span class="realm-badge-intl">Quốc Tế</span> <span class="realm-badge-cn">Trong Nước</span>';
+      } else {
+        const isIntlOnly = ['gpt-6-astra', 'gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.6-luna', 'gpt-5.5', 'gpt-5.4', 'gpt-5.3-codex', 'gemini-3.5-flash'].includes(m.id);
+        realmCell = isIntlOnly ? '<span class="realm-badge-intl">Quốc Tế</span>' : (window.VIEW_REALM === 'cn' ? '<span class="realm-badge-cn">Trong Nước</span>' : '<span class="realm-badge-intl">Quốc Tế</span>');
+      }
       if(acctEntries.length === 1){
         const [uid, count] = acctEntries[0];
         const info = acctsMap[uid] || {};
         const name = esc(info.nickname || uid.slice(0, 8));
-        const flag = info.realm === 'cn' ? '<span class="badge warn mini">🇨🇳</span>' : '<span class="badge s mini">🌐</span>';
-        acctCell = '<b>' + name + '</b> ' + flag;
+        acctCell = '<b>' + name + '</b>';
       } else if(acctEntries.length > 1){
         acctCell = acctEntries.map(([uid, count]) => {
           const info = acctsMap[uid] || {};
           const name = esc(info.nickname || uid.slice(0, 6));
-          const flag = info.realm === 'cn' ? '' : '';
-          return '<span class="badge mini" style="margin:1px 2px">' + flag + ' ' + name + ' <span style="color:var(--dim)">(' + count + ')</span></span>';
+          return '<span class="badge mini" style="margin:1px 2px">' + name + ' <span style="color:var(--dim)">(' + count + ')</span></span>';
         }).join('');
       }
       return '<tr>'
-        + '<td class="mono"><b>' + esc(m.id) + '</b>' + errText + '</td>'
-        + '<td>' + acctCell + '</td>'
+        + '<td style="text-align:left" class="mono"><b>' + esc(m.id) + '</b>' + errText + '</td>'
+        + '<td style="text-align:center;white-space:nowrap">' + realmCell + '</td>'
+        + '<td style="text-align:left">' + acctCell + '</td>'
         + '<td>' + fmt(m.requests) + '</td>'
         + '<td><b>' + fmt(m.total_tokens) + '</b></td>'
         + '<td>' + fmt(m.prompt_tokens) + ' / ' + fmt(m.completion_tokens) + (m.reasoning_tokens ? (' (<span style="color:var(--think)">' + fmt(m.reasoning_tokens) + '</span>)') : '') + '</td>'
@@ -1762,15 +1984,37 @@ async function refreshInner(){
     }).join('');
 
     matrixEl.innerHTML = '<table><thead><tr>'
-      + '<th>Tên Mô Hình</th><th>Tài Khoản</th><th>Số yêu cầu</th><th>tổng Token</th><th>Vào / Ra (suy nghĩ)</th>'
+      + '<th style="text-align:left">Tên Mô Hình</th>'
+      + '<th style="text-align:center;width:76px">khu vực</th>'
+      + '<th style="text-align:left">Tài Khoản</th>'
+      + '<th>Số yêu cầu</th><th>tổng Token</th><th>Vào / Ra (suy nghĩ)</th>'
       + '<th>Độ trễ ký tự đầu (TTFT)</th><th>tốc độ sinh</th><th>Thời gian đầu cuối</th><th>Tỷ lệ truy cập cache</th><th>Tỷ lệ lượng dùng</th>'
       + '</tr></thead><tbody>' + summaryRow + rows + '</tbody></table>';
   }
 
-  const last = (recent.rows || []).slice(-60).reverse();
-  document.getElementById('recent').innerHTML = last.length ?
+  const total = recent.total || 0;
+  RECENT_PAGE = recent.page || 1;
+  RECENT_TOTAL_PAGES = recent.total_pages || Math.max(1, Math.ceil(total / RECENT_LIMIT));
+
+  const pageInfo = document.getElementById('recentPageInfo');
+  if(pageInfo){
+    pageInfo.textContent = 'thứ ' + RECENT_PAGE + ' / ' + RECENT_TOTAL_PAGES + ' trang · Tổng ' + fmt(total) + ' dòngbản ghi';
+  }
+  const pageIndicator = document.getElementById('recentPageIndicator');
+  if(pageIndicator){
+    pageIndicator.textContent = RECENT_PAGE;
+  }
+  const btnPrev = document.getElementById('btnRecentPrev');
+  if(btnPrev) btnPrev.disabled = (RECENT_PAGE <= 1);
+  const btnNext = document.getElementById('btnRecentNext');
+  if(btnNext) btnNext.disabled = (RECENT_PAGE >= RECENT_TOTAL_PAGES);
+
+  const rows = recent.rows || [];
+  const countEl = document.getElementById('recentCount');
+  if(countEl) countEl.textContent = '(thứ ' + RECENT_PAGE + ' trang / Tổng ' + fmt(total) + ' dòng)';
+  document.getElementById('recent').innerHTML = rows.length ?
     '<table><thead><tr><th>thời gian</th><th>mô hình</th><th>Tài Khoản</th><th>chế độ</th><th>thời gian</th><th>ký tự đầu</th><th>tốc độ</th><th>vào</th><th>ra</th><th>suy nghĩ</th><th>Cache</th><th>Tổng token</th></tr></thead><tbody>'
-    + last.map(r => '<tr>'
+    + rows.map(r => '<tr>'
         + '<td class="mono">' + esc((r.iso||'').replace('T',' ').slice(5)) + '</td>'
         + '<td class="mono">' + esc(r.model) + '</td>'
         + '<td class="mono" style="font-size:11px;color:var(--dim)">' + esc((r.account||'—').slice(0,8)) + '</td>'
@@ -1790,6 +2034,33 @@ async function refreshInner(){
 (async function initDashboard(){
   await bootPanel();
 })();
+
+let RECENT_LIMIT = parseInt(localStorage.getItem('WB_RECENT_LIMIT') || '20', 10);
+if(![10, 20, 50, 100].includes(RECENT_LIMIT)) RECENT_LIMIT = 20;
+let RECENT_PAGE = 1;
+let RECENT_TOTAL_PAGES = 1;
+
+function updateRecentLimitButtons(){
+  [10, 20, 50, 100].forEach(n => {
+    const btn = document.getElementById('btnRecentLimit' + n);
+    if(btn) btn.classList.toggle('active', RECENT_LIMIT === n);
+  });
+}
+
+function setRecentLimit(n){
+  RECENT_LIMIT = n;
+  RECENT_PAGE = 1;
+  try { localStorage.setItem('WB_RECENT_LIMIT', String(n)); } catch(e){}
+  updateRecentLimitButtons();
+  refresh();
+}
+
+async function changeRecentPage(delta){
+  const next = RECENT_PAGE + delta;
+  if(next < 1 || next > RECENT_TOTAL_PAGES) return;
+  RECENT_PAGE = next;
+  await refresh();
+}
 
 let currentMainTab = 'gateway';
 let analyticsRange = 'today';
@@ -1878,13 +2149,14 @@ let PANEL_TIMERS = [];
 async function startDashboard(){
   if(PANEL_READY) return;
   PANEL_READY = true;
+  await loadSettings();
   await initRealm();
   await loadAccounts();
   await loadModels();
   await loadGrowthTasks();
   await loadSchedulerStatus();
   await refresh();
-  await loadSettings();
+  updateRecentLimitButtons();
   const tabFromUrl = new URLSearchParams(window.location.search).get('tab');
   if(tabFromUrl && ['gateway', 'analytics', 'logs', 'settings'].includes(tabFromUrl)){
     switchMainTab(tabFromUrl);
@@ -1917,21 +2189,6 @@ async function loadSettings(showToast){
       keyState.textContent = count ? ('(' + count + ' có hiệu lực)') : '(hiện không xác thực)';
       keyState.style.color = count ? 'var(--accent2)' : 'var(--dim)';
     }
-    const keyHint = document.getElementById('setKeyHint');
-    if(keyHint){
-      const bound = (data.api_keys || []).filter(k => k.enabled && k.realm);
-      if(!(data.api_keys || []).length){
-        keyHint.textContent = data.api_key_set
-          ? ('Hiện chỉ dùng Key từ tham số khởi động: ' + (data.api_key_masked || '') + '(sau khi lưu sẽ do bảng điều khiển quản lý)')
-          : 'Hiện chưa cài API Key, giao diện /v1 không xác thực khóa.';
-      } else if(!bound.length){
-        keyHint.textContent = 'Hiện chưa có Key gán cổng xuất, mọi yêu cầu theo chuyển đổi toàn cục ở trang 「Cổng & Vận Hành」.';
-      } else {
-        keyHint.textContent = bound.map(k =>
-          (k.name || 'chưa đặt tên') + ' → ' + (k.realm === 'cn' ? 'Trong Nước' : 'Quốc Tế')
-        ).join(' · ');
-      }
-    }
     // Rebuild the editable rows, keeping stored values so an untouched field
     // is not accidentally blanked.
     API_KEY_ROWS = (data.api_keys || []).map(k => ({
@@ -1944,8 +2201,12 @@ async function loadSettings(showToast){
       masked: k.masked || '',
       realm: k.realm || '',
       enabled: k.enabled !== false,
+      created_at: k.created_at || '',
+      _editing: false,
     }));
+    window.API_KEY_ROWS = API_KEY_ROWS;
     renderKeyRows();
+    updateUI();
     const set = (id, value) => { const el = document.getElementById(id); if(el) el.textContent = value || '-'; };
     set('setVersion', data.version);
     set('setAccountsDir', data.accounts_dir);
@@ -2002,49 +2263,178 @@ function renderKeyRows(){
   const box = document.getElementById('keyList');
   if(!box) return;
   if(!API_KEY_ROWS.length){
-    box.innerHTML = '<div class="empty" style="padding:14px 0">Chưa cấu hình Key, nhấn nút bên dưới để thêm.</div>';
+    box.innerHTML = '<div class="empty" style="padding:24px 0">chưa cấu hình API Key，nhấn góc trên bên phải「+ thêm API Key」tạo。</div>';
     return;
   }
   box.innerHTML = API_KEY_ROWS.map((row, i) => {
-    const options = REALM_CHOICES.map(([value, label]) =>
-      '<option value="' + value + '"' + (row.realm === value ? ' selected' : '') + '>' + label + '</option>'
-    ).join('');
-    const maskedHint = row.masked
-      ? '<span style="color:var(--dim);font-size:11px">Đã lưu: ' + esc(row.masked) + '</span>'
-      : '';
-    return '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;'
-      + 'background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:8px">'
-      + '<input type="text" value="' + esc(row.name || '') + '" placeholder="Tên ghi chú" '
-      +   'oninput="updateKeyRow(' + i + ',\'name\', this.value)" '
-      +   'style="width:130px;background:var(--panel);border:1px solid var(--line);border-radius:7px;padding:6px 9px;color:var(--fg);font:inherit">'
-      + '<input type="text" value="' + esc(row.key || '') + '" placeholder="API Key (để trống nghĩa là không đổi)" '
-     +   'oninput="updateKeyRow(' + i + ',\'key\', this.value)" '
-      +   'style="flex:1;min-width:190px;background:var(--panel);border:1px solid var(--line);border-radius:7px;padding:6px 9px;color:var(--fg);font:inherit">'
-      + '<button class="sec mini" id="copyBtn' + i + '" onclick="copyKeyRow(' + i + ')">Sao Chép</button>'
-      + '<select onchange="updateKeyRow(' + i + ',\'realm\', this.value)" '
-      +   'style="background:var(--panel);border:1px solid var(--line);border-radius:7px;padding:6px 9px;color:var(--fg);font:inherit">'
-      + options + '</select>'
-      + '<label style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--dim)">'
-      +   '<input type="checkbox"' + (row.enabled ? ' checked' : '') + ' onchange="updateKeyRow(' + i + ',\'enabled\', this.checked)">Bật</label>'
-      + '<button class="sec mini" onclick="generateKeyRow(' + i + ')">Tạo Ngẫu Nhiên</button>'
-      + '<button class="danger mini" onclick="removeKeyRow(' + i + ')">Xóa</button>'
-      + maskedHint
+    if(row._editing){
+      const options = REALM_CHOICES.map(([val, lbl]) =>
+        '<option value="' + val + '"' + ((row.realm || '') === val ? ' selected' : '') + '>' + lbl + '</option>'
+      ).join('');
+      return '<div class="key-card" style="border-color:var(--accent);background:#ffffff;box-shadow:0 0 0 1px var(--accent), var(--shadow-md)">'
+        + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">'
+        +   '<div style="font-size:14px;font-weight:700;color:var(--fg)">' + (row.id ? 'chỉnh sửa API Key' : 'tạo mới API Key') + '</div>'
+        +   '<span class="badge s mini">Cài Đặt cổng xuất</span>'
+        + '</div>'
+        + '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:14px">'
+        +   '<div>'
+        +     '<div style="font-size:12px;color:var(--dim);margin-bottom:4px;font-weight:500">Tên ghi chú (gọi)</div>'
+        +     '<input type="text" id="editKeyName_' + i + '" value="' + esc(row.name || '') + '" placeholder="vd: Cursor / DSH / cục bộkiểm tra" '
+        +       'style="width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:7px 10px;font:inherit;color:var(--fg)">'
+        +   '</div>'
+        +   '<div>'
+        +     '<div style="font-size:12px;color:var(--dim);margin-bottom:4px;font-weight:500">gán cổng xuất</div>'
+        +     '<select id="editKeyRealm_' + i + '" style="width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:7px 10px;font:inherit;color:var(--fg)">'
+        +       options
+        +     '</select>'
+        +   '</div>'
+        +   '<div style="grid-column:1 / -1">'
+        +     '<div style="font-size:12px;color:var(--dim);margin-bottom:4px;font-weight:500">API Key nội dung ' + (row.masked ? '<span style="color:var(--dim-light)">(Đã lưu: ' + esc(row.masked) + '，để trống nghĩa là không đổi)</span>' : '') + '</div>'
+        +     '<div style="display:flex;gap:8px">'
+        +       '<input type="text" id="editKeyValue_' + i + '" value="' + esc(row.key || '') + '" placeholder="' + (row.masked ? 'để trống nghĩa là giữ nguyên Key không đổi' : 'vàokhóa tùy chỉnh，hoặc nhấn tạo bên phải') + '" '
+        +         'style="flex:1;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:7px 10px;font:inherit;color:var(--fg)">'
+        +       '<button class="sec mini" style="white-space:nowrap;border-radius:8px;padding:7px 14px" onclick="generateKeyForEdit(' + i + ')">Tạo Ngẫu Nhiên</button>'
+        +     '</div>'
+        +   '</div>'
+        + '</div>'
+        + '<div style="display:flex;gap:8px;justify-content:flex-end">'
+        +   '<button class="sec mini" style="border-radius:8px;padding:6px 16px" onclick="cancelEditKey(' + i + ')">Hủy</button>'
+        +   '<button class="mini" style="border-radius:8px;padding:6px 18px" onclick="saveSingleKey(' + i + ', this)">lưu</button>'
+        + '</div>'
+        + '</div>';
+    }
+
+    const statusBadge = row.enabled
+      ? '<span class="badge ok" style="font-size:11px;font-weight:600;padding:2px 10px">đãBật</span>'
+      : '<span class="badge off" style="font-size:11px;font-weight:600;padding:2px 10px">đã tắt</span>';
+
+    const realmBadge = (row.realm === 'intl')
+      ? '<span class="realm-badge-intl" style="font-size:11px">Cố định cổng Quốc Tế</span>'
+      : (row.realm === 'cn')
+      ? '<span class="realm-badge-cn" style="font-size:11px">Cố định cổng Trong Nước</span>'
+      : '<span class="badge s" style="font-size:11px">Theo chuyển đổi bảng</span>';
+
+    const displayKey = row.masked || (row.key ? (row.key.slice(0, 4) + '******' + row.key.slice(-4)) : 'chưaCài Đặt');
+    const createdStr = row.created_at ? ('tạothời gian ' + esc(row.created_at)) : '';
+
+    return '<div class="key-card' + (row.enabled ? '' : ' disabled') + '">'
+      + '<div class="key-card-main">'
+      +   '<div>'
+      +     '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">'
+      +       '<span style="font-size:15px;font-weight:700;color:var(--fg)">' + esc(row.name || 'chưa đặt tên') + '</span>'
+      +       statusBadge
+      +       realmBadge
+      +     '</div>'
+      +     '<div style="font-size:12px;color:var(--dim);display:flex;align-items:center;gap:16px;flex-wrap:wrap">'
+      +       '<span>Key: <span class="mono" style="color:var(--fg);font-weight:500">' + esc(displayKey) + '</span></span>'
+      +       (createdStr ? ('<span>' + createdStr + '</span>') : '')
+      +     '</div>'
+      +   '</div>'
+      +   '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'
+      +     '<button class="key-action-btn" id="copyBtn' + i + '" onclick="copyKeyRow(' + i + ')">Sao Chép</button>'
+      +     '<button class="key-action-btn" onclick="openEditKey(' + i + ')">chỉnh sửa</button>'
+      +     '<button class="key-action-btn" onclick="toggleKeyRow(' + i + ')">' + (row.enabled ? 'vô hiệu hóa' : 'Bật') + '</button>'
+      +     '<button class="key-action-btn danger" onclick="removeKeyRow(' + i + ')">Xóa</button>'
+      +   '</div>'
+      + '</div>'
       + '</div>';
   }).join('');
 }
 
-function updateKeyRow(index, field, value){
+function openEditKey(index){
   if(!API_KEY_ROWS[index]) return;
-  API_KEY_ROWS[index][field] = value;
-  if(field === 'enabled' || field === 'realm') renderKeyRows();
-}
-
-function generateKeyRow(index){
-  if(!API_KEY_ROWS[index]) return;
-  API_KEY_ROWS[index].key = randomKeyValue();
+  API_KEY_ROWS[index]._editing = true;
   renderKeyRows();
 }
 
+function cancelEditKey(index){
+  if(!API_KEY_ROWS[index]) return;
+  if(!API_KEY_ROWS[index].id && !API_KEY_ROWS[index].masked){
+    API_KEY_ROWS.splice(index, 1);
+  } else {
+    API_KEY_ROWS[index]._editing = false;
+  }
+  renderKeyRows();
+}
+
+function generateKeyForEdit(index){
+  const el = document.getElementById('editKeyValue_' + index);
+  if(el){
+    el.value = randomKeyValue();
+  }
+}
+
+async function saveSingleKey(index, btn){
+  const row = API_KEY_ROWS[index];
+  if(!row) return;
+  const nameInput = document.getElementById('editKeyName_' + index);
+  const realmSelect = document.getElementById('editKeyRealm_' + index);
+  const keyInput = document.getElementById('editKeyValue_' + index);
+
+  const name = nameInput ? nameInput.value.trim() : (row.name || '');
+  const realm = realmSelect ? realmSelect.value : (row.realm || '');
+  const keyVal = keyInput ? keyInput.value.trim() : (row.key || '');
+
+  if(!keyVal && !row.masked){
+    toast('API Key không thể để trống', 'warn');
+    return;
+  }
+
+  row.name = name || 'chưa đặt tên';
+  row.realm = realm;
+  if(keyVal) row.key = keyVal;
+  row._editing = false;
+
+  if(btn) btn.disabled = true;
+  try {
+    await saveApiKeys();
+    toast('API Key [' + row.name + '] đãlưu', 'ok');
+  } catch(e){
+    toast('Lưu thất bại: ' + e.message, 'bad');
+  }
+}
+
+async function toggleKeyRow(index){
+  const row = API_KEY_ROWS[index];
+  if(!row) return;
+  row.enabled = !row.enabled;
+  try {
+    await saveApiKeys();
+    toast(row.enabled ? 'Key [' + row.name + '] đãBật' : 'Key [' + row.name + '] đã tắt', 'ok');
+  } catch(e){
+    toast('Thao tác thất bại: ' + e.message, 'bad');
+  }
+}
+
+async function removeKeyRow(index){
+  const row = API_KEY_ROWS[index];
+  if(!row) return;
+  if(!confirm('xác địnhXóa API Key [' + (row.name || 'chưa đặt tên') + '] ?？đây thao tác không thể hoàn tác。')) return;
+  API_KEY_ROWS.splice(index, 1);
+  try {
+    await saveApiKeys();
+    toast('đãXóa API Key', 'ok');
+  } catch(e){
+    toast('Xóathất bại: ' + e.message, 'bad');
+  }
+}
+
+function addApiKeyRow(){
+  API_KEY_ROWS.push({
+    id: '',
+    name: '',
+    key: randomKeyValue(),
+    realm: '',
+    enabled: true,
+    masked: '',
+    _editing: true
+  });
+  renderKeyRows();
+  setTimeout(() => {
+    const el = document.getElementById('editKeyName_' + (API_KEY_ROWS.length - 1));
+    if(el) el.focus();
+  }, 50);
+}
 /* Copy the key in a row, fetching the stored value when the field is blank
    (the panel only ever displays a masked key). */
 async function copyKeyRow(index){
@@ -2285,11 +2675,11 @@ function toggleLogAuto(){
   const btn = document.getElementById('btnToggleLogAuto');
   if(btn){
     if(logAutoRefresh){
-      btn.textContent = '● Giám sát thời gian thực';
+      btn.textContent = 'Giám sát thời gian thực';
       btn.style.color = 'var(--accent2)';
       startLogPolling();
     } else {
-      btn.textContent = '⏸ Đã Tạm Dừng Lắng Nghe';
+      btn.textContent = 'Đã Tạm Dừng Lắng Nghe';
       btn.style.color = 'var(--dim)';
       stopLogPolling();
     }
@@ -2300,7 +2690,7 @@ function toggleLogScroll(){
   logAutoScroll = !logAutoScroll;
   const btn = document.getElementById('btnToggleLogScroll');
   if(btn){
-    btn.textContent = logAutoScroll ? '↓ Tự động cuộn: Bật' : '↓ Tự động cuộn: Tắt';
+    btn.textContent = logAutoScroll ? 'Tự động cuộn: Bật' : 'Tự động cuộn: Tắt';
   }
   if(logAutoScroll){
     const body = document.getElementById('logTerminalBody');

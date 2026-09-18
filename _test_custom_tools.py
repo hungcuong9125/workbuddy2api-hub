@@ -63,6 +63,18 @@ check("tool result appended with matching id",
       len(tool_msgs) == 1 and tool_msgs[0]["tool_call_id"] == "call_1")
 
 print()
+print("[2.5] responses reasoning item handling (Issue #17)")
+hist_reasoning = {"model": "m", "input": [
+    {"role": "user", "content": "solve math"},
+    {"type": "reasoning", "id": "rs_1", "summary": [{"type": "summary_text", "text": "let me think about 2+2"}]},
+    {"type": "message", "role": "assistant", "content": "4"},
+]}
+c_r = P.responses_to_chat(hist_reasoning)
+asst_r = [m for m in c_r["messages"] if m.get("role") == "assistant"]
+check("reasoning attached to assistant message", len(asst_r) == 1 and asst_r[0].get("reasoning_content") == "let me think about 2+2")
+check("assistant message content preserved", asst_r[0].get("content") == "4")
+
+print()
 print("[3] unknown input item types are logged, not silently dropped")
 import io, contextlib
 buf = io.StringIO()

@@ -472,7 +472,7 @@ class AccountPool(object):
 
     def list_public(self, realm=None):
         with self._lock:
-            accs = self.accounts if not realm else [a for a in self.accounts if a.realm == realm]
+            accs = self.accounts if (not realm or realm == "all") else [a for a in self.accounts if a.realm == realm]
             return [a.public() for a in accs]
 
     def get(self, uid):
@@ -980,4 +980,3 @@ def normalise_import_row(row, realm=None):
         "lastError": "",
         "cooldownUntil": 0.0,
     }
-

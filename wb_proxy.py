@@ -590,28 +590,72 @@ def count_usage_rows(realm=None):
     return n
 
 
-def recent_usage(limit=100, realm=None):
-    """Last `limit` rows, read from the tail of the log.
+def recent_usage(limit=100, realm=None, page=1):
+    """Paginated rows from the tail of the log (page 1 is latest).
 
-    Reading only the tail keeps this in the millisecond range even when the
-    log holds tens of thousands of rows.
+    Reading backward in chunks keeps this in the millisecond range while
+    accurately fetching any requested page without missing rows across realms.
     """
     try:
         limit = max(1, int(limit))
     except Exception:
         limit = 100
-    # Realm filtering drops rows, so over-read to still fill `limit`.
-    want = limit * 8 if realm else limit
-    rows = []
-    for raw in _tail_lines(USAGE_LOG, want):
-        try:
-            item = json.loads(raw.decode("utf-8", "replace"))
-        except Exception:
-            continue
-        if realm and not row_matches_realm(item, realm):
-            continue
-        rows.append(item)
-    return {"total": count_usage_rows(realm), "rows": rows[-limit:]}
+    try:
+        page = max(1, int(page))
+    except Exception:
+        page = 1
+    total = count_usage_rows(realm)
+    total_pages = max(1, (total + limit - 1) // limit) if total > 0 else 1
+    page = min(page, total_pages)
+    target_count = page * limit
+    matching = []
+    chunk = 256 * 1024
+    try:
+        with open(USAGE_LOG, "rb") as fh:
+            fh.seek(0, os.SEEK_END)
+            pos = fh.tell()
+            buf = b""
+            while pos > 0 and len(matching) < target_count:
+                step = min(chunk, pos)
+                pos -= step
+                fh.seek(pos)
+                buf = fh.read(step) + buf
+                parts = buf.split(b"\n")
+                buf = parts[0]
+                for raw in reversed(parts[1:]):
+                    st = raw.strip()
+                    if not st:
+                        continue
+                    try:
+                        item = json.loads(st.decode("utf-8", "replace"))
+                    except Exception:
+                        continue
+                    if realm and not row_matches_realm(item, realm):
+                        continue
+                    matching.append(item)
+                    if len(matching) >= target_count:
+                        break
+            if len(matching) < target_count and buf.strip():
+                try:
+                    item = json.loads(buf.strip().decode("utf-8", "replace"))
+                    if not realm or row_matches_realm(item, realm):
+                        matching.append(item)
+                except Exception:
+                    pass
+    except FileNotFoundError:
+        pass
+    except Exception as exc:
+        log("recent_usage read failed: %s" % exc)
+    start_idx = (page - 1) * limit
+    end_idx = start_idx + limit
+    page_rows = matching[start_idx:end_idx]
+    return {
+        "total": total,
+        "page": page,
+        "limit": limit,
+        "total_pages": total_pages,
+        "rows": page_rows
+    }
 POOL = None
 SCHEDULER = None
 ACCOUNTS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'accounts')
@@ -864,6 +908,7 @@ def runtime_settings_view():
             "enabled": entry.get("enabled", True) is not False,
             "masked": (raw[:4] + "*" * 6 + raw[-4:]) if len(raw) > 8 else "*" * len(raw),
             "source": entry.get("source") or "panel",
+            "created_at": entry.get("created_at") or "",
         })
     return {
         "panel_password_is_default": wb_settings.panel_password_is_default(ACCOUNTS_DIR),
@@ -875,7 +920,7 @@ def runtime_settings_view():
         "accounts_dir": ACCOUNTS_DIR,
         "usage_dir": USAGE_DIR,
         "settings_file": wb_settings.settings_path(ACCOUNTS_DIR),
-        "version": "1.2.0",
+        "version": "1.4.0",
     }
 def current_account():
     """Account used for display purposes (health / usage summaries)."""
@@ -1934,6 +1979,7 @@ def responses_to_chat(payload):
     if isinstance(instructions, str) and instructions.strip():
         messages.append({"role": "system", "content": instructions})
     inp = payload.get("input")
+    pending_reasoning = ""
     if isinstance(inp, str):
         messages.append({"role": "user", "content": inp})
     elif isinstance(inp, list):
@@ -1959,8 +2005,38 @@ def responses_to_chat(payload):
                             prev["content"] = str(prev["content"]) + chr(10) + str(body)
                         else:
                             prev["content"] = body
+                        if pending_reasoning and "reasoning_content" not in prev:
+                            prev["reasoning_content"] = pending_reasoning
+                            pending_reasoning = ""
                     else:
-                        messages.append({"role": role, "content": body})
+                        msg_dict = {"role": role, "content": body}
+                        if role == "assistant" and pending_reasoning:
+                            msg_dict["reasoning_content"] = pending_reasoning
+                            pending_reasoning = ""
+                        messages.append(msg_dict)
+            elif itype == "reasoning":
+                # Reasoning item from previous assistant turn in Responses API.
+                # In standard Chat Completions, reasoning is either backfilled into
+                # the assistant message's reasoning_content or omitted.
+                r_text = ""
+                summ = item.get("summary")
+                if isinstance(summ, list):
+                    r_text = chr(10).join(
+                        p.get("text", "") for p in summ if isinstance(p, dict) and p.get("text")
+                    )
+                elif isinstance(summ, str):
+                    r_text = summ
+                if not r_text:
+                    cnt = item.get("content")
+                    if isinstance(cnt, str):
+                        r_text = cnt
+                    elif isinstance(cnt, list):
+                        r_text = _flatten_content(cnt)
+                if r_text:
+                    if messages and messages[-1].get("role") == "assistant":
+                        messages[-1]["reasoning_content"] = r_text
+                    else:
+                        pending_reasoning = r_text
             elif itype == "function_call_output":
                 raw_out = item.get("output")
                 if isinstance(raw_out, list):
@@ -1995,12 +2071,19 @@ def responses_to_chat(payload):
                         prev["tool_calls"].append(tc_item)
                     else:
                         prev["tool_calls"] = [tc_item]
+                    if pending_reasoning and "reasoning_content" not in prev:
+                        prev["reasoning_content"] = pending_reasoning
+                        pending_reasoning = ""
                 else:
-                    messages.append({
+                    msg_dict = {
                         "role": "assistant",
                         "content": "",
                         "tool_calls": [tc_item],
-                    })
+                    }
+                    if pending_reasoning:
+                        msg_dict["reasoning_content"] = pending_reasoning
+                        pending_reasoning = ""
+                    messages.append(msg_dict)
             elif itype == "custom_tool_call":
                 # Freeform tool call coming back as conversation history.
                 raw_input = item.get("input")
@@ -2023,12 +2106,19 @@ def responses_to_chat(payload):
                         prev["tool_calls"].append(tc_item)
                     else:
                         prev["tool_calls"] = [tc_item]
+                    if pending_reasoning and "reasoning_content" not in prev:
+                        prev["reasoning_content"] = pending_reasoning
+                        pending_reasoning = ""
                 else:
-                    messages.append({
+                    msg_dict = {
                         "role": "assistant",
                         "content": "",
                         "tool_calls": [tc_item],
-                    })
+                    }
+                    if pending_reasoning:
+                        msg_dict["reasoning_content"] = pending_reasoning
+                        pending_reasoning = ""
+                    messages.append(msg_dict)
             elif itype == "custom_tool_call_output":
                 # Result of a freeform tool call (e.g. apply_patch output).
                 raw_out = item.get("output")
@@ -2544,8 +2634,22 @@ class Handler(BaseHTTPRequestHandler):
             super().finish()
         except (ConnectionResetError, BrokenPipeError, ConnectionAbortedError):
             pass
-    server_version = "wb-proxy/1.2.0"
+    server_version = "wb-proxy/1.4.0"
     def log_message(self, fmt, *args):
+        # 静默过滤前端看板高频定时心跳的正常 200 GET 请求（/logs、/usage、/accounts 轮询等）
+        # 避免自增死循环刷屏与日志污染。遇 4xx/5xx 异常或所有非 GET 业务操作依然如实记录。
+        try:
+            status_code = int(args[1]) if len(args) > 1 and str(args[1]).isdigit() else 200
+            if status_code < 400 and getattr(self, "command", "GET") == "GET":
+                req_path = (getattr(self, "path", None) or (args[0] if args else "")).split("?")[0]
+                quiet_prefixes = (
+                    "/logs", "/usage", "/accounts", "/scheduler",
+                    "/health", "/panel/status", "/realm", "/favicon.ico"
+                )
+                if any(req_path == p or req_path.startswith(p + "/") for p in quiet_prefixes):
+                    return
+        except Exception:
+            pass
         log(fmt % args)
     def _json(self, code, obj):
         body = json.dumps(obj, ensure_ascii=False).encode("utf-8")
@@ -2745,8 +2849,12 @@ class Handler(BaseHTTPRequestHandler):
                 limit = max(1, min(1000, int((query.get("limit") or ["100"])[0])))
             except ValueError:
                 limit = 100
+            try:
+                page = max(1, int((query.get("page") or ["1"])[0]))
+            except ValueError:
+                page = 1
             req_realm = query.get('realm', [None])[0] or self.headers.get('X-Realm') or CURRENT_REALM
-            return self._json(200, recent_usage(limit, realm=req_realm))
+            return self._json(200, recent_usage(limit, realm=req_realm, page=page))
         if path == "/accounts/credits":
             if not self._authorized():
                 return
@@ -2977,12 +3085,14 @@ class Handler(BaseHTTPRequestHandler):
                 if realm not in ("", "intl", "cn"):
                     return self._error(400, "realm must be intl, cn or empty",
                                        "invalid_request_error")
+                created_at = item.get("created_at") or (existing.get(entry_id, {}).get("created_at") if entry_id in existing else None) or time.strftime("%Y/%m/%d %H:%M")
                 cleaned.append({
                     "id": entry_id,
                     "name": str(item.get("name") or "").strip(),
                     "key": value,
                     "realm": realm,
                     "enabled": item.get("enabled", True) is not False,
+                    "created_at": created_at,
                 })
             wb_settings.set_api_keys(ACCOUNTS_DIR, cleaned)
             reply["api_keys_saved"] = len(cleaned)
@@ -3069,7 +3179,13 @@ class Handler(BaseHTTPRequestHandler):
             return self._error(400, "expected a JSON object", "invalid_request_error")
         if path in ("/accounts/credits", "/accounts/credits/fetch"):
             uid = payload.get("uid")
-            targets = [POOL.get(uid)] if uid else list(POOL.accounts)
+            realm = payload.get("realm")
+            if uid:
+                targets = [POOL.get(uid)]
+            elif realm and realm != "all":
+                targets = [a for a in POOL.accounts if a.realm == realm]
+            else:
+                targets = list(POOL.accounts)
             results = []
             for account in targets:
                 if account is None:
@@ -3226,6 +3342,69 @@ class Handler(BaseHTTPRequestHandler):
                 account.save(ACCOUNTS_DIR)
                 results.append({"uid": account.uid, "ok": ok, "error": account.last_error})
             return self._json(200, {"results": results})
+        if path == "/accounts/test":
+            uid = payload.get("uid")
+            if not uid:
+                return self._error(400, "uid required")
+            account = POOL.get(uid)
+            if not account:
+                return self._error(404, "no such account")
+            test_model = payload.get("model") or "deepseek-v4.1-flash"
+            cfg = wb_accounts.get_realm_config(account.realm)
+            chat_url = cfg["chat_upstream"] + CHAT_PATH
+            test_body = {
+                "model": test_model,
+                "messages": [{"role": "user", "content": "hi"}],
+                "stream": False,
+            }
+            forwarded = build_upstream_body(test_body)
+            body = json.dumps(forwarded, ensure_ascii=False).encode("utf-8")
+            req = urllib.request.Request(
+                chat_url, data=body, method="POST",
+                headers=account.headers(purpose="chat")
+            )
+            t0 = time.time()
+            try:
+                with urllib.request.urlopen(req, timeout=30) as resp:
+                    chat_obj = aggregate_stream(resp, test_model, None)
+                    wall_ms = int((time.time() - t0) * 1000)
+                    choices = chat_obj.get("choices") or []
+                    msg = (choices[0].get("message") or {}) if choices else {}
+                    reply_text = (msg.get("content") or msg.get("reasoning_content") or "OK").strip()
+                    if len(reply_text) > 80:
+                        reply_text = reply_text[:77] + "..."
+                    account.clear_error()
+                    log(f"account test: uid={account.uid[:8]} model={test_model} wall={wall_ms}ms ok=True", tag="accounts")
+                    return self._json(200, {
+                        "ok": True,
+                        "uid": account.uid,
+                        "model": test_model,
+                        "elapsed_ms": wall_ms,
+                        "reply": reply_text,
+                    })
+            except urllib.error.HTTPError as exc:
+                wall_ms = int((time.time() - t0) * 1000)
+                detail = exc.read(400).decode("utf-8", "replace")
+                account.note_error(f"HTTP {exc.code}: {detail[:80]}", cooldown=60)
+                log(f"account test: uid={account.uid[:8]} model={test_model} wall={wall_ms}ms error={exc.code}", level="WARN", tag="accounts")
+                return self._json(200, {
+                    "ok": False,
+                    "uid": account.uid,
+                    "status": exc.code,
+                    "error": f"HTTP {exc.code}: {detail[:150]}",
+                    "elapsed_ms": wall_ms,
+                })
+            except Exception as exc:
+                wall_ms = int((time.time() - t0) * 1000)
+                account.note_error(str(exc)[:80], cooldown=60)
+                log(f"account test: uid={account.uid[:8]} model={test_model} wall={wall_ms}ms exc={exc}", level="WARN", tag="accounts")
+                return self._json(200, {
+                    "ok": False,
+                    "uid": account.uid,
+                    "status": 500,
+                    "error": str(exc),
+                    "elapsed_ms": wall_ms,
+                })
         if path == "/accounts/set":
             uid = payload.get("uid")
             if not uid:
