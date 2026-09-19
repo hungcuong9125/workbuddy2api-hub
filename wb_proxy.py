@@ -82,7 +82,7 @@ def exclusive_realm(model_id):
         return "cn"
     return ""
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from urllib.parse import urlparse, parse_qs
+from urllib.parse import urlparse, parse_qs, urlsplit, unquote
 def install_console_close_handler():
     """Release the port when the console window is closed by the user.
     Windows does not kill child processes when a console window closes, so
@@ -944,6 +944,33 @@ def account_views(realm=None):
     if not POOL:
         return []
     return POOL.list_public(realm=realm)
+
+
+def validate_proxy_url(value):
+    """Validate a user-supplied proxy URL, returning (ok, error_message).
+
+    Accepts `protocol://[user:pass@]host:port` and a bare `host:port` (a
+    scheme is temporarily prepended for the check, matching open_url's own
+    normalization). Only the shape is validated here - reachability is the
+    job of the separate test endpoint. The value is never logged.
+    """
+    text = str(value or "").strip()
+    if not text:
+        return True, None
+    candidate = text if "://" in text else "http://" + text
+    try:
+        parts = urlsplit(candidate)
+        host = parts.hostname
+        port = parts.port
+    except ValueError:
+        return False, "proxy must look like protocol://[user:pass@]host:port"
+    if not host or port is None:
+        return False, "proxy must include a host and a port (host:port)"
+    if not (0 < port < 65536):
+        return False, "proxy port must be between 1 and 65535"
+    return True, None
+
+
 _byacct_cache = {"at": 0.0, "data": None}
 _byacct_lock = threading.Lock()
 
@@ -3881,6 +3908,13 @@ class Handler(BaseHTTPRequestHandler):
             return self._route_accounts_delete(payload)
         if path == "/accounts/import":
             return self._route_accounts_import(payload)
+        # Per-account proxy editor: /accounts/{uid}/proxy and .../proxy/test
+        proxy_match = re.match(r"^/accounts/([^/]+)/proxy(?:/(test))?$", path)
+        if proxy_match:
+            uid = unquote(proxy_match.group(1))
+            if proxy_match.group(2) == "test":
+                return self._route_accounts_proxy_test(uid)
+            return self._route_accounts_proxy_set(uid, payload)
         return self._error(404, "unknown account endpoint", "invalid_request_error")
     def _route_accounts_credits_fetch(self, payload):
         uid = payload.get("uid")
@@ -4155,6 +4189,62 @@ class Handler(BaseHTTPRequestHandler):
         removed = POOL.remove(uid)
         log("account %s deleted" % uid[:8])
         return self._json(200, {"deleted": removed, "accounts": account_views()})
+
+    def _route_accounts_proxy_set(self, uid, payload):
+        """Set or clear one account's egress proxy (never echoes the URL).
+
+        Body: {"proxy": "<url>"} to set, or ""/null to clear. The stored value
+        is kept exactly as typed (open_url normalizes a missing scheme at use
+        time). Only account.public() - which carries hasProxy, never the URL -
+        goes back to the client, and the value is never logged.
+        """
+        account = POOL.get(uid)
+        if account is None:
+            return self._error(404, "no such account")
+        raw = payload.get("proxy")
+        text = str(raw or "").strip()
+        if text:
+            ok, problem = validate_proxy_url(text)
+            if not ok:
+                return self._error(400, problem, "invalid_request_error")
+            account.proxy = text
+        else:
+            account.proxy = None
+        account.save(POOL.dir)
+        log("account %s proxy %s" % (uid[:8], "set" if account.proxy else "cleared"),
+            tag="accounts")
+        return self._json(200, {"ok": True, "account": account.public()})
+
+    def _route_accounts_proxy_test(self, uid):
+        """Fetch an IP-echo endpoint through this account's proxy.
+
+        Returns the egress IP on success, or a fail-closed error. A 200 is
+        always returned so the dashboard can show the outcome uniformly.
+        """
+        account = POOL.get(uid)
+        if account is None:
+            return self._error(404, "no such account")
+        if not account.proxy:
+            return self._json(200, {"ok": False, "error": "no proxy configured"})
+        req = urllib.request.Request(
+            "https://api.ipify.org?format=json",
+            headers={"User-Agent": "curl/8", "Accept": "application/json"},
+        )
+        t0 = time.time()
+        try:
+            with open_url(req, timeout=15, proxy=account.proxy) as resp:
+                body = resp.read().decode("utf-8", "replace")
+            try:
+                egress = json.loads(body).get("ip") or body.strip()
+            except Exception:
+                egress = body.strip()
+            log("account %s proxy test ok (%dms)" % (uid[:8], int((time.time() - t0) * 1000)),
+                tag="accounts")
+            return self._json(200, {"ok": True, "egressIp": egress})
+        except Exception as exc:
+            log("account %s proxy test failed: %s" % (uid[:8], exc),
+                level="WARN", tag="accounts")
+            return self._json(200, {"ok": False, "error": str(exc)})
 
     def _route_accounts_import(self, payload):
         # Import a previously exported document (or any hand-written list
