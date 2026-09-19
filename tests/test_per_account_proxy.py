@@ -464,6 +464,19 @@ class ProxyEndpointTests(unittest.TestCase):
         self._orig_pool = wb_proxy.POOL
         wb_proxy.POOL = self.pool
         self.addCleanup(self._restore)
+        # The set endpoint auto-probes the proxy, and the test endpoint probes
+        # on demand, so stub open_url by default to keep every test offline.
+        self._orig_open_url = wb_proxy.open_url
+        wb_proxy.open_url = self._fake_open_url
+        self.addCleanup(self._restore_open_url)
+        self.probe_seen = []
+
+    def _fake_open_url(self, req, timeout=30, proxy=None):
+        self.probe_seen.append({"proxy": proxy, "url": req.full_url})
+        return FakeResponse(b'{"ip": "203.0.113.7"}')
+
+    def _restore_open_url(self):
+        wb_proxy.open_url = self._orig_open_url
 
     def _restore(self):
         wb_proxy.POOL = self._orig_pool
@@ -484,6 +497,30 @@ class ProxyEndpointTests(unittest.TestCase):
         # Persisted on the account object, exactly as typed.
         self.assertEqual(self.pool.get("u-ep").proxy,
                          "http://user:pass@1.2.3.4:8080")
+        # The save triggers an immediate health check and records it.
+        self.assertTrue(body["account"]["proxyStatus"]["ok"])
+        self.assertEqual(self.probe_seen[-1]["proxy"], "http://user:pass@1.2.3.4:8080")
+
+    def test_set_proxy_can_skip_probe(self):
+        code, body = self._call("/accounts/u-ep/proxy",
+                                {"proxy": "http://1.2.3.4:8080", "skipTest": True})
+        self.assertEqual(code, 200)
+        self.assertTrue(body["account"]["hasProxy"])
+        # No probe was made, so the status stays unset.
+        self.assertIsNone(body["account"]["proxyStatus"])
+        self.assertEqual(self.probe_seen, [])
+
+    def test_set_proxy_failing_probe_recorded(self):
+        def boom(req, timeout=30, proxy=None):
+            raise urllib.error.URLError("refused")
+
+        wb_proxy.open_url = boom
+        code, body = self._call("/accounts/u-ep/proxy", {"proxy": "http://1.2.3.4:8080"})
+        self.assertEqual(code, 200)
+        # Saved regardless, but flagged as unhealthy.
+        self.assertTrue(body["account"]["hasProxy"])
+        self.assertFalse(body["account"]["proxyStatus"]["ok"])
+        self.assertEqual(self.pool.get("u-ep").proxy, "http://1.2.3.4:8080")
 
     def test_set_proxy_accepts_scheme_less(self):
         code, body = self._call("/accounts/u-ep/proxy", {"proxy": "1.2.3.4:8080"})
@@ -567,6 +604,46 @@ class ProxyEndpointTests(unittest.TestCase):
         self.assertTrue(wb_proxy.validate_proxy_url("")[0])
         self.assertFalse(wb_proxy.validate_proxy_url("garbage")[0])
         self.assertFalse(wb_proxy.validate_proxy_url("http://host")[0])
+
+    def test_proxy_status_not_persisted(self):
+        # The health snapshot is runtime-only: it must never land in the file,
+        # otherwise a stale "ok" would survive a restart.
+        self._call("/accounts/u-ep/proxy", {"proxy": "http://1.2.3.4:8080"})
+        acc = self.pool.get("u-ep")
+        self.assertIsNotNone(acc.proxy_status)
+        self.assertNotIn("proxyStatus", acc.to_dict())
+        self.assertNotIn("proxy_status", acc.to_dict())
+
+    def test_clear_resets_proxy_status(self):
+        self._call("/accounts/u-ep/proxy", {"proxy": "http://1.2.3.4:8080"})
+        self.assertIsNotNone(self.pool.get("u-ep").proxy_status)
+        self._call("/accounts/u-ep/proxy", {"proxy": ""})
+        self.assertIsNone(self.pool.get("u-ep").proxy_status)
+
+    def test_public_carries_proxy_status_but_no_url(self):
+        self._call("/accounts/u-ep/proxy", {"proxy": "http://user:pass@1.2.3.4:8080"})
+        pub = self.pool.get("u-ep").public()
+        self.assertTrue(pub["hasProxy"])
+        self.assertIn("proxyStatus", pub)
+        self.assertTrue(pub["proxyStatus"]["ok"])
+        self.assertNotIn("1.2.3.4", json.dumps(pub))
+        self.assertNotIn("pass", json.dumps(pub))
+
+    def test_test_all_probes_only_accounts_with_proxy(self):
+        self._call("/accounts/u-ep/proxy", {"proxy": "http://1.2.3.4:8080"})
+        # A second account with no proxy must be skipped.
+        self.pool.add(wb_accounts.Account({
+            "uid": "u-noproxy", "accessToken": make_jwt(exp=9999999999),
+            "realm": "intl",
+        }))
+        self.probe_seen = []
+        code, body = self._call("/accounts/proxy/test-all", {})
+        self.assertEqual(code, 200)
+        uids = [r["uid"] for r in body["results"]]
+        self.assertEqual(uids, ["u-ep"])
+        self.assertTrue(body["results"][0]["ok"])
+        self.assertEqual(len(self.probe_seen), 1)
+        self.assertIn("accounts", body)
 
 
 if __name__ == "__main__":
