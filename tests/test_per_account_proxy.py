@@ -427,5 +427,147 @@ class IntegrationStubProxyTests(unittest.TestCase):
         self.assertNotEqual(pool.get("u-dead").last_error, "")
 
 
+# --------------------------------------------------------------------------- #
+# Proxy admin endpoints (Việc A)
+# --------------------------------------------------------------------------- #
+
+class _FakeHandler(wb_proxy.Handler):
+    """Real Handler route methods without a socket.
+
+    Subclasses Handler so every _route_* method resolves, but overrides
+    __init__ (no socket) and _json/_error to capture the response. The
+    /accounts/{uid}/proxy[/test] regex routing is exercised for real.
+    """
+
+    def __init__(self):
+        self.responses = []
+
+    def _json(self, code, obj):
+        self.responses.append((code, obj))
+
+    def _error(self, code, message, err_type="server_error"):
+        self.responses.append((code, {"error": {"message": message, "type": err_type}}))
+
+    def last(self):
+        return self.responses[-1]
+
+
+class ProxyEndpointTests(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp(prefix="wb-proxy-ep-")
+        self.addCleanup(shutil.rmtree, self.tmp, True)
+        self.pool = wb_accounts.AccountPool(self.tmp)
+        self.pool.add(wb_accounts.Account({
+            "uid": "u-ep", "accessToken": make_jwt(exp=9999999999),
+            "realm": "intl",
+        }))
+        self._orig_pool = wb_proxy.POOL
+        wb_proxy.POOL = self.pool
+        self.addCleanup(self._restore)
+
+    def _restore(self):
+        wb_proxy.POOL = self._orig_pool
+
+    def _call(self, path, payload):
+        h = _FakeHandler()
+        h._handle_accounts(path, payload)
+        return h.last()
+
+    def test_set_proxy_ok_and_hidden(self):
+        code, body = self._call("/accounts/u-ep/proxy",
+                                {"proxy": "http://user:pass@1.2.3.4:8080"})
+        self.assertEqual(code, 200)
+        self.assertTrue(body["ok"])
+        self.assertTrue(body["account"]["hasProxy"])
+        self.assertNotIn("1.2.3.4", json.dumps(body))
+        self.assertNotIn("pass", json.dumps(body))
+        # Persisted on the account object, exactly as typed.
+        self.assertEqual(self.pool.get("u-ep").proxy,
+                         "http://user:pass@1.2.3.4:8080")
+
+    def test_set_proxy_accepts_scheme_less(self):
+        code, body = self._call("/accounts/u-ep/proxy", {"proxy": "1.2.3.4:8080"})
+        self.assertEqual(code, 200)
+        self.assertTrue(body["account"]["hasProxy"])
+        # Stored verbatim; open_url normalizes at use time.
+        self.assertEqual(self.pool.get("u-ep").proxy, "1.2.3.4:8080")
+
+    def test_clear_proxy(self):
+        self._call("/accounts/u-ep/proxy", {"proxy": "http://1.2.3.4:8080"})
+        code, body = self._call("/accounts/u-ep/proxy", {"proxy": ""})
+        self.assertEqual(code, 200)
+        self.assertFalse(body["account"]["hasProxy"])
+        self.assertIsNone(self.pool.get("u-ep").proxy)
+
+    def test_clear_proxy_with_null(self):
+        self._call("/accounts/u-ep/proxy", {"proxy": "http://1.2.3.4:8080"})
+        code, body = self._call("/accounts/u-ep/proxy", {"proxy": None})
+        self.assertEqual(code, 200)
+        self.assertFalse(body["account"]["hasProxy"])
+
+    def test_invalid_proxy_returns_400(self):
+        for bad in ("garbage", "http://host", "http://host:99999"):
+            code, body = self._call("/accounts/u-ep/proxy", {"proxy": bad})
+            self.assertEqual(code, 400, bad)
+            self.assertIn("message", body["error"])
+        # Nothing was written by the rejected attempts.
+        self.assertIsNone(self.pool.get("u-ep").proxy)
+
+    def test_unknown_uid_returns_404(self):
+        code, _ = self._call("/accounts/nope/proxy", {"proxy": "http://1.2.3.4:8080"})
+        self.assertEqual(code, 404)
+
+    def test_test_endpoint_no_proxy(self):
+        code, body = self._call("/accounts/u-ep/proxy/test", {})
+        self.assertEqual(code, 200)
+        self.assertFalse(body["ok"])
+        self.assertIn("no proxy", body["error"])
+
+    def test_test_endpoint_success_uses_proxy(self):
+        self._call("/accounts/u-ep/proxy", {"proxy": "http://1.2.3.4:8080"})
+        seen = {}
+
+        def fake_open_url(req, timeout=30, proxy=None):
+            seen["proxy"] = proxy
+            seen["url"] = req.full_url
+            return FakeResponse(b'{"ip": "203.0.113.7"}')
+
+        orig = wb_proxy.open_url
+        wb_proxy.open_url = fake_open_url
+        try:
+            code, body = self._call("/accounts/u-ep/proxy/test", {})
+        finally:
+            wb_proxy.open_url = orig
+        self.assertEqual(code, 200)
+        self.assertTrue(body["ok"])
+        self.assertEqual(body["egressIp"], "203.0.113.7")
+        self.assertEqual(seen["proxy"], "http://1.2.3.4:8080")
+        self.assertIn("ipify", seen["url"])
+        self.assertNotIn("1.2.3.4", json.dumps(body))
+
+    def test_test_endpoint_failure_is_fail_closed(self):
+        self._call("/accounts/u-ep/proxy", {"proxy": "http://1.2.3.4:8080"})
+
+        def boom(req, timeout=30, proxy=None):
+            raise urllib.error.URLError("connection refused")
+
+        orig = wb_proxy.open_url
+        wb_proxy.open_url = boom
+        try:
+            code, body = self._call("/accounts/u-ep/proxy/test", {})
+        finally:
+            wb_proxy.open_url = orig
+        self.assertEqual(code, 200)
+        self.assertFalse(body["ok"])
+        self.assertIn("error", body)
+
+    def test_validate_proxy_url_helper(self):
+        self.assertTrue(wb_proxy.validate_proxy_url("http://1.2.3.4:8080")[0])
+        self.assertTrue(wb_proxy.validate_proxy_url("1.2.3.4:8080")[0])
+        self.assertTrue(wb_proxy.validate_proxy_url("")[0])
+        self.assertFalse(wb_proxy.validate_proxy_url("garbage")[0])
+        self.assertFalse(wb_proxy.validate_proxy_url("http://host")[0])
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

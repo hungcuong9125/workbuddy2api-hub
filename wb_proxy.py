@@ -4242,7 +4242,10 @@ class Handler(BaseHTTPRequestHandler):
                 tag="accounts")
             return self._json(200, {"ok": True, "egressIp": egress})
         except Exception as exc:
-            log("account %s proxy test failed: %s" % (uid[:8], exc),
+            # Log only the exception type: a proxy-related message could in
+            # principle echo connection details, and the URL must never be
+            # written to logs.
+            log("account %s proxy test failed: %s" % (uid[:8], type(exc).__name__),
                 level="WARN", tag="accounts")
             return self._json(200, {"ok": False, "error": str(exc)})
 
