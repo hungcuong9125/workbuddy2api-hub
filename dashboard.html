@@ -2031,16 +2031,27 @@ async function refreshInner(){
   }
 
   const rows = recent.rows || [];
+  // Terminal state of a request. Rows written before the outcome field only
+  // carry error/status, so fall back to that; a client cancellation is shown
+  // apart from a real failure because the gateway did nothing wrong.
+  const outcomeBadge = r => {
+    const o = r.outcome || (r.error ? 'failed' : 'completed');
+    if(o === 'completed') return '<span class="badge ok">Hoàn thành</span>';
+    if(o === 'client_aborted') return '<span class="badge off">Client hủy</span>';
+    if(o === 'upstream_aborted') return '<span class="badge warn">Upstream ngắt</span>';
+    return '<span class="badge bad">Thất bại</span>';
+  };
   const countEl = document.getElementById('recentCount');
   if(countEl) countEl.textContent = '(Trang ' + RECENT_PAGE + ' / Tổng ' + fmt(total) + ' dòng)';
   document.getElementById('recent').innerHTML = rows.length ?
-    '<table><thead><tr><th>Thời gian</th><th>Mô hình</th><th>Tài Khoản</th><th>Chế độ</th><th>Thời gian</th><th>Ký tự đầu</th><th>Speed</th><th>Input</th><th>Output</th><th>Suy nghĩ</th><th>Cache</th><th>Tổng Token</th></tr></thead><tbody>'
+    '<table><thead><tr><th>Thời gian</th><th>Mô hình</th><th>Tài Khoản</th><th>Chế độ</th><th>Kết quả</th><th>Thời gian</th><th>Ký tự đầu</th><th>Speed</th><th>Input</th><th>Output</th><th>Suy nghĩ</th><th>Cache</th><th>Tổng Token</th></tr></thead><tbody>'
     + rows.map(r => '<tr>'
         + '<td class="mono">' + esc((r.iso||'').replace('T',' ').slice(5)) + '</td>'
         + '<td class="mono">' + esc(r.model) + '</td>'
         + '<td class="mono" style="font-size:11px;color:var(--dim)">' + esc((r.account||'—').slice(0,8)) + '</td>'
         + '<td><span class="badge ' + (r.stream?'s':'') + '">' + (r.stream?'Luồng':'Không luồng') + '</span></td>'
-        + '<td>' + (r.error ? '<span class="badge bad">thất bại</span>' : (r.elapsed_ms!=null ? fmt(r.elapsed_ms)+' ms' : '—')) + '</td>'
+        + '<td>' + outcomeBadge(r) + '</td>'
+        + '<td>' + (r.elapsed_ms!=null ? fmt(r.elapsed_ms)+' ms' : '—') + '</td>'
         + '<td>' + (r.ttft_ms!=null ? fmt(r.ttft_ms)+' ms' : '—') + '</td>'
         + '<td>' + (r.tokens_per_sec ? r.tokens_per_sec.toFixed(1) : '—') + '</td>'
         + '<td>' + fmt(r.prompt_tokens) + '</td>'

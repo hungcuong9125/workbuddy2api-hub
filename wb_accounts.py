@@ -161,6 +161,13 @@ class Account(object):
         self.model_cooldowns = {}
         self.credits = data.get("credits") or None
         self.last_checkin = data.get("lastCheckin") or None
+        # Serialise token refresh and file writes. Request threads, /health,
+        # dashboard polls and the scheduler can all reach refresh()/save() for
+        # the same account at once; without a lock the upstream rotates the
+        # refresh token concurrently and the last writer wins, so a freshly
+        # minted token can be overwritten by a stale snapshot.
+        self._refresh_lock = threading.Lock()
+        self._save_lock = threading.Lock()
 
     def to_dict(self):
         return {
@@ -215,10 +222,22 @@ class Account(object):
         path = os.path.abspath(os.path.join(directory, name))
         if not path.startswith(os.path.abspath(directory)):
             raise ValueError("invalid path for account save")
-        tmp = path + ".tmp"
-        with open(tmp, "w", encoding="utf-8") as fh:
-            json.dump(self.to_dict(), fh, ensure_ascii=False, indent=2)
-        os.replace(tmp, path)
+        # A unique temp name plus a per-account lock: two threads saving the
+        # same account used to share "<uid>.json.tmp", so one could truncate
+        # the file the other was still writing and the loser's os.replace()
+        # then failed with ENOENT.
+        with self._save_lock:
+            tmp = "%s.%d.%d.tmp" % (path, os.getpid(), threading.get_ident())
+            try:
+                with open(tmp, "w", encoding="utf-8") as fh:
+                    json.dump(self.to_dict(), fh, ensure_ascii=False, indent=2)
+                os.replace(tmp, path)
+            except Exception:
+                try:
+                    os.unlink(tmp)
+                except Exception:
+                    pass
+                raise
         self.path = path
         return path
 
@@ -240,8 +259,11 @@ class Account(object):
         if remaining > 120:
             return True
         if remaining > 0:
-            self.refresh()
-            return True
+            # Refresh is a last resort and its result decides availability.
+            # Returning True unconditionally here kept handing out an account
+            # whose token was about to expire, so requests went upstream with a
+            # stale credential and came back 401/403.
+            return self.refresh()
         return self.refresh()
 
     def headers(self, purpose="chat"):
@@ -281,6 +303,13 @@ class Account(object):
         return headers
 
     def refresh(self):
+        # Serialise refreshes per account, then re-check inside the lock: the
+        # upstream rotates the refresh token, so two concurrent refreshes can
+        # make the second one send a token that the first already consumed.
+        with self._refresh_lock:
+            return self._refresh_locked()
+
+    def _refresh_locked(self):
         if not self.refresh_token:
             self.last_error = "no refresh token; sign in again"
             return False

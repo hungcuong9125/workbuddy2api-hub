@@ -18,6 +18,14 @@ import re
 import json
 import os
 MAX_PAYLOAD_BYTES = int(os.environ.get("WB_MAX_PAYLOAD_BYTES", 50 * 1024 * 1024))  # 50MB limit
+# Upstream chat calls may hold a handler thread for up to 600s, and every
+# request gets its own thread, so an unbounded pool lets a handful of slow
+# clients pin hundreds of threads and the memory behind them. Bound the number
+# of chat/responses requests in flight; dashboard and management calls are not
+# affected. Excess callers wait briefly, then get a 503 instead of queueing
+# forever.
+MAX_CONCURRENT_CHAT = int(os.environ.get("WB_MAX_CONCURRENT_CHAT", 32))
+CHAT_SLOT_WAIT_SECONDS = float(os.environ.get("WB_CHAT_SLOT_WAIT", 30))
 import socket
 import sys
 import threading
@@ -143,6 +151,7 @@ def cors_origin_allowed(path):
     return path.startswith(CORS_PATH_PREFIXES)
 _lock = threading.Lock()
 _login_lock = threading.Lock()
+_chat_slots = threading.BoundedSemaphore(MAX_CONCURRENT_CHAT)
 _login_attempts = {}  # ip -> list of timestamp
 def _prune_login_attempts(now=None, window=60):
     """Drop stale per-IP entries so the dict cannot grow without bound.
@@ -227,21 +236,43 @@ def row_matches_realm(row, realm):
     model = row.get("model")
     if model: return detect_model_realm(model) == realm
     return realm == "intl"
+def row_outcome(row):
+    """Terminal state of a request row.
+
+    Rows written before the outcome field existed only carry error/status,
+    so they fall back to that: an error row is a failure, anything else is a
+    completed request. One helper keeps every reader agreeing on the answer.
+    """
+    o = row.get("outcome")
+    if o:
+        return o
+    return "failed" if row.get("error") else "completed"
 def record_usage(model, usage, stream=None, elapsed_ms=None, ttft_ms=None, gen_ms=None, fp=None,
-                account=None):
-    """Accumulate stats, append a JSONL row, and persist the summary."""
-    fields = _extract_usage(usage)
-    if not fields:
-        return None
+                account=None, outcome="completed"):
+    """Record one finished request as exactly one JSONL row.
+
+    A request without a usage block still gets a row (flagged usage_missing):
+    skipping it entirely used to drop the request from the request count,
+    success rate and latency samples, not just from the token totals.
+
+    outcome is the terminal state: completed / client_aborted /
+    upstream_aborted / failed. It is deliberately not called status, because
+    status already means the HTTP status code on error rows.
+    """
+    fields = _extract_usage(usage) or {}
+    usage_missing = not fields
     row = {
         "at": time.time(),
         "iso": time.strftime("%Y-%m-%dT%H:%M:%S"),
         "model": model,
         "stream": bool(stream),
+        "outcome": outcome,
         "elapsed_ms": elapsed_ms,
         "ttft_ms": ttft_ms,
         "gen_ms": gen_ms,
     }
+    if usage_missing:
+        row["usage_missing"] = True
     row.update(fields)
     if fp:
         row.update(fp)
@@ -251,11 +282,12 @@ def record_usage(model, usage, stream=None, elapsed_ms=None, ttft_ms=None, gen_m
     row["realm"] = acc.realm if acc else CURRENT_REALM
     # Derived per-request rates (None-safe).
     if gen_ms and gen_ms > 0:
-        row["tokens_per_sec"] = round(fields["completion_tokens"] / (gen_ms / 1000.0), 2)
+        row["tokens_per_sec"] = round(fields.get("completion_tokens", 0) / (gen_ms / 1000.0), 2)
     # Share the denominator with the aggregate view (compute_usage_analytics),
     # otherwise the per-request row and the rollup disagree on the same data.
-    if fields["prompt_tokens"] > 0:
-        row["cache_hit_pct"] = round(fields["cached_tokens"] * 100.0 / fields["prompt_tokens"], 1)
+    if fields.get("prompt_tokens", 0) > 0:
+        row["cache_hit_pct"] = round(fields.get("cached_tokens", 0) * 100.0
+                                     / fields["prompt_tokens"], 1)
     with _lock:
         _usage["requests"] += 1
         for k in USAGE_FIELDS:
@@ -281,7 +313,8 @@ def record_usage(model, usage, stream=None, elapsed_ms=None, ttft_ms=None, gen_m
         dur = f" {elapsed_ms:.0f}ms" if elapsed_ms is not None else ""
         acc_tag = f" acct={account[:8]}" if account else ""
         speed_tag = f" {row.get('tokens_per_sec', 0)}t/s" if row.get("tokens_per_sec") else ""
-        log(f"chat done: model={model}{acc_tag}{dur} tokens={t_tokens} (in={fields.get('prompt_tokens',0)} out={fields.get('completion_tokens',0)}){speed_tag}", tag="chat")
+        miss_tag = " usage=missing" if usage_missing else ""
+        log(f"chat done: model={model}{acc_tag}{dur} tokens={t_tokens} (in={fields.get('prompt_tokens',0)} out={fields.get('completion_tokens',0)}){speed_tag}{miss_tag}", tag="chat")
     except Exception:
         pass
     return row
@@ -303,22 +336,43 @@ def _persist_usage(row, fail_label):
     except Exception as exc:
         log("%s: %s" % (fail_label, exc))
 
-def record_error(model, status, message, elapsed_ms=None, account=None):
-    """Count a failed request and append it to the log so errors are visible.
+def record_error(model, status, message, elapsed_ms=None, account=None,
+                 usage=None, stream=None, ttft_ms=None, gen_ms=None, fp=None,
+                 outcome="failed"):
+    """Record one failed request as exactly one JSONL row.
 
     Passing the account uid records which account the request was bound to, so
     per-realm success rates attribute the failure by fact instead of falling
     back to guessing from the model name.
+
+    The usage argument carries whatever the upstream had already reported when
+    a stream broke. An aborted stream used to write an error row AND a usage
+    row, so one request counted as both a failure and a success; the token
+    totals stay accurate here without inflating the request count.
+
+    status stays the HTTP status code; outcome is the terminal state, so the
+    two never disagree about what the field means.
     """
+    fields = _extract_usage(usage) or {}
     row = {
         "at": time.time(),
         "iso": time.strftime("%Y-%m-%dT%H:%M:%S"),
         "model": model,
         "error": True,
+        "outcome": outcome,
         "status": status,
         "message": str(message)[:200],
         "elapsed_ms": elapsed_ms,
     }
+    if stream is not None:
+        row["stream"] = bool(stream)
+    if ttft_ms is not None:
+        row["ttft_ms"] = ttft_ms
+    if gen_ms is not None:
+        row["gen_ms"] = gen_ms
+    row.update(fields)
+    if fp:
+        row.update(fp)
     if account:
         row["account"] = account
         acc = POOL.get(account) if POOL else None
@@ -343,9 +397,13 @@ _perf_cache = {}
 _perf_lock = threading.Lock()
 
 
-def perf_stats(sample=5000, realm=None, ttl=10):
+def perf_stats(sample=5000, realm=None, ttl=None):
     """Cached wrapper: parsing thousands of rows is CPU-heavy, and the
-    dashboard polls this endpoint every few seconds."""
+    dashboard polls this endpoint every few seconds.
+
+    Rebuilds under the lock so a burst of pollers cannot each start their own
+    scan of the log."""
+    ttl = _STATS_TTL if ttl is None else ttl
     r = realm or CURRENT_REALM
     try:
         key = (int(sample), r)
@@ -356,8 +414,7 @@ def perf_stats(sample=5000, realm=None, ttl=10):
         hit = _perf_cache.get(key)
         if hit is not None and (now - hit[0]) < ttl:
             return hit[1]
-    data = _perf_stats_uncached(sample, realm)
-    with _perf_lock:
+        data = _perf_stats_uncached(sample, realm)
         _perf_cache[key] = (time.time(), data)
     return data
 
@@ -365,7 +422,7 @@ def perf_stats(sample=5000, realm=None, ttl=10):
 def _perf_stats_uncached(sample=5000, realm=None):
     """Latency percentiles + derived rates, computed from the JSONL log."""
     ttfts, gens, walls, rates, hits, tok_rates = [], [], [], [], [], []
-    total = ok = err = 0
+    total = ok = err = aborted = 0
     # 按模型聚合性能指标
     m_buckets = {}
     # 只读日志末尾 sample 行：原先 readlines() 会把整个日志读成字符串列表
@@ -381,35 +438,49 @@ def _perf_stats_uncached(sample=5000, realm=None):
         if realm and not row_matches_realm(r, realm):
             continue
         total += 1
-        if r.get("error"):
-            err += 1
+        outcome = row_outcome(r)
+        # Every row reaches the model bucket, whatever its outcome, so a model
+        # that only ever saw cancellations still shows up with a zero success
+        # count instead of silently vanishing from the per-model table.
+        m_id = r.get("model") or "unknown"
+        mb = m_buckets.setdefault(m_id, {"total": 0, "ok": 0, "err": 0, "aborted": 0,
+                                        "ttfts": [], "gens": [], "walls": [],
+                                        "tok_rates": [], "hits": []})
+        mb["total"] += 1
+        # A client that walks away is not a gateway failure, so it counts as
+        # neither ok nor err - it gets its own bucket instead of silently
+        # dragging the success rate down.
+        if outcome == "client_aborted":
+            aborted += 1
+            mb["aborted"] += 1
             if r.get("elapsed_ms"):
                 walls.append(r["elapsed_ms"])
+                mb["walls"].append(r["elapsed_ms"])
+            continue
+        if outcome != "completed":
+            err += 1
+            mb["err"] += 1
+            if r.get("elapsed_ms"):
+                walls.append(r["elapsed_ms"])
+                mb["walls"].append(r["elapsed_ms"])
             continue
         ok += 1
+        mb["ok"] += 1
         if r.get("ttft_ms") is not None:
             ttfts.append(r["ttft_ms"])
+            mb["ttfts"].append(r["ttft_ms"])
         if r.get("gen_ms") is not None:
             gens.append(r["gen_ms"])
+            mb["gens"].append(r["gen_ms"])
         if r.get("elapsed_ms") is not None:
             walls.append(r["elapsed_ms"])
+            mb["walls"].append(r["elapsed_ms"])
         if r.get("tokens_per_sec"):
             tok_rates.append(r["tokens_per_sec"])
+            mb["tok_rates"].append(r["tokens_per_sec"])
         if r.get("cache_hit_pct") is not None:
             hits.append(r["cache_hit_pct"])
-        # 模型分桶记录
-        m_id = r.get("model") or "unknown"
-        mb = m_buckets.setdefault(m_id, {"total": 0, "ok": 0, "err": 0, "ttfts": [], "gens": [], "walls": [], "tok_rates": [], "hits": []})
-        mb["total"] += 1
-        if r.get("error"):
-            mb["err"] += 1
-        else:
-            mb["ok"] += 1
-        if r.get("ttft_ms") is not None: mb["ttfts"].append(r["ttft_ms"])
-        if r.get("gen_ms") is not None: mb["gens"].append(r["gen_ms"])
-        if r.get("elapsed_ms") is not None: mb["walls"].append(r["elapsed_ms"])
-        if r.get("tokens_per_sec"): mb["tok_rates"].append(r["tokens_per_sec"])
-        if r.get("cache_hit_pct") is not None: mb["hits"].append(r["cache_hit_pct"])
+            mb["hits"].append(r["cache_hit_pct"])
     def block(vals):
         if not vals:
             return None
@@ -425,7 +496,11 @@ def _perf_stats_uncached(sample=5000, realm=None):
         "sampled": total,
         "success": ok,
         "errors": err,
-        "success_rate_pct": round(ok * 100.0 / total, 1) if total else None,
+        "client_aborted": aborted,
+        # Success rate is measured against requests the gateway actually
+        # finished; client cancellations are reported separately rather than
+        # being counted as failures.
+        "success_rate_pct": round(ok * 100.0 / (ok + err), 1) if (ok + err) else None,
         "ttft_ms": block(ttfts),
         "generation_ms": block(gens),
         "wall_ms": block(walls),
@@ -435,7 +510,9 @@ def _perf_stats_uncached(sample=5000, realm=None):
             mid: {
                 "requests": mb["total"],
                 "errors": mb["err"],
-                "success_rate_pct": round(mb["ok"] * 100.0 / mb["total"], 1) if mb["total"] else None,
+                "client_aborted": mb.get("aborted", 0),
+                "success_rate_pct": round(mb["ok"] * 100.0 / (mb["ok"] + mb["err"]), 1)
+                                     if (mb["ok"] + mb["err"]) else None,
                 "ttft_ms": block(mb["ttfts"]),
                 "generation_ms": block(mb["gens"]),
                 "wall_ms": block(mb["walls"]),
@@ -446,18 +523,28 @@ def _perf_stats_uncached(sample=5000, realm=None):
     }
 _snap_cache = {}
 _snap_lock = threading.Lock()
+# The dashboard polls every 5s. A TTL shorter than the poll interval makes
+# every other poll do the full uncached scan; 15s means at most one rebuild
+# per three polls while the numbers stay a few seconds stale at worst.
+_STATS_TTL = float(os.environ.get("WB_STATS_TTL", 15))
 
 
-def usage_snapshot(realm=None, ttl=10):
-    """Cached wrapper: the dashboard polls this every few seconds."""
+def usage_snapshot(realm=None, ttl=None):
+    """Cached wrapper: the dashboard polls this every few seconds.
+
+    The rebuild happens while holding the lock on purpose. Releasing it first
+    let every concurrent caller run its own full scan of the JSONL when the
+    entry expired, so a single dashboard refresh could trigger several scans
+    of the same file.
+    """
+    ttl = _STATS_TTL if ttl is None else ttl
     r = realm or CURRENT_REALM
     now = time.time()
     with _snap_lock:
         hit = _snap_cache.get(r)
         if hit is not None and (now - hit[0]) < ttl:
             return hit[1]
-    data = _usage_snapshot_uncached(r)
-    with _snap_lock:
+        data = _usage_snapshot_uncached(r)
         _snap_cache[r] = (time.time(), data)
     return data
 
@@ -479,7 +566,8 @@ def _usage_snapshot_uncached(realm=None):
                     continue
                 if r and not row_matches_realm(row, r):
                     continue
-                if row.get("error"):
+                outcome = row_outcome(row)
+                if outcome != "completed":
                     snap["errors"] += 1
                 else:
                     snap["requests"] += 1
@@ -550,13 +638,40 @@ def _tail_lines(path, max_lines, chunk=256 * 1024):
     return lines
 
 
+_count_cache = {}
+_count_lock = threading.Lock()
+# The count only feeds the "N records" label. The poll interval is 5s, so a
+# TTL of the same length would miss on nearly every poll; 30s turns a full
+# scan per poll into one scan per six polls while the label stays current
+# enough for a record total that only ever grows.
+_COUNT_TTL = float(os.environ.get("WB_COUNT_TTL", 30))
+
+
 def count_usage_rows(realm=None):
-    """Cheap row count - substring match instead of a full JSON parse.
+    """Cached row count - substring match instead of a full JSON parse.
 
     Rows written before the `realm` field existed (they are all error rows)
     have to fall back to the account/model heuristic in row_matches_realm,
     so those few are still parsed properly.
+
+    This runs on every /usage/recent poll purely to render the page total,
+    and a full scan of the file dominated that endpoint (measured at ~50% of
+    its cost on a 45MB log). A short TTL keeps the number honest while
+    removing the scan from the poll path.
     """
+    r = realm or ""
+    now = time.time()
+    with _count_lock:
+        hit = _count_cache.get(r)
+        if hit is not None and (now - hit[0]) < _COUNT_TTL:
+            return hit[1]
+    n = _count_usage_rows_uncached(realm)
+    with _count_lock:
+        _count_cache[r] = (time.time(), n)
+    return n
+
+
+def _count_usage_rows_uncached(realm=None):
     needles = ()
     if realm:
         needles = ('"realm": "%s"' % realm, '"realm":"%s"' % realm)
@@ -719,14 +834,16 @@ _byacct_cache = {"at": 0.0, "data": None}
 _byacct_lock = threading.Lock()
 
 
-def usage_by_account(ttl=10):
-    """Cached wrapper: full aggregation over the whole log is expensive."""
+def usage_by_account(ttl=None):
+    """Cached wrapper: full aggregation over the whole log is expensive.
+
+    Rebuilds under the lock, same reasoning as usage_snapshot."""
+    ttl = _STATS_TTL if ttl is None else ttl
     now = time.time()
     with _byacct_lock:
         if _byacct_cache["data"] is not None and (now - _byacct_cache["at"]) < ttl:
             return _byacct_cache["data"]
-    data = _usage_by_account_uncached()
-    with _byacct_lock:
+        data = _usage_by_account_uncached()
         _byacct_cache["at"] = time.time()
         _byacct_cache["data"] = data
     return data
@@ -771,30 +888,27 @@ _analytics_cache = {"at": 0.0, "data": None}
 _analytics_lock = threading.Lock()
 
 
-def compute_usage_analytics(ttl=10):
+def compute_usage_analytics(ttl=None):
     """Cached analytics payload.
 
     Unlike perf_stats/usage_snapshot/usage_by_account this used to run
     uncached, re-reading the whole JSONL on every call while the metrics tab
-    polls it every 5 seconds. Same 10s TTL as its siblings now.
+    polls it every 5 seconds. Same shared TTL as its siblings now, and the
+    rebuild runs under the lock so parallel pollers do not each scan the log.
     """
+    ttl = _STATS_TTL if ttl is None else ttl
     now = time.time()
     with _analytics_lock:
         hit = _analytics_cache["data"]
         if hit is not None and (now - _analytics_cache["at"]) < ttl:
             return hit
-    data = _compute_usage_analytics_uncached()
-    with _analytics_lock:
+        data = _compute_usage_analytics_uncached()
         _analytics_cache["at"] = time.time()
         _analytics_cache["data"] = data
     return data
 
 
-def _compute_usage_analytics_uncached():
-    """Detailed analytics for Token, Cache, and Reasoning metrics page."""
-    now = time.localtime()
-    today_ts = time.mktime((now.tm_year, now.tm_mon, now.tm_mday, 0, 0, 0, 0, 0, -1))
-    def new_stat():
+def _new_analytics_stat():
         return {
             "requests": 0, "errors": 0,
             "prompt_tokens": 0, "completion_tokens": 0, "reasoning_tokens": 0,
@@ -803,10 +917,10 @@ def _compute_usage_analytics_uncached():
             "speed_sum": 0.0, "speed_n": 0,
             "elapsed_sum": 0.0, "elapsed_n": 0,
         }
-    all_summary = new_stat()
-    today_summary = new_stat()
-    acct_map = {}
-    model_map = {}
+
+
+def _scan_usage_log(all_summary, today_summary, acct_map, model_map, today_ts):
+    """Walk the usage JSONL once, folding every row into the maps."""
     if os.path.exists(USAGE_LOG):
         try:
             with open(USAGE_LOG, encoding="utf-8") as fh:
@@ -818,7 +932,15 @@ def _compute_usage_analytics_uncached():
                         r = json.loads(line)
                     except Exception:
                         continue
-                    is_err = bool(r.get("error"))
+                    # Only a genuine gateway/upstream failure is an error.
+                    # A client cancellation is not: its token counts are
+                    # incomplete, and folding them into the ratios this page
+                    # reports would understate cache hit and speed. It is
+                    # counted in perf_stats instead.
+                    outcome = row_outcome(r)
+                    if outcome == "client_aborted":
+                        continue
+                    is_err = outcome != "completed"
                     at = r.get("at", 0)
                     is_today = (at >= today_ts)
                     acct_uid = r.get("account") or "(unattributed)"
@@ -828,20 +950,24 @@ def _compute_usage_analytics_uncached():
                             stat_obj["errors"] += 1
                         else:
                             stat_obj["requests"] += 1
-                            stat_obj["prompt_tokens"] += (r.get("prompt_tokens") or 0)
-                            stat_obj["completion_tokens"] += (r.get("completion_tokens") or 0)
-                            stat_obj["reasoning_tokens"] += (r.get("reasoning_tokens") or 0)
-                            stat_obj["cached_tokens"] += (r.get("cached_tokens") or 0)
-                            stat_obj["total_tokens"] += (r.get("total_tokens") or 0)
-                            if r.get("ttft_ms"):
-                                stat_obj["ttft_sum"] += r["ttft_ms"]
-                                stat_obj["ttft_n"] += 1
-                            if r.get("tokens_per_sec"):
-                                stat_obj["speed_sum"] += r["tokens_per_sec"]
-                                stat_obj["speed_n"] += 1
-                            if r.get("elapsed_ms"):
-                                stat_obj["elapsed_sum"] += r["elapsed_ms"]
-                                stat_obj["elapsed_n"] += 1
+                        # Token totals follow actual consumption, so a request
+                        # that failed after the upstream had already billed for
+                        # tokens still shows them. Only the request/error
+                        # counters depend on the outcome.
+                        stat_obj["prompt_tokens"] += (r.get("prompt_tokens") or 0)
+                        stat_obj["completion_tokens"] += (r.get("completion_tokens") or 0)
+                        stat_obj["reasoning_tokens"] += (r.get("reasoning_tokens") or 0)
+                        stat_obj["cached_tokens"] += (r.get("cached_tokens") or 0)
+                        stat_obj["total_tokens"] += (r.get("total_tokens") or 0)
+                        if r.get("ttft_ms"):
+                            stat_obj["ttft_sum"] += r["ttft_ms"]
+                            stat_obj["ttft_n"] += 1
+                        if r.get("tokens_per_sec"):
+                            stat_obj["speed_sum"] += r["tokens_per_sec"]
+                            stat_obj["speed_n"] += 1
+                        if r.get("elapsed_ms"):
+                            stat_obj["elapsed_sum"] += r["elapsed_ms"]
+                            stat_obj["elapsed_n"] += 1
                     feed(all_summary, is_err)
                     if is_today:
                         feed(today_summary, is_err)
@@ -851,8 +977,8 @@ def _compute_usage_analytics_uncached():
                             "nickname": acct_uid,
                             "realm": r.get("realm", ""),
                             "domain": "",
-                            "today": new_stat(),
-                            "all_time": new_stat(),
+                            "today": _new_analytics_stat(),
+                            "all_time": _new_analytics_stat(),
                             "today_models": {},
                             "all_models": {},
                         }
@@ -870,12 +996,16 @@ def _compute_usage_analytics_uncached():
                             tdm["tokens"] += (r.get("total_tokens") or 0)
                             tdm["reasoning"] += (r.get("reasoning_tokens") or 0)
                     if m_id not in model_map:
-                        model_map[m_id] = {"model": m_id, "today": new_stat(), "all_time": new_stat()}
+                        model_map[m_id] = {"model": m_id, "today": _new_analytics_stat(), "all_time": _new_analytics_stat()}
                     feed(model_map[m_id]["all_time"], is_err)
                     if is_today:
                         feed(model_map[m_id]["today"], is_err)
         except Exception as exc:
             log("compute_usage_analytics failed: %s" % exc)
+
+
+def _enrich_accounts_from_pool(acct_map):
+    """Attach nickname/realm/credits for accounts that saw no traffic."""
     if POOL:
         for a in POOL.accounts:
             if a.uid in acct_map:
@@ -890,12 +1020,14 @@ def _compute_usage_analytics_uncached():
                     "realm": a.realm,
                     "domain": a.domain,
                     "credits": getattr(a, "credits", None) or {},
-                    "today": new_stat(),
-                    "all_time": new_stat(),
+                    "today": _new_analytics_stat(),
+                    "all_time": _new_analytics_stat(),
                     "today_models": {},
                     "all_models": {},
                 }
-    def finalize(stat_obj):
+
+
+def _finalize_analytics_stat(stat_obj):
         p = stat_obj["prompt_tokens"]
         c = stat_obj["cached_tokens"]
         out = stat_obj["completion_tokens"]
@@ -906,14 +1038,25 @@ def _compute_usage_analytics_uncached():
         stat_obj["speed_avg"] = round(stat_obj["speed_sum"] / stat_obj["speed_n"], 1) if stat_obj["speed_n"] > 0 else 0.0
         stat_obj["elapsed_ms_avg"] = round(stat_obj["elapsed_sum"] / stat_obj["elapsed_n"]) if stat_obj["elapsed_n"] > 0 else 0
         return stat_obj
-    finalize(all_summary)
-    finalize(today_summary)
+
+def _compute_usage_analytics_uncached():
+    """Detailed analytics for Token, Cache, and Reasoning metrics page."""
+    now = time.localtime()
+    today_ts = time.mktime((now.tm_year, now.tm_mon, now.tm_mday, 0, 0, 0, 0, 0, -1))
+    all_summary = _new_analytics_stat()
+    today_summary = _new_analytics_stat()
+    acct_map = {}
+    model_map = {}
+    _scan_usage_log(all_summary, today_summary, acct_map, model_map, today_ts)
+    _enrich_accounts_from_pool(acct_map)
+    _finalize_analytics_stat(all_summary)
+    _finalize_analytics_stat(today_summary)
     for a in acct_map.values():
-        finalize(a["today"])
-        finalize(a["all_time"])
+        _finalize_analytics_stat(a["today"])
+        _finalize_analytics_stat(a["all_time"])
     for m in model_map.values():
-        finalize(m["today"])
-        finalize(m["all_time"])
+        _finalize_analytics_stat(m["today"])
+        _finalize_analytics_stat(m["all_time"])
     accts_list = sorted(acct_map.values(), key=lambda a: (-a["today"]["total_tokens"], -a["all_time"]["total_tokens"]))
     models_list = sorted(model_map.values(), key=lambda m: (-m["today"]["total_tokens"], -m["all_time"]["total_tokens"]))
     return {
@@ -951,7 +1094,7 @@ def runtime_settings_view():
         "accounts_dir": ACCOUNTS_DIR,
         "usage_dir": USAGE_DIR,
         "settings_file": wb_settings.settings_path(ACCOUNTS_DIR),
-        "version": "1.4.3",
+        "version": "1.4.5",
     }
 def current_account():
     """Account used for display purposes (health / usage summaries)."""
@@ -1677,6 +1820,23 @@ def build_upstream_body(payload):
     if "stream_options" not in body:
         body["stream_options"] = {"include_usage": True}
     return body
+class ContentRejected(Exception):
+    """Upstream content review rejected this request (403 / code 11140).
+
+    Not an account problem: another credential gets the same 403 for the same
+    content, so it is passed straight through instead of cooling the pool.
+    """
+
+    def __init__(self, http_error=None, detail=""):
+        self.http_error = http_error
+        self.detail = detail or ""
+        super().__init__("upstream rejected the request content (403)")
+
+    @property
+    def code(self):
+        return 403
+
+
 class RateLimited(Exception):
     """Upstream throttled this model (429 / code 6004). Distinct from a dead
     pool: the credential is fine, only the model is cooling down for a while."""
@@ -1699,17 +1859,43 @@ def retry_after_seconds(model, realm):
 
 
 def realm_model_throttled(realm, model):
-    """True when accounts exist and are healthy but all are cooling this model."""
+    """True when accounts exist and are healthy but all are cooling this model.
+
+    Only a *model* cooldown counts. A plain account cooldown usually comes from
+    a transient network error, and reporting that as "rate limited" told
+    clients to back off from a model that was never throttled.
+    """
     if not POOL:
         return (False, 0)
     existing = [a for a in POOL.accounts
                 if a.realm == realm and a.enabled and a.access_token]
     if not existing:
         return (False, 0)
-    waits = [a.throttle_wait(model=model) for a in existing]
+    waits = []
+    for a in existing:
+        wait = getattr(a, "model_cooldowns", {}).get(model, 0.0) - time.time()
+        waits.append(max(0.0, wait))
     if waits and all(w > 0 for w in waits):
         return (True, int(min(waits)))
     return (False, 0)
+
+
+def is_transient(exc):
+    """Network-level flakiness that deserves a retry, not a cooldown.
+
+    Upstream occasionally drops a TLS handshake mid-stream
+    (SSL: UNEXPECTED_EOF_WHILE_READING / Remote end closed connection).
+    Treating that as a dead account took the only intl account offline for 60s
+    and turned one hiccup into a 502 storm.
+    """
+    t = ("%s %s" % (type(exc).__name__, exc)).lower()
+    markers = (
+        "ssl", "unexpected_eof", "eof occurred", "remote end closed",
+        "connection reset", "connection aborted", "connectionreseterror",
+        "connectionabortederror", "timed out", "timeout", "temporarily unavailable",
+        "bad gateway", "502", "503", "504", "incompleteread",
+    )
+    return any(m in t for m in markers)
 
 
 def parse_rate_limit_reset(detail):
@@ -1757,10 +1943,17 @@ def open_upstream(payload, session_key=None, target_realm=None):
     last_uid = None
     last_429 = None
     last_429_detail = ""
-    for _ in range(total):
+    last_403_detail = ""
+    transient_hits = 0
+    max_attempts = max(2, total) + 1
+    for _attempt in range(max_attempts):
         account = POOL.pick_for_session(realm=realm, session_key=session_key,
                                         exclude=tried, model=model) if POOL else None
         if account is None:
+            if transient_hits and _attempt < max_attempts - 1:
+                tried.clear()
+                time.sleep(min(1.5 * transient_hits, 3.0))
+                continue
             break
         if account.realm != realm:
             if session_key and POOL: POOL.affinity.unbind(session_key)
@@ -1795,19 +1988,44 @@ def open_upstream(payload, session_key=None, target_realm=None):
                 last_429 = exc
                 last_429_detail = detail
                 continue
-            if exc.code in (401, 403):
-                log("account %s rejected (HTTP %s), rotating" % (account.uid[:8], exc.code))
+            if exc.code == 403:
+                try:
+                    detail = exc.read(400).decode("utf-8", "replace")
+                except Exception:
+                    detail = ""
+                log("upstream 403 for '%s' (content review), passing through" % model)
                 if session_key and POOL:
                     POOL.affinity.unbind(session_key)
-                account.note_error("HTTP %s" % exc.code,
+                last_error = exc
+                last_403_detail = detail
+                break
+            if exc.code == 401:
+                log("account %s rejected (HTTP 401), rotating" % account.uid[:8])
+                if session_key and POOL:
+                    POOL.affinity.unbind(session_key)
+                account.note_error("HTTP 401",
                                    cooldown=60,
                                    single_account=(total <= 1))
+                last_error = exc
+                continue
+            if exc.code in (500, 502, 503, 504):
+                transient_hits += 1
+                log("upstream %s for '%s', retrying" % (exc.code, model))
+                if session_key and POOL:
+                    POOL.affinity.unbind(session_key)
                 last_error = exc
                 continue
             raise
         except Exception as exc:
             if session_key and POOL:
                 POOL.affinity.unbind(session_key)
+            if is_transient(exc):
+                transient_hits += 1
+                log("upstream connection hiccup for '%s' (%s), retrying"
+                    % (model, type(exc).__name__))
+                last_error = exc
+                time.sleep(min(0.6 * transient_hits, 2.0))
+                continue
             account.note_error(str(exc)[:120], cooldown=60, single_account=(total <= 1))
             last_error = exc
             continue
@@ -1822,6 +2040,10 @@ def open_upstream(payload, session_key=None, target_realm=None):
         if last_429 is not None:
             exc = RateLimited(last_429, last_429_detail,
                               wait=retry_after_seconds(model, realm))
+            exc.account_uid = last_uid
+            raise exc
+        if last_403_detail:
+            exc = ContentRejected(last_error, last_403_detail)
             exc.account_uid = last_uid
             raise exc
         raise last_error
@@ -1842,6 +2064,16 @@ def extract_session_key(headers, payload):
     if key:
         return str(key).strip()
     return None
+
+def estimate_tokens(text):
+    if not text:
+        return 0
+    if not isinstance(text, str):
+        text = str(text)
+    cjk = sum(1 for c in text if '\u4e00' <= c <= '\u9fff' or '\u3400' <= c <= '\u4dbf')
+    other = len(text) - cjk
+    return cjk + max(1, int(other / 3.6)) if text else 0
+
 def aggregate_stream(raw_iter, model, resp_id):
     """Fold an SSE stream into one non-streaming chat.completion object."""
     content, reasoning, finish = [], [], "stop"
@@ -1863,8 +2095,10 @@ def aggregate_stream(raw_iter, model, resp_id):
             resp_id = chunk["id"]
         if chunk.get("model"):
             model = chunk["model"]
-        if chunk.get("usage"):
-            usage = chunk["usage"]
+        u = chunk.get("usage")
+        if u:
+            if usage is None or (u.get("total_tokens") or 0) >= (usage.get("total_tokens") or 0):
+                usage = u
         for choice in chunk.get("choices") or []:
             delta = choice.get("delta") or {}
             if delta.get("content"):
@@ -1939,6 +2173,19 @@ def aggregate_stream(raw_iter, model, resp_id):
     elif finish == "tool_calls":
         # 占位被全部过滤掉，无实际工具调用，降级为正常结束，防止客户端无限挂起等待
         finish = "stop"
+    if usage is None or (usage.get("total_tokens") or 0) == 0:
+        full_c = "".join(content)
+        full_r = "".join(reasoning)
+        if full_c or full_r:
+            comp = estimate_tokens(full_c) + estimate_tokens(full_r)
+            prompt_est = max(1, comp // 2)
+            usage = {
+                "prompt_tokens": prompt_est,
+                "completion_tokens": comp,
+                "total_tokens": prompt_est + comp,
+                "completion_tokens_details": {"reasoning_tokens": estimate_tokens(full_r)},
+                "prompt_tokens_details": {"cached_tokens": 0},
+            }
     out = {
         "id": resp_id or "chatcmpl-wb",
         "object": "chat.completion",
@@ -2104,8 +2351,8 @@ def _unwrap_custom_input(args):
         return parsed
     return args
 
-def responses_to_chat(payload):
-    """Translate a Responses API request body into a Chat Completions body."""
+def _responses_input_to_messages(payload):
+    """Turn the Responses input items into chat messages."""
     messages = []
     instructions = payload.get("instructions")
     if isinstance(instructions, str) and instructions.strip():
@@ -2272,6 +2519,12 @@ def responses_to_chat(payload):
                 # tool result leaves the transcript inconsistent upstream.
                 log("responses: WARNING unhandled input item type=%r keys=%s"
                     % (itype, sorted(item.keys())[:8]))
+    return messages
+
+
+def responses_to_chat(payload):
+    """Translate a Responses API request body into a Chat Completions body."""
+    messages = _responses_input_to_messages(payload)
     chat = {"model": payload.get("model"), "messages": messages}
     for key in ("temperature", "top_p", "seed"):
         if payload.get(key) is not None:
@@ -2293,6 +2546,7 @@ def responses_to_chat(payload):
     if payload.get("parallel_tool_calls") is not None:
         chat["parallel_tool_calls"] = payload["parallel_tool_calls"]
     return chat
+
 def _responses_usage(u):
     if not u:
         return None
@@ -2308,12 +2562,17 @@ def _responses_usage(u):
         "output_tokens_details": {"reasoning_tokens": det.get("reasoning_tokens") or 0},
         "total_tokens": u.get("total_tokens") or 0,
     }
-def chat_to_response(chat_obj, model, custom_names=None):
+def chat_to_response(chat_obj, model, custom_names=None, request_meta=None):
     """Fold a Chat Completions object into a Responses API response object.
 
     custom_names is the set of tool names the client declared as freeform
     ("custom"). Calls to those tools are re-inflated into custom_tool_call
     items so clients such as Codex recognise them.
+
+    request_meta echoes the request-level capabilities (tools, tool_choice,
+    parallel_tool_calls) back on the response. They used to be hardcoded to
+    tools=[], tool_choice=auto and parallel_tool_calls=true, so a client that
+    asked for something else was told the opposite of what it requested.
     """
     custom_names = custom_names or set()
     choice = (chat_obj.get("choices") or [{}])[0]
@@ -2381,11 +2640,12 @@ def chat_to_response(chat_obj, model, custom_names=None):
         "model": model,
         "output": output,
         "output_text": text,
-        "parallel_tool_calls": True,
-        "tool_choice": "auto",
-        "tools": [],
         "metadata": {},
     }
+    meta = request_meta or {}
+    obj["parallel_tool_calls"] = meta.get("parallel_tool_calls", True)
+    obj["tool_choice"] = meta.get("tool_choice", "auto")
+    obj["tools"] = meta.get("tools") or []
     u = _responses_usage(chat_obj.get("usage"))
     if u:
         obj["usage"] = u
@@ -2407,6 +2667,9 @@ def stream_responses_events(upstream, model, holder):
     text_buffer = ""
     dsml_tool_calls = []
     custom_names = set(holder.get("custom_names") or ())
+    # Echo the request capabilities the client actually sent, same as the
+    # non-streaming path; these were hardcoded before.
+    meta = holder.get("request_meta") or {}
     def resp_obj(status):
         obj = {
             "id": resp_id,
@@ -2416,9 +2679,9 @@ def stream_responses_events(upstream, model, holder):
             "model": model,
             "output": [o for o in outputs if o],
             "output_text": "".join(text_parts),
-            "parallel_tool_calls": True,
-            "tool_choice": "auto",
-            "tools": [],
+            "parallel_tool_calls": meta.get("parallel_tool_calls", True),
+            "tool_choice": meta.get("tool_choice", "auto"),
+            "tools": meta.get("tools") or [],
             "metadata": {},
         }
         u = _responses_usage(usage)
@@ -2446,6 +2709,155 @@ def stream_responses_events(upstream, model, holder):
             item["content"] = [{"type": "output_text", "text": "".join(text_parts),
                               "annotations": []}]
         return item
+    def _finalize():
+        # Close out the stream: reasoning item, structured tool calls,
+        # DSML fallback, the message item and response.completed.
+        nonlocal msg_index, text_buffer
+        if reason_index is not None and outputs[reason_index] is None:
+            full_r = "".join(reason_parts)
+            yield ev("response.reasoning_summary_text.done", {
+                "item_id": rs_id, "output_index": reason_index, "summary_index": 0, "text": full_r,
+            })
+            yield ev("response.reasoning_summary_part.done", {
+                "item_id": rs_id, "output_index": reason_index, "summary_index": 0,
+                "part": {"type": "summary_text", "text": full_r},
+            })
+            outputs[reason_index] = reason_item("completed")
+            yield ev("response.output_item.done",
+                     {"output_index": reason_index, "item": outputs[reason_index]})
+        # 1. Emit completed structured tool calls
+        for idx in sorted(tool_calls_map.keys()):
+            entry = tool_calls_map[idx]
+            if entry.get("custom"):
+                yield ev("response.custom_tool_call_input.done", {
+                    "output_index": entry["output_index"],
+                    "item_id": entry["item_id"],
+                    "call_id": entry["id"],
+                    "input": _unwrap_custom_input(entry["arguments"]),
+                })
+                fc_item = {
+                    "id": entry["item_id"],
+                    "type": "custom_tool_call",
+                    "status": "completed",
+                    "call_id": entry["id"],
+                    "name": entry["name"],
+                    "input": _unwrap_custom_input(entry["arguments"]),
+                }
+            else:
+                yield ev("response.function_call_arguments.done", {
+                    "output_index": entry["output_index"],
+                    "call_id": entry["id"],
+                    "arguments": entry["arguments"],
+                })
+                fc_item = {
+                    "id": entry["item_id"],
+                    "type": "function_call",
+                    "status": "completed",
+                    "call_id": entry["id"],
+                    "name": entry["name"],
+                    "arguments": entry["arguments"],
+                }
+            outputs[entry["output_index"]] = fc_item
+            yield ev("response.output_item.done", {
+                "output_index": entry["output_index"],
+                "item": fc_item,
+            })
+        # Flush remaining buffered text if any
+        if text_buffer:
+            calls_rem, clean_rem = parse_dsml_tool_calls(text_buffer)
+            if calls_rem:
+                dsml_tool_calls.extend(calls_rem)
+            if clean_rem:
+                text_parts.append(clean_rem)
+                if msg_index is not None:
+                    yield ev("response.output_text.delta", {
+                        "item_id": msg_id, "output_index": msg_index,
+                        "content_index": 0, "delta": clean_rem,
+                    })
+            text_buffer = ""
+        # 2. DSML fallback: emit buffered/parsed DSML tool calls if no structured tool_calls were emitted
+        full_text = "".join(text_parts)
+        dsml_calls = dsml_tool_calls
+        if not dsml_calls:
+            extra_calls, clean_text = parse_dsml_tool_calls(full_text)
+            if extra_calls:
+                dsml_calls = extra_calls
+                full_text = clean_text
+        if dsml_calls and not tool_calls_map:
+            for dc in dsml_calls:
+                out_idx = len(outputs)
+                fc_item = {
+                    "id": _new_id("fc_"),
+                    "type": "function_call",
+                    "status": "completed",
+                    "call_id": dc.get("id") or _new_id("call_"),
+                    "name": dc.get("name") or "",
+                    "arguments": dc.get("arguments") or "{}",
+                }
+                outputs.append(fc_item)
+                yield ev("response.output_item.added", {
+                    "output_index": out_idx,
+                    "item": dict(fc_item, status="in_progress", arguments=""),
+                })
+                yield ev("response.function_call_arguments.delta", {
+                    "output_index": out_idx,
+                    "call_id": fc_item["call_id"],
+                    "delta": fc_item["arguments"],
+                })
+                yield ev("response.function_call_arguments.done", {
+                    "output_index": out_idx,
+                    "call_id": fc_item["call_id"],
+                    "arguments": fc_item["arguments"],
+                })
+                yield ev("response.output_item.done", {
+                    "output_index": out_idx,
+                    "item": fc_item,
+                })
+        # 3. Emit message item only if text was emitted OR no other output item exists
+        has_other_items = any(o for o in outputs if o)
+        if msg_index is not None or full_text or not has_other_items:
+            if msg_index is None:
+                msg_index = len(outputs)
+                outputs.append(None)
+                yield ev("response.output_item.added", {
+                    "output_index": msg_index,
+                    "item": {"id": msg_id, "type": "message", "status": "in_progress",
+                             "role": "assistant", "content": []},
+                })
+                yield ev("response.content_part.added", {
+                    "item_id": msg_id, "output_index": msg_index, "content_index": 0,
+                    "part": {"type": "output_text", "text": "", "annotations": []},
+                })
+            yield ev("response.output_text.done", {
+                "item_id": msg_id, "output_index": msg_index, "content_index": 0, "text": full_text,
+            })
+            yield ev("response.content_part.done", {
+                "item_id": msg_id, "output_index": msg_index, "content_index": 0,
+                "part": {"type": "output_text", "text": full_text, "annotations": []},
+            })
+            outputs[msg_index] = msg_item("completed")
+            yield ev("response.output_item.done", {"output_index": msg_index, "item": outputs[msg_index]})
+        nonlocal usage
+        if usage is None or (usage.get("total_tokens") or 0) == 0:
+            out_txt = "".join(text_parts)
+            rs_txt = "".join(reason_parts)
+            if out_txt or rs_txt:
+                comp = estimate_tokens(out_txt) + estimate_tokens(rs_txt)
+                prompt_est = max(1, estimate_tokens(str(meta.get("input") or "")))
+                usage = {
+                    "prompt_tokens": prompt_est,
+                    "completion_tokens": comp,
+                    "total_tokens": prompt_est + comp,
+                    "completion_tokens_details": {"reasoning_tokens": estimate_tokens(rs_txt)},
+                    "prompt_tokens_details": {"cached_tokens": 0},
+                }
+                holder["usage"] = usage
+        status = "completed" if finish != "length" else "incomplete"
+        final = resp_obj(status)
+        if finish == "length":
+            final["incomplete_details"] = {"reason": "max_output_tokens"}
+        yield ev("response.completed", {"response": final})
+
     yield ev("response.created", {"response": resp_obj("in_progress")})
     yield ev("response.in_progress", {"response": resp_obj("in_progress")})
     for raw in upstream:
@@ -2456,9 +2868,11 @@ def stream_responses_events(upstream, model, holder):
             chunk = json.loads(data)
         except Exception:
             continue
-        if usage is None and chunk.get("usage"):
-            usage = chunk["usage"]
-            holder["usage"] = usage
+        u = chunk.get("usage")
+        if u:
+            if usage is None or (u.get("total_tokens") or 0) >= (usage.get("total_tokens") or 0):
+                usage = u
+                holder["usage"] = usage
         for choice in chunk.get("choices") or []:
             delta = choice.get("delta") or {}
             piece = delta.get("reasoning_content")
@@ -2619,135 +3033,8 @@ def stream_responses_events(upstream, model, holder):
                             break
             if choice.get("finish_reason"):
                 finish = choice["finish_reason"]
-    if reason_index is not None and outputs[reason_index] is None:
-        full_r = "".join(reason_parts)
-        yield ev("response.reasoning_summary_text.done", {
-            "item_id": rs_id, "output_index": reason_index, "summary_index": 0, "text": full_r,
-        })
-        yield ev("response.reasoning_summary_part.done", {
-            "item_id": rs_id, "output_index": reason_index, "summary_index": 0,
-            "part": {"type": "summary_text", "text": full_r},
-        })
-        outputs[reason_index] = reason_item("completed")
-        yield ev("response.output_item.done",
-                 {"output_index": reason_index, "item": outputs[reason_index]})
-    # 1. Emit completed structured tool calls
-    for idx in sorted(tool_calls_map.keys()):
-        entry = tool_calls_map[idx]
-        if entry.get("custom"):
-            yield ev("response.custom_tool_call_input.done", {
-                "output_index": entry["output_index"],
-                "item_id": entry["item_id"],
-                "call_id": entry["id"],
-                "input": _unwrap_custom_input(entry["arguments"]),
-            })
-            fc_item = {
-                "id": entry["item_id"],
-                "type": "custom_tool_call",
-                "status": "completed",
-                "call_id": entry["id"],
-                "name": entry["name"],
-                "input": _unwrap_custom_input(entry["arguments"]),
-            }
-        else:
-            yield ev("response.function_call_arguments.done", {
-                "output_index": entry["output_index"],
-                "call_id": entry["id"],
-                "arguments": entry["arguments"],
-            })
-            fc_item = {
-                "id": entry["item_id"],
-                "type": "function_call",
-                "status": "completed",
-                "call_id": entry["id"],
-                "name": entry["name"],
-                "arguments": entry["arguments"],
-            }
-        outputs[entry["output_index"]] = fc_item
-        yield ev("response.output_item.done", {
-            "output_index": entry["output_index"],
-            "item": fc_item,
-        })
-    # Flush remaining buffered text if any
-    if text_buffer:
-        calls_rem, clean_rem = parse_dsml_tool_calls(text_buffer)
-        if calls_rem:
-            dsml_tool_calls.extend(calls_rem)
-        if clean_rem:
-            text_parts.append(clean_rem)
-            if msg_index is not None:
-                yield ev("response.output_text.delta", {
-                    "item_id": msg_id, "output_index": msg_index,
-                    "content_index": 0, "delta": clean_rem,
-                })
-        text_buffer = ""
-    # 2. DSML fallback: emit buffered/parsed DSML tool calls if no structured tool_calls were emitted
-    full_text = "".join(text_parts)
-    dsml_calls = dsml_tool_calls
-    if not dsml_calls:
-        extra_calls, clean_text = parse_dsml_tool_calls(full_text)
-        if extra_calls:
-            dsml_calls = extra_calls
-            full_text = clean_text
-    if dsml_calls and not tool_calls_map:
-        for dc in dsml_calls:
-            out_idx = len(outputs)
-            fc_item = {
-                "id": _new_id("fc_"),
-                "type": "function_call",
-                "status": "completed",
-                "call_id": dc.get("id") or _new_id("call_"),
-                "name": dc.get("name") or "",
-                "arguments": dc.get("arguments") or "{}",
-            }
-            outputs.append(fc_item)
-            yield ev("response.output_item.added", {
-                "output_index": out_idx,
-                "item": dict(fc_item, status="in_progress", arguments=""),
-            })
-            yield ev("response.function_call_arguments.delta", {
-                "output_index": out_idx,
-                "call_id": fc_item["call_id"],
-                "delta": fc_item["arguments"],
-            })
-            yield ev("response.function_call_arguments.done", {
-                "output_index": out_idx,
-                "call_id": fc_item["call_id"],
-                "arguments": fc_item["arguments"],
-            })
-            yield ev("response.output_item.done", {
-                "output_index": out_idx,
-                "item": fc_item,
-            })
-    # 3. Emit message item only if text was emitted OR no other output item exists
-    has_other_items = any(o for o in outputs if o)
-    if msg_index is not None or full_text or not has_other_items:
-        if msg_index is None:
-            msg_index = len(outputs)
-            outputs.append(None)
-            yield ev("response.output_item.added", {
-                "output_index": msg_index,
-                "item": {"id": msg_id, "type": "message", "status": "in_progress",
-                         "role": "assistant", "content": []},
-            })
-            yield ev("response.content_part.added", {
-                "item_id": msg_id, "output_index": msg_index, "content_index": 0,
-                "part": {"type": "output_text", "text": "", "annotations": []},
-            })
-        yield ev("response.output_text.done", {
-            "item_id": msg_id, "output_index": msg_index, "content_index": 0, "text": full_text,
-        })
-        yield ev("response.content_part.done", {
-            "item_id": msg_id, "output_index": msg_index, "content_index": 0,
-            "part": {"type": "output_text", "text": full_text, "annotations": []},
-        })
-        outputs[msg_index] = msg_item("completed")
-        yield ev("response.output_item.done", {"output_index": msg_index, "item": outputs[msg_index]})
-    status = "completed" if finish != "length" else "incomplete"
-    final = resp_obj(status)
-    if finish == "length":
-        final["incomplete_details"] = {"reason": "max_output_tokens"}
-    yield ev("response.completed", {"response": final})
+    yield from _finalize()
+
 # ---------------------------------------------------------------------------
 # HTTP layer
 # ---------------------------------------------------------------------------
@@ -2756,6 +3043,14 @@ class Handler(BaseHTTPRequestHandler):
     # Which configured API key the caller used, set by _key_ok(). Its bound
     # realm decides the upstream exit for this request alone.
     key_entry = None
+    def handle_one_request(self):
+        # Reset per-request auth state. HTTP/1.1 keeps the connection alive, so
+        # one Handler instance serves many requests; a request that authenticates
+        # via the panel token never reassigns key_entry, and without this reset
+        # it inherited the realm binding of whatever API key used the connection
+        # before it - sending that request to the wrong upstream exit.
+        self.key_entry = None
+        return super().handle_one_request()
     def handle(self):
         try:
             super().handle()
@@ -2766,7 +3061,7 @@ class Handler(BaseHTTPRequestHandler):
             super().finish()
         except (ConnectionResetError, BrokenPipeError, ConnectionAbortedError):
             pass
-    server_version = "wb-proxy/1.4.3"
+    server_version = "wb-proxy/1.4.5"
     def log_message(self, fmt, *args):
         # 静默过滤前端看板高频定时心跳的正常 200 GET 请求（/logs、/usage、/accounts 轮询等）
         # 避免自增死循环刷屏与日志污染。遇 4xx/5xx 异常或所有非 GET 业务操作依然如实记录。
@@ -2837,7 +3132,18 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(body)
     def _supplied_key(self):
         """The key the caller presented, from the header or the ?key= query."""
-        supplied = (self.headers.get("Authorization") or "").removeprefix("Bearer ").strip()
+        # The auth scheme is case-insensitive per RFC 7235, so "bearer sk-x"
+        # and "BEARER sk-x" must strip just like "Bearer sk-x". The old
+        # removeprefix("Bearer ") left the scheme attached for other casings
+        # and the whole "bearer sk-x" string was then compared as a key.
+        header = (self.headers.get("Authorization") or "").strip()
+        supplied = ""
+        if header:
+            scheme, _, value = header.partition(" ")
+            if scheme.lower() == "bearer":
+                supplied = value.strip()
+            else:
+                supplied = header
         if supplied:
             return supplied
         # Browsers cannot set headers on a top-level navigation, so accept the
@@ -2946,221 +3252,281 @@ class Handler(BaseHTTPRequestHandler):
         if self._is_panel_route(path) and not self._panel_ok():
             return self._error(401, "panel password required", "invalid_request_error")
         if path in ("/", "/dashboard", "/ui"):
-            return self._dashboard()
+            return self._get_dashboard()
         if path == "/panel/status":
-            # Answer without a token: the dashboard needs to know whether to
-            # show the login screen before it can hold a session.
-            info = {
-                "panel_password_required": True,
-                "panel_password_is_default": wb_settings.panel_password_is_default(ACCOUNTS_DIR),
-                "authenticated": self._panel_ok(),
-            }
-            # Whether a key exists is not a secret; its value never leaves the
-            # process, and the settings endpoint only reports a masked form.
-            info["api_key_set"] = bool(API_KEY)
-            return self._json(200, info)
+            return self._get_panel_status()
         if path == "/health":
-            # Always answer (the launcher uses this to detect a running copy),
-            # but only expose account identity to an authorised caller.
-            rep = current_account()
-            info = {
-                "ok": True,
-                # Report the realm actually in use; this used to be the
-                # literal "intl" and drifted from the panel switch.
-                "realm": CURRENT_REALM,
-                "accounts": len(POOL.accounts) if POOL else 0,
-                "accounts_ready": POOL.count_ready() if POOL else 0,
-                "api_key_required": bool(API_KEY),
-            }
-            if self._key_ok():
-                info.update({
-                    "uid": rep.uid if rep else None,
-                    "domain": rep.domain if rep else None,
-                    "issuer": wb_accounts.jwt_issuer(rep.access_token) if rep else None,
-                    "credential_file": os.path.basename(rep.path) if rep and rep.path else None,
-                    "expires_at": rep.expires_at if rep else None,
-                })
-            return self._json(200, info)
-        # Accept the conventional /v1 prefix and the bare path, because clients
-        # differ in whether they append "/v1" themselves.
+            return self._get_health()
         if path == "/realm":
-            return self._json(200, {"current": CURRENT_REALM, "options": ["intl", "cn"]})
+            return self._get_realm()
         if path in ("/v1/models", "/models"):
-            if not self._authorized():
-                return
-            req_realm = self._request_realm() or CURRENT_REALM
-            try:
-                entries = fetch_models(realm=req_realm)
-            except Exception as exc:
-                return self._error(502, str(exc))
-            data = [model_entry(mid, meta) for mid, meta in entries]
-            return self._json(200, {"object": "list", "data": data, "realm": req_realm or CURRENT_REALM})
+            return self._get_v1_models()
         if path in ("/usage", "/v1/usage"):
-            if not self._authorized():
-                return
-            req_realm = query.get('realm', [None])[0] or self.headers.get('X-Realm') or CURRENT_REALM
-            return self._json(200, usage_snapshot(realm=req_realm))
+            return self._get_v1_usage(query)
         if path == "/usage/recent":
-            if not self._authorized():
-                return
-            try:
-                limit = max(1, min(1000, int((query.get("limit") or ["100"])[0])))
-            except ValueError:
-                limit = 100
-            try:
-                page = max(1, int((query.get("page") or ["1"])[0]))
-            except ValueError:
-                page = 1
-            req_realm = query.get('realm', [None])[0] or self.headers.get('X-Realm') or CURRENT_REALM
-            return self._json(200, recent_usage(limit, realm=req_realm, page=page))
+            return self._get_usage_recent(query)
         if path == "/accounts/credits":
-            if not self._authorized():
-                return
-            # Refresh credits for all accounts
-            for a in (POOL.accounts if POOL else []):
-                a.fetch_credits()
-            return self._json(200, {"accounts": account_views()})
+            return self._get_accounts_credits()
         if path == "/accounts":
-            if not self._authorized():
-                return
-            return self._json(200, {
-                "accounts": account_views(realm=query.get('realm', [None])[0] or CURRENT_REALM),
-                "storage": ACCOUNTS_DIR,
-                "usable": POOL.count_ready() if POOL else 0,
-            })
+            return self._get_accounts(query)
         if path == "/accounts/export":
-            if not self._authorized():
-                return
-            # ?download=1 makes the browser save it as a file; without it the
-            # document is returned inline so the dashboard can show a summary.
-            # ?uid= narrows it to specific accounts (repeatable, comma-joined),
-            # which is how the per-row "export" button works.
-            realm = (query.get("realm") or [None])[0] or None
-            if realm not in ("intl", "cn"):
-                realm = None
-            include_secrets = (query.get("secrets") or ["1"])[0] not in ("0", "false", "no")
-            uids = []
-            for raw in query.get("uid") or []:
-                uids.extend(part.strip() for part in str(raw).split(",") if part.strip())
-            if uids:
-                known = {a.uid for a in (POOL.accounts if POOL else [])}
-                missing = [u for u in uids if u not in known]
-                if missing:
-                    return self._error(404, "no such account: %s" % ", ".join(missing[:5]),
-                                       "invalid_request_error")
-            doc = wb_accounts.build_export_document(
-                POOL.accounts if POOL else [],
-                realm=realm,
-                include_secrets=include_secrets,
-                uids=uids or None,
-            )
-            if (query.get("download") or ["0"])[0] in ("1", "true", "yes"):
-                stamp = time.strftime("%Y%m%d-%H%M%S")
-                if len(uids) == 1:
-                    # Name a single-account export after the account, so a
-                    # folder of them stays readable.
-                    label = uids[0][:8]
-                else:
-                    label = realm + "-" if realm else ""
-                name = "workbuddy-accounts-%s%s.json" % (label, stamp)
-                return self._download(name, doc)
-            return self._json(200, doc)
+            return self._get_accounts_export(query)
         if path == "/accounts/login/poll":
-            if not self._authorized():
-                return
-            state = (query.get("state") or [""])[0]
-            return self._json(200, POOL.poll_login(state))
+            return self._get_accounts_login_poll(query)
         if path == "/usage/analytics":
-            if not self._authorized():
-                return
-            return self._json(200, compute_usage_analytics())
+            return self._get_usage_analytics()
         if path == "/usage/by-account":
-            if not self._authorized():
-                return
-            return self._json(200, {"accounts": usage_by_account()})
+            return self._get_usage_by_account()
         if path == "/usage/perf":
-            if not self._authorized():
-                return
-            try:
-                sample = max(10, min(20000, int((query.get("sample") or ["5000"])[0])))
-            except ValueError:
-                sample = 5000
-            req_realm = query.get('realm', [None])[0] or self.headers.get('X-Realm') or CURRENT_REALM
-            return self._json(200, perf_stats(sample, realm=req_realm))
+            return self._get_usage_perf(query)
         if path == "/tasks":
-            if not self._authorized():
-                return
-            cn_accounts = [a for a in (POOL.accounts if POOL else []) if a.realm == "cn" and a.enabled]
-            if not cn_accounts:
-                return self._json(200, {"tasks": [], "summary": {}, "accounts": [], "msg": "Không tìm thấy tài khoản Trong Nước khả dụng"})
-            uid = (query.get("uid") or [None])[0]
-            acc = None
-            if uid and uid != "all":
-                target = POOL.get(uid) if POOL else None
-                if target and target.realm == "cn":
-                    acc = target
-            if not acc:
-                acc = cn_accounts[0]
-            from wb_tasks import fetch_growth_tasks, fetch_growth_summary
-            tasks = fetch_growth_tasks(acc)
-            summary = fetch_growth_summary(acc)
-            acct_list = [{"uid": a.uid, "nickname": a.nickname or a.uid[:8]} for a in cn_accounts]
-            return self._json(200, {
-                "tasks": tasks,
-                "summary": summary,
-                "account": acc.public(),
-                "accounts": acct_list,
-            })
+            return self._get_tasks(query)
         if path == "/scheduler":
-            if not self._authorized():
-                return
-            return self._json(200, SCHEDULER.status() if SCHEDULER else {"enabled": False, "msg": "Chưa chạy"})
+            return self._get_scheduler()
         if path == "/settings":
-            if not self._authorized():
-                return
-            return self._json(200, runtime_settings_view())
+            return self._get_settings()
         if path == "/logs":
-            if not self._authorized():
-                return
-            try:
-                limit = int(query.get("limit", ["200"])[0])
-            except (ValueError, TypeError):
-                limit = 200
-            level = query.get("level", [""])[0]
-            tag = query.get("tag", [""])[0]
-            search = query.get("search", [""])[0]
-            try:
-                since_id = int(query.get("since_id", ["0"])[0])
-            except (ValueError, TypeError):
-                since_id = 0
-            return self._json(200, get_logs(limit=limit, level=level, tag=tag, search=search, since_id=since_id))
+            return self._get_logs(query)
         if path == "/logs/export":
-            if not self._authorized():
-                return
-            log_data = get_logs(limit=5000)
-            lines = [f"[{item['ts']}] [{item['level']}] [{item['tag']}] {item['msg']}" for item in log_data["logs"]]
-            text_content = "\n".join(lines).encode("utf-8")
-            filename = f"wb-proxy-{time.strftime('%Y%m%d-%H%M%S')}.log"
-            self.send_response(200)
-            self.send_header("Content-Type", "text/plain; charset=utf-8")
-            self.send_header("Content-Disposition", f'attachment; filename="{filename}"')
-            self.send_header("Content-Length", str(len(text_content)))
-            if cors_origin_allowed(self.path):
-                self.send_header("Access-Control-Allow-Origin", "*")
-            self.end_headers()
-            self.wfile.write(text_content)
-            return
+            return self._get_logs_export()
         if path == "/settings/reveal":
-            # The panel only ever draws masked keys, so copying one needs an
-            # explicit request. Panel session required, API key is not enough.
-            if not self._panel_ok():
-                return self._error(401, "panel password required", "invalid_request_error")
-            wanted = (query.get("id") or [""])[0]
-            for entry in configured_keys():
-                if entry.get("id") == wanted:
-                    return self._json(200, {"id": wanted, "key": entry.get("key") or ""})
-            return self._error(404, "no such key", "invalid_request_error")
+            return self._get_settings_reveal(query)
         return self._error(404, "not found", "invalid_request_error")
+    def _get_dashboard(self):
+        return self._dashboard()
+
+    def _get_panel_status(self):
+        # Answer without a token: the dashboard needs to know whether to
+        # show the login screen before it can hold a session.
+        info = {
+            "panel_password_required": True,
+            "panel_password_is_default": wb_settings.panel_password_is_default(ACCOUNTS_DIR),
+            "authenticated": self._panel_ok(),
+        }
+        # Whether a key exists is not a secret; its value never leaves the
+        # process, and the settings endpoint only reports a masked form.
+        info["api_key_set"] = bool(API_KEY)
+        return self._json(200, info)
+
+    def _get_health(self):
+        # Always answer (the launcher uses this to detect a running copy),
+        # but only expose account identity to an authorised caller.
+        rep = current_account()
+        info = {
+            "ok": True,
+            # Report the realm actually in use; this used to be the
+            # literal "intl" and drifted from the panel switch.
+            "realm": CURRENT_REALM,
+            "accounts": len(POOL.accounts) if POOL else 0,
+            "accounts_ready": POOL.count_ready() if POOL else 0,
+            "api_key_required": bool(API_KEY),
+        }
+        if self._key_ok():
+            info.update({
+                "uid": rep.uid if rep else None,
+                "domain": rep.domain if rep else None,
+                "issuer": wb_accounts.jwt_issuer(rep.access_token) if rep else None,
+                "credential_file": os.path.basename(rep.path) if rep and rep.path else None,
+                "expires_at": rep.expires_at if rep else None,
+            })
+        return self._json(200, info)
+    # Accept the conventional /v1 prefix and the bare path, because clients
+    # differ in whether they append "/v1" themselves.
+
+    def _get_realm(self):
+        return self._json(200, {"current": CURRENT_REALM, "options": ["intl", "cn"]})
+
+    def _get_v1_models(self):
+        if not self._authorized():
+            return
+        req_realm = self._request_realm() or CURRENT_REALM
+        try:
+            entries = fetch_models(realm=req_realm)
+        except Exception as exc:
+            return self._error(502, str(exc))
+        data = [model_entry(mid, meta) for mid, meta in entries]
+        return self._json(200, {"object": "list", "data": data, "realm": req_realm or CURRENT_REALM})
+
+    def _get_v1_usage(self, query):
+        if not self._authorized():
+            return
+        req_realm = query.get('realm', [None])[0] or self.headers.get('X-Realm') or CURRENT_REALM
+        return self._json(200, usage_snapshot(realm=req_realm))
+
+    def _get_usage_recent(self, query):
+        if not self._authorized():
+            return
+        try:
+            limit = max(1, min(1000, int((query.get("limit") or ["100"])[0])))
+        except ValueError:
+            limit = 100
+        try:
+            page = max(1, int((query.get("page") or ["1"])[0]))
+        except ValueError:
+            page = 1
+        req_realm = query.get('realm', [None])[0] or self.headers.get('X-Realm') or CURRENT_REALM
+        return self._json(200, recent_usage(limit, realm=req_realm, page=page))
+
+    def _get_accounts_credits(self):
+        if not self._authorized():
+            return
+        # Refresh credits for all accounts
+        for a in (POOL.accounts if POOL else []):
+            a.fetch_credits()
+        return self._json(200, {"accounts": account_views()})
+
+    def _get_accounts(self, query):
+        if not self._authorized():
+            return
+        return self._json(200, {
+            "accounts": account_views(realm=query.get('realm', [None])[0] or CURRENT_REALM),
+            "storage": ACCOUNTS_DIR,
+            "usable": POOL.count_ready() if POOL else 0,
+        })
+
+    def _get_accounts_export(self, query):
+        if not self._authorized():
+            return
+        # ?download=1 makes the browser save it as a file; without it the
+        # document is returned inline so the dashboard can show a summary.
+        # ?uid= narrows it to specific accounts (repeatable, comma-joined),
+        # which is how the per-row "export" button works.
+        realm = (query.get("realm") or [None])[0] or None
+        if realm not in ("intl", "cn"):
+            realm = None
+        include_secrets = (query.get("secrets") or ["1"])[0] not in ("0", "false", "no")
+        uids = []
+        for raw in query.get("uid") or []:
+            uids.extend(part.strip() for part in str(raw).split(",") if part.strip())
+        if uids:
+            known = {a.uid for a in (POOL.accounts if POOL else [])}
+            missing = [u for u in uids if u not in known]
+            if missing:
+                return self._error(404, "no such account: %s" % ", ".join(missing[:5]),
+                                   "invalid_request_error")
+        doc = wb_accounts.build_export_document(
+            POOL.accounts if POOL else [],
+            realm=realm,
+            include_secrets=include_secrets,
+            uids=uids or None,
+        )
+        if (query.get("download") or ["0"])[0] in ("1", "true", "yes"):
+            stamp = time.strftime("%Y%m%d-%H%M%S")
+            if len(uids) == 1:
+                # Name a single-account export after the account, so a
+                # folder of them stays readable.
+                label = uids[0][:8]
+            else:
+                label = realm + "-" if realm else ""
+            name = "workbuddy-accounts-%s%s.json" % (label, stamp)
+            return self._download(name, doc)
+        return self._json(200, doc)
+
+    def _get_accounts_login_poll(self, query):
+        if not self._authorized():
+            return
+        state = (query.get("state") or [""])[0]
+        return self._json(200, POOL.poll_login(state))
+
+    def _get_usage_analytics(self):
+        if not self._authorized():
+            return
+        return self._json(200, compute_usage_analytics())
+
+    def _get_usage_by_account(self):
+        if not self._authorized():
+            return
+        return self._json(200, {"accounts": usage_by_account()})
+
+    def _get_usage_perf(self, query):
+        if not self._authorized():
+            return
+        try:
+            sample = max(10, min(20000, int((query.get("sample") or ["5000"])[0])))
+        except ValueError:
+            sample = 5000
+        req_realm = query.get('realm', [None])[0] or self.headers.get('X-Realm') or CURRENT_REALM
+        return self._json(200, perf_stats(sample, realm=req_realm))
+
+    def _get_tasks(self, query):
+        if not self._authorized():
+            return
+        cn_accounts = [a for a in (POOL.accounts if POOL else []) if a.realm == "cn" and a.enabled]
+        if not cn_accounts:
+            return self._json(200, {"tasks": [], "summary": {}, "accounts": [], "msg": "Không tìm thấy tài khoản Trong Nước khả dụng"})
+        uid = (query.get("uid") or [None])[0]
+        acc = None
+        if uid and uid != "all":
+            target = POOL.get(uid) if POOL else None
+            if target and target.realm == "cn":
+                acc = target
+        if not acc:
+            acc = cn_accounts[0]
+        from wb_tasks import fetch_growth_tasks, fetch_growth_summary
+        tasks = fetch_growth_tasks(acc)
+        summary = fetch_growth_summary(acc)
+        acct_list = [{"uid": a.uid, "nickname": a.nickname or a.uid[:8]} for a in cn_accounts]
+        return self._json(200, {
+            "tasks": tasks,
+            "summary": summary,
+            "account": acc.public(),
+            "accounts": acct_list,
+        })
+
+    def _get_scheduler(self):
+        if not self._authorized():
+            return
+        return self._json(200, SCHEDULER.status() if SCHEDULER else {"enabled": False, "msg": "Chưa chạy"})
+
+    def _get_settings(self):
+        if not self._authorized():
+            return
+        return self._json(200, runtime_settings_view())
+
+    def _get_logs(self, query):
+        if not self._authorized():
+            return
+        try:
+            limit = int(query.get("limit", ["200"])[0])
+        except (ValueError, TypeError):
+            limit = 200
+        level = query.get("level", [""])[0]
+        tag = query.get("tag", [""])[0]
+        search = query.get("search", [""])[0]
+        try:
+            since_id = int(query.get("since_id", ["0"])[0])
+        except (ValueError, TypeError):
+            since_id = 0
+        return self._json(200, get_logs(limit=limit, level=level, tag=tag, search=search, since_id=since_id))
+
+    def _get_logs_export(self):
+        if not self._authorized():
+            return
+        log_data = get_logs(limit=5000)
+        lines = [f"[{item['ts']}] [{item['level']}] [{item['tag']}] {item['msg']}" for item in log_data["logs"]]
+        text_content = "\n".join(lines).encode("utf-8")
+        filename = f"wb-proxy-{time.strftime('%Y%m%d-%H%M%S')}.log"
+        self.send_response(200)
+        self.send_header("Content-Type", "text/plain; charset=utf-8")
+        self.send_header("Content-Disposition", f'attachment; filename="{filename}"')
+        self.send_header("Content-Length", str(len(text_content)))
+        if cors_origin_allowed(self.path):
+            self.send_header("Access-Control-Allow-Origin", "*")
+        self.end_headers()
+        self.wfile.write(text_content)
+        return
+
+    def _get_settings_reveal(self, query):
+        # The panel only ever draws masked keys, so copying one needs an
+        # explicit request. Panel session required, API key is not enough.
+        if not self._panel_ok():
+            return self._error(401, "panel password required", "invalid_request_error")
+        wanted = (query.get("id") or [""])[0]
+        for entry in configured_keys():
+            if entry.get("id") == wanted:
+                return self._json(200, {"id": wanted, "key": entry.get("key") or ""})
+        return self._error(404, "no such key", "invalid_request_error")
+
     def _dashboard(self):
         try:
             with open(DASHBOARD_HTML, "rb") as fh:
@@ -3336,310 +3702,385 @@ class Handler(BaseHTTPRequestHandler):
         if not isinstance(payload, dict):
             return self._error(400, "expected a JSON object", "invalid_request_error")
         if path in ("/accounts/credits", "/accounts/credits/fetch"):
-            uid = payload.get("uid")
-            realm = payload.get("realm")
-            if uid:
-                targets = [POOL.get(uid)]
-            elif realm and realm != "all":
-                targets = [a for a in POOL.accounts if a.realm == realm]
-            else:
-                targets = list(POOL.accounts)
-            results = []
-            for account in targets:
-                if account is None:
-                    continue
-                res = account.fetch_credits()
-                results.append({"uid": account.uid, "ok": res.get("ok", False),
-                                "credits": account.credits, "error": res.get("error", "")})
-            return self._json(200, {"results": results, "accounts": account_views()})
+            return self._route_accounts_credits_fetch(payload)
         if path == "/tasks/run":
-            if not POOL:
-                return self._json(200, {"ok": False, "msg": "Nhóm tài khoản không khả dụng"})
-            uid = payload.get("uid")
-            if uid and uid != "all":
-                target = POOL.get(uid)
-                if not target or target.realm != "cn":
-                    return self._json(200, {"ok": False, "msg": "Không tìm thấy tài khoản Trong Nước được chỉ định"})
-                targets = [target]
-            else:
-                targets = [a for a in POOL.accounts if a.realm == "cn" and a.enabled]
-            if not targets:
-                return self._json(200, {"ok": False, "msg": "Không tìm thấy tài khoản Trong Nước đã bật"})
-            from wb_tasks import run_growth_tasks
-            combined_logs = []
-            total_credit = 0
-            for i, acc in enumerate(targets):
-                uid_str = acc.uid[:8] if acc.uid else "?"
-                nick = acc.nickname or uid_str
-                combined_logs.append(f"====== Đang thực thi tự động nhiệm vụ phát triển cho tài khoản [{nick} ({acc.uid})] ({i+1}/{len(targets)}) ======")
-                res = run_growth_tasks(acc, gap=1.0)
-                # run_growth_tasks() reports its total as "earned_credit";
-                # reading the old "credit_added" name silently summed zeros
-                # and the dashboard always showed "+0 积分".
-                total_credit += res.get("earned_credit") or 0
-                for l in res.get("logs") or []:
-                    combined_logs.append(f"  {l}")
-                if i < len(targets) - 1:
-                    time.sleep(1.5)
-            combined_logs.append(f"====== Hoàn tất thực thi nhiệm vụ cho {len(targets)} tài khoản, tích lũy điểm mới: +{total_credit} ======")
-            return self._json(200, {
-                "ok": True,
-                "credit_added": total_credit,
-                "logs": combined_logs,
-                "accounts_count": len(targets)
-            })
+            return self._route_tasks_run(payload)
         if path == "/tasks/travel":
-            if not POOL:
-                return self._json(200, {"ok": False, "msg": "Nhóm tài khoản không khả dụng"})
-            uid = payload.get("uid")
-            if uid and uid != "all":
-                target = POOL.get(uid)
-                if not target or target.realm != "cn":
-                    return self._json(200, {"ok": False, "msg": "Không tìm thấy tài khoản Trong Nước được chỉ định"})
-                targets = [target]
-            else:
-                targets = [a for a in POOL.accounts if a.realm == "cn" and a.enabled]
-            if not targets:
-                return self._json(200, {"ok": False, "msg": "Không tìm thấy tài khoản Trong Nước đã bật"})
-            from wb_tasks import do_cat_travel
-            results = []
-            for i, acc in enumerate(targets):
-                uid_str = acc.uid[:8] if acc.uid else "?"
-                nick = acc.nickname or uid_str
-                res = do_cat_travel(acc)
-                results.append({
-                    "uid": acc.uid,
-                    "nickname": nick,
-                    "action": res.get("action"),
-                    "msg": res.get("msg") or "",
-                    # do_cat_travel() returns the amount as "credit".
-                    "reward_credit": res.get("credit", 0)
-                })
-                if i < len(targets) - 1:
-                    time.sleep(1.0)
-            summary_msg = chr(10).join([f"{r['nickname']}: {r['msg']}" for r in results])
-            return self._json(200, {
-                "ok": True,
-                "results": results,
-                "msg": summary_msg,
-                "accounts_count": len(targets)
-            })
+            return self._route_tasks_travel(payload)
         if path == "/scheduler/trigger":
-            if SCHEDULER:
-                return self._json(200, SCHEDULER.trigger_now())
-            return self._json(200, {"ok": False, "msg": "Bộ lịch chưa khởi tạo"})
+            return self._route_scheduler_trigger(payload)
         if path == "/scheduler/toggle":
-            if SCHEDULER:
-                SCHEDULER.enabled = not SCHEDULER.enabled
-                SCHEDULER.log(f"Người dùng chuyển trạng thái bộ lịch thành: {'bật' if SCHEDULER.enabled else 'tạm dừng'}")
-                return self._json(200, SCHEDULER.status())
-            return self._json(200, {"ok": False, "msg": "Bộ lịch chưa khởi tạo"})
+            return self._route_scheduler_toggle(payload)
         if path == "/logs/clear":
-            clear_logs()
-            return self._json(200, {"ok": True})
+            return self._route_logs_clear(payload)
         if path == "/realm":
-            new_realm = payload.get("realm")
-            if new_realm in ("intl", "cn"):
-                save_persisted_realm(new_realm)
-            return self._json(200, {"ok": True, "current": CURRENT_REALM, "persisted": True})
+            return self._route_realm(payload)
         if path == "/accounts/checkin":
-            uid = payload.get("uid")
-            targets = [POOL.get(uid)] if uid else [a for a in (POOL.accounts if POOL else []) if a.realm == "cn"]
-            results = []
-            for account in targets:
-                if account is None:
-                    continue
-                res = account.checkin()
-                results.append({"uid": account.uid, "nickname": account.nickname, **res})
-            return self._json(200, {"results": results, "accounts": account_views()})
+            return self._route_accounts_checkin(payload)
         if path == "/accounts/login/start":
-            platform = payload.get("platform") or "CLI"
-            target_realm = payload.get("realm") or CURRENT_REALM
-            try:
-                started = POOL.start_login(realm=target_realm, platform=platform)
-            except Exception as exc:
-                return self._error(502, "could not start login: %s" % exc)
-            log("oauth login started (realm=%s, platform=%s, state=%s)" % (target_realm, platform, started["state"][:8]))
-            return self._json(200, started)
+            return self._route_accounts_login_start(payload)
         if path == "/accounts/login/cancel":
-            state = payload.get("state") or ""
-            return self._json(200, {"cancelled": POOL.cancel_login(state)})
+            return self._route_accounts_login_cancel(payload)
         if path == "/accounts/import/desktop":
-            # Two ways to call this:
-            #   {}                     -> scan only (read-only, nothing imported)
-            #   {"path": "..."}        -> import that credential
-            #   {"all": true}          -> import everything the scan found
-            target_path = payload.get("path")
-            if target_path:
-                realm = payload.get("realm")
-                try:
-                    account = POOL.import_desktop_credential(
-                        path=target_path, realm=realm, source="desktop-app")
-                except Exception as exc:
-                    return self._error(400, "import failed: %s" % exc)
-                log("imported %s from %s (user confirmed)" % (account.uid[:8], os.path.basename(target_path)))
-                return self._json(200, {
-                    "imported": [account.public()],
-                    "accounts": account_views(),
-                })
-            if payload.get("all"):
-                imported = import_desktop_accounts(payload.get("realm"))
-                return self._json(200, {
-                    "imported": [a.public() for a in imported],
-                    "accounts": account_views(),
-                })
-            return self._json(200, {
-                "detected": desktop_credential_scan(),
-                "accounts": account_views(),
-                "pool_uids": [a.uid for a in POOL.accounts],
-            })
+            return self._route_accounts_import_desktop(payload)
         if path == "/accounts/refresh":
-            uid = payload.get("uid")
-            targets = [POOL.get(uid)] if uid else list(POOL.accounts)
-            results = []
-            for account in targets:
-                if account is None:
-                    continue
-                ok = account.refresh()
-                account.save(ACCOUNTS_DIR)
-                results.append({"uid": account.uid, "ok": ok, "error": account.last_error})
-            return self._json(200, {"results": results})
+            return self._route_accounts_refresh(payload)
         if path == "/accounts/test":
-            uid = payload.get("uid")
-            if not uid:
-                return self._error(400, "uid required")
-            account = POOL.get(uid)
-            if not account:
-                return self._error(404, "no such account")
-            test_model = payload.get("model") or "deepseek-v4.1-flash"
-            cfg = wb_accounts.get_realm_config(account.realm)
-            chat_url = cfg["chat_upstream"] + CHAT_PATH
-            test_body = {
-                "model": test_model,
-                "messages": [{"role": "user", "content": "hi"}],
-                "stream": False,
-            }
-            forwarded = build_upstream_body(test_body)
-            body = json.dumps(forwarded, ensure_ascii=False).encode("utf-8")
-            req = urllib.request.Request(
-                chat_url, data=body, method="POST",
-                headers=account.headers(purpose="chat")
-            )
-            t0 = time.time()
-            try:
-                with urllib.request.urlopen(req, timeout=30) as resp:
-                    chat_obj = aggregate_stream(resp, test_model, None)
-                    wall_ms = int((time.time() - t0) * 1000)
-                    choices = chat_obj.get("choices") or []
-                    msg = (choices[0].get("message") or {}) if choices else {}
-                    reply_text = (msg.get("content") or msg.get("reasoning_content") or "OK").strip()
-                    if len(reply_text) > 80:
-                        reply_text = reply_text[:77] + "..."
-                    account.clear_error()
-                    log(f"account test: uid={account.uid[:8]} model={test_model} wall={wall_ms}ms ok=True", tag="accounts")
-                    return self._json(200, {
-                        "ok": True,
-                        "uid": account.uid,
-                        "model": test_model,
-                        "elapsed_ms": wall_ms,
-                        "reply": reply_text,
-                    })
-            except urllib.error.HTTPError as exc:
-                wall_ms = int((time.time() - t0) * 1000)
-                detail = exc.read(400).decode("utf-8", "replace")
-                account.note_error(f"HTTP {exc.code}: {detail[:80]}", cooldown=60)
-                log(f"account test: uid={account.uid[:8]} model={test_model} wall={wall_ms}ms error={exc.code}", level="WARN", tag="accounts")
-                return self._json(200, {
-                    "ok": False,
-                    "uid": account.uid,
-                    "status": exc.code,
-                    "error": f"HTTP {exc.code}: {detail[:150]}",
-                    "elapsed_ms": wall_ms,
-                })
-            except Exception as exc:
-                wall_ms = int((time.time() - t0) * 1000)
-                account.note_error(str(exc)[:80], cooldown=60)
-                log(f"account test: uid={account.uid[:8]} model={test_model} wall={wall_ms}ms exc={exc}", level="WARN", tag="accounts")
-                return self._json(200, {
-                    "ok": False,
-                    "uid": account.uid,
-                    "status": 500,
-                    "error": str(exc),
-                    "elapsed_ms": wall_ms,
-                })
+            return self._route_accounts_test(payload)
         if path == "/accounts/set":
-            uid = payload.get("uid")
-            if not uid:
-                return self._error(400, "uid required")
-            updated = POOL.set_enabled(uid, bool(payload.get("enabled")))
-            if updated is None:
-                return self._error(404, "no such account")
-            log("account %s %s" % (uid[:8], "enabled" if payload.get("enabled") else "disabled"))
-            return self._json(200, {"account": updated})
+            return self._route_accounts_set(payload)
         if path == "/accounts/set-all":
-            POOL.set_all_enabled(bool(payload.get("enabled")))
-            return self._json(200, {"accounts": account_views()})
+            return self._route_accounts_set_all(payload)
         if path == "/accounts/delete":
-            uid = payload.get("uid")
-            if not uid:
-                return self._error(400, "uid required")
-            removed = POOL.remove(uid)
-            log("account %s deleted" % uid[:8])
-            return self._json(200, {"deleted": removed, "accounts": account_views()})
+            return self._route_accounts_delete(payload)
         if path == "/accounts/import":
-            # Import a previously exported document (or any hand-written list
-            # of accounts). Body shapes accepted, see wb_accounts._coerce_account_rows:
-            #   {"format":"workbuddy-accounts","accounts":[...]}   <- our export
-            #   [...]                                              <- bare list
-            #   {"accessToken": ...}                               <- single account
-            #   {"account":{...},"auth":{...}}                     <- desktop credential
-            #
-            # Options:
-            #   dryRun    (bool) - validate and report, write nothing
-            #   overwrite (bool) - replace accounts whose uid already exists
-            #   realm     ("intl"|"cn") - force a realm instead of detecting it
-            #
-            # `data` carries the document. It is preferred over the bare body so
-            # the body can also hold the options above.
-            blob = payload.get("data") if "data" in payload else payload
-            if not isinstance(blob, (dict, list)):
-                return self._error(400, "the document must be a JSON object or array",
-                                   "invalid_request_error")
-            rows, problem = wb_accounts._coerce_account_rows(blob)
-            if problem:
-                return self._error(400, "cannot read the document: %s" % problem,
-                                   "invalid_request_error")
-            dry_run = bool(payload.get("dryRun"))
-            overwrite = bool(payload.get("overwrite"))
-            forced_realm = (payload.get("realm") or "").strip().lower() or None
-            if forced_realm and forced_realm not in ("intl", "cn"):
-                return self._error(400, "realm must be intl or cn", "invalid_request_error")
-            if dry_run:
-                # Validate every row without touching the pool so the caller can
-                # see exactly what an import would do before committing to it.
-                # Shares its rules with the real import, so the preview cannot
-                # disagree with what would actually happen.
-                return self._json(200, {
-                    "dryRun": True,
-                    "count": len(rows),
-                    "result": POOL.preview_import_rows(rows, realm=forced_realm, overwrite=overwrite),
-                    "accounts": account_views(),
-                })
-            report = POOL.import_rows(rows, realm=forced_realm, overwrite=overwrite)
-            log("account import: %d added, %d updated, %d skipped, %d invalid"
-                % (len(report["added"]), len(report["updated"]),
-                   len(report["skipped"]), len(report["invalid"])))
+            return self._route_accounts_import(payload)
+        return self._error(404, "unknown account endpoint", "invalid_request_error")
+    def _route_accounts_credits_fetch(self, payload):
+        uid = payload.get("uid")
+        realm = payload.get("realm")
+        if uid:
+            targets = [POOL.get(uid)]
+        elif realm and realm != "all":
+            targets = [a for a in POOL.accounts if a.realm == realm]
+        else:
+            targets = list(POOL.accounts)
+        results = []
+        for account in targets:
+            if account is None:
+                continue
+            res = account.fetch_credits()
+            results.append({"uid": account.uid, "ok": res.get("ok", False),
+                            "credits": account.credits, "error": res.get("error", "")})
+        return self._json(200, {"results": results, "accounts": account_views()})
+
+    def _route_tasks_run(self, payload):
+        if not POOL:
+            return self._json(200, {"ok": False, "msg": "Nhóm tài khoản không khả dụng"})
+        uid = payload.get("uid")
+        if uid and uid != "all":
+            target = POOL.get(uid)
+            if not target or target.realm != "cn":
+                return self._json(200, {"ok": False, "msg": "Không tìm thấy tài khoản Trong Nước được chỉ định"})
+            targets = [target]
+        else:
+            targets = [a for a in POOL.accounts if a.realm == "cn" and a.enabled]
+        if not targets:
+            return self._json(200, {"ok": False, "msg": "Không tìm thấy tài khoản Trong Nước đã bật"})
+        from wb_tasks import run_growth_tasks
+        combined_logs = []
+        total_credit = 0
+        for i, acc in enumerate(targets):
+            uid_str = acc.uid[:8] if acc.uid else "?"
+            nick = acc.nickname or uid_str
+            combined_logs.append(f"====== Đang thực thi tự động nhiệm vụ phát triển cho tài khoản [{nick} ({acc.uid})] ({i+1}/{len(targets)}) ======")
+            res = run_growth_tasks(acc, gap=1.0)
+            # run_growth_tasks() reports its total as "earned_credit";
+            # reading the old "credit_added" name silently summed zeros
+            # and the dashboard always showed "+0 积分".
+            total_credit += res.get("earned_credit") or 0
+            for l in res.get("logs") or []:
+                combined_logs.append(f"  {l}")
+            if i < len(targets) - 1:
+                time.sleep(1.5)
+        combined_logs.append(f"====== Hoàn tất thực thi nhiệm vụ cho {len(targets)} tài khoản, tích lũy điểm mới: +{total_credit} ======")
+        return self._json(200, {
+            "ok": True,
+            "credit_added": total_credit,
+            "logs": combined_logs,
+            "accounts_count": len(targets)
+        })
+
+    def _route_tasks_travel(self, payload):
+        if not POOL:
+            return self._json(200, {"ok": False, "msg": "Nhóm tài khoản không khả dụng"})
+        uid = payload.get("uid")
+        if uid and uid != "all":
+            target = POOL.get(uid)
+            if not target or target.realm != "cn":
+                return self._json(200, {"ok": False, "msg": "Không tìm thấy tài khoản Trong Nước được chỉ định"})
+            targets = [target]
+        else:
+            targets = [a for a in POOL.accounts if a.realm == "cn" and a.enabled]
+        if not targets:
+            return self._json(200, {"ok": False, "msg": "Không tìm thấy tài khoản Trong Nước đã bật"})
+        from wb_tasks import do_cat_travel
+        results = []
+        for i, acc in enumerate(targets):
+            uid_str = acc.uid[:8] if acc.uid else "?"
+            nick = acc.nickname or uid_str
+            res = do_cat_travel(acc)
+            results.append({
+                "uid": acc.uid,
+                "nickname": nick,
+                "action": res.get("action"),
+                "msg": res.get("msg") or "",
+                # do_cat_travel() returns the amount as "credit".
+                "reward_credit": res.get("credit", 0)
+            })
+            if i < len(targets) - 1:
+                time.sleep(1.0)
+        summary_msg = chr(10).join([f"{r['nickname']}: {r['msg']}" for r in results])
+        return self._json(200, {
+            "ok": True,
+            "results": results,
+            "msg": summary_msg,
+            "accounts_count": len(targets)
+        })
+
+    def _route_scheduler_trigger(self, payload):
+        if SCHEDULER:
+            return self._json(200, SCHEDULER.trigger_now())
+        return self._json(200, {"ok": False, "msg": "Bộ lịch chưa khởi tạo"})
+
+    def _route_scheduler_toggle(self, payload):
+        if SCHEDULER:
+            SCHEDULER.enabled = not SCHEDULER.enabled
+            SCHEDULER.log(f"Người dùng chuyển trạng thái bộ lịch thành: {'bật' if SCHEDULER.enabled else 'tạm dừng'}")
+            return self._json(200, SCHEDULER.status())
+        return self._json(200, {"ok": False, "msg": "Bộ lịch chưa khởi tạo"})
+
+    def _route_logs_clear(self, payload):
+        clear_logs()
+        return self._json(200, {"ok": True})
+
+    def _route_realm(self, payload):
+        # Changing the exit affects every key that is not realm-bound, so
+        # it is an admin action: the panel session is required. GET /realm
+        # stays open to API keys because it only reports the current exit.
+        if not self._panel_ok():
+            return self._error(403, "changing the upstream exit requires the "
+                                    "panel session, not an API key",
+                               "invalid_request_error")
+        new_realm = payload.get("realm")
+        if new_realm in ("intl", "cn"):
+            save_persisted_realm(new_realm)
+        return self._json(200, {"ok": True, "current": CURRENT_REALM, "persisted": True})
+
+    def _route_accounts_checkin(self, payload):
+        uid = payload.get("uid")
+        targets = [POOL.get(uid)] if uid else [a for a in (POOL.accounts if POOL else []) if a.realm == "cn"]
+        results = []
+        for account in targets:
+            if account is None:
+                continue
+            res = account.checkin()
+            results.append({"uid": account.uid, "nickname": account.nickname, **res})
+        return self._json(200, {"results": results, "accounts": account_views()})
+
+    def _route_accounts_login_start(self, payload):
+        platform = payload.get("platform") or "CLI"
+        target_realm = payload.get("realm") or CURRENT_REALM
+        try:
+            started = POOL.start_login(realm=target_realm, platform=platform)
+        except Exception as exc:
+            return self._error(502, "could not start login: %s" % exc)
+        log("oauth login started (realm=%s, platform=%s, state=%s)" % (target_realm, platform, started["state"][:8]))
+        return self._json(200, started)
+
+    def _route_accounts_login_cancel(self, payload):
+        state = payload.get("state") or ""
+        return self._json(200, {"cancelled": POOL.cancel_login(state)})
+
+    def _route_accounts_import_desktop(self, payload):
+        # Two ways to call this:
+        #   {}                     -> scan only (read-only, nothing imported)
+        #   {"path": "..."}        -> import that credential
+        #   {"all": true}          -> import everything the scan found
+        target_path = payload.get("path")
+        if target_path:
+            realm = payload.get("realm")
+            try:
+                account = POOL.import_desktop_credential(
+                    path=target_path, realm=realm, source="desktop-app")
+            except Exception as exc:
+                return self._error(400, "import failed: %s" % exc)
+            log("imported %s from %s (user confirmed)" % (account.uid[:8], os.path.basename(target_path)))
             return self._json(200, {
-                "count": len(rows),
-                "result": report,
+                "imported": [account.public()],
                 "accounts": account_views(),
             })
-        return self._error(404, "unknown account endpoint", "invalid_request_error")
+        if payload.get("all"):
+            imported = import_desktop_accounts(payload.get("realm"))
+            return self._json(200, {
+                "imported": [a.public() for a in imported],
+                "accounts": account_views(),
+            })
+        return self._json(200, {
+            "detected": desktop_credential_scan(),
+            "accounts": account_views(),
+            "pool_uids": [a.uid for a in POOL.accounts],
+        })
+
+    def _route_accounts_refresh(self, payload):
+        uid = payload.get("uid")
+        targets = [POOL.get(uid)] if uid else list(POOL.accounts)
+        results = []
+        for account in targets:
+            if account is None:
+                continue
+            ok = account.refresh()
+            account.save(ACCOUNTS_DIR)
+            results.append({"uid": account.uid, "ok": ok, "error": account.last_error})
+        return self._json(200, {"results": results})
+
+    def _route_accounts_test(self, payload):
+        uid = payload.get("uid")
+        if not uid:
+            return self._error(400, "uid required")
+        account = POOL.get(uid)
+        if not account:
+            return self._error(404, "no such account")
+        test_model = payload.get("model") or "deepseek-v4.1-flash"
+        cfg = wb_accounts.get_realm_config(account.realm)
+        chat_url = cfg["chat_upstream"] + CHAT_PATH
+        test_body = {
+            "model": test_model,
+            "messages": [{"role": "user", "content": "hi"}],
+            "stream": False,
+        }
+        forwarded = build_upstream_body(test_body)
+        body = json.dumps(forwarded, ensure_ascii=False).encode("utf-8")
+        req = urllib.request.Request(
+            chat_url, data=body, method="POST",
+            headers=account.headers(purpose="chat")
+        )
+        t0 = time.time()
+        try:
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                chat_obj = aggregate_stream(resp, test_model, None)
+                wall_ms = int((time.time() - t0) * 1000)
+                choices = chat_obj.get("choices") or []
+                msg = (choices[0].get("message") or {}) if choices else {}
+                reply_text = (msg.get("content") or msg.get("reasoning_content") or "OK").strip()
+                if len(reply_text) > 80:
+                    reply_text = reply_text[:77] + "..."
+                account.clear_error()
+                log(f"account test: uid={account.uid[:8]} model={test_model} wall={wall_ms}ms ok=True", tag="accounts")
+                return self._json(200, {
+                    "ok": True,
+                    "uid": account.uid,
+                    "model": test_model,
+                    "elapsed_ms": wall_ms,
+                    "reply": reply_text,
+                })
+        except urllib.error.HTTPError as exc:
+            wall_ms = int((time.time() - t0) * 1000)
+            detail = exc.read(400).decode("utf-8", "replace")
+            account.note_error(f"HTTP {exc.code}: {detail[:80]}", cooldown=60)
+            log(f"account test: uid={account.uid[:8]} model={test_model} wall={wall_ms}ms error={exc.code}", level="WARN", tag="accounts")
+            return self._json(200, {
+                "ok": False,
+                "uid": account.uid,
+                "status": exc.code,
+                "error": f"HTTP {exc.code}: {detail[:150]}",
+                "elapsed_ms": wall_ms,
+            })
+        except Exception as exc:
+            wall_ms = int((time.time() - t0) * 1000)
+            account.note_error(str(exc)[:80], cooldown=60)
+            log(f"account test: uid={account.uid[:8]} model={test_model} wall={wall_ms}ms exc={exc}", level="WARN", tag="accounts")
+            return self._json(200, {
+                "ok": False,
+                "uid": account.uid,
+                "status": 500,
+                "error": str(exc),
+                "elapsed_ms": wall_ms,
+            })
+
+    def _route_accounts_set(self, payload):
+        uid = payload.get("uid")
+        if not uid:
+            return self._error(400, "uid required")
+        updated = POOL.set_enabled(uid, bool(payload.get("enabled")))
+        if updated is None:
+            return self._error(404, "no such account")
+        log("account %s %s" % (uid[:8], "enabled" if payload.get("enabled") else "disabled"))
+        return self._json(200, {"account": updated})
+
+    def _route_accounts_set_all(self, payload):
+        POOL.set_all_enabled(bool(payload.get("enabled")))
+        return self._json(200, {"accounts": account_views()})
+
+    def _route_accounts_delete(self, payload):
+        uid = payload.get("uid")
+        if not uid:
+            return self._error(400, "uid required")
+        removed = POOL.remove(uid)
+        log("account %s deleted" % uid[:8])
+        return self._json(200, {"deleted": removed, "accounts": account_views()})
+
+    def _route_accounts_import(self, payload):
+        # Import a previously exported document (or any hand-written list
+        # of accounts). Body shapes accepted, see wb_accounts._coerce_account_rows:
+        #   {"format":"workbuddy-accounts","accounts":[...]}   <- our export
+        #   [...]                                              <- bare list
+        #   {"accessToken": ...}                               <- single account
+        #   {"account":{...},"auth":{...}}                     <- desktop credential
+        #
+        # Options:
+        #   dryRun    (bool) - validate and report, write nothing
+        #   overwrite (bool) - replace accounts whose uid already exists
+        #   realm     ("intl"|"cn") - force a realm instead of detecting it
+        #
+        # `data` carries the document. It is preferred over the bare body so
+        # the body can also hold the options above.
+        blob = payload.get("data") if "data" in payload else payload
+        if not isinstance(blob, (dict, list)):
+            return self._error(400, "the document must be a JSON object or array",
+                               "invalid_request_error")
+        rows, problem = wb_accounts._coerce_account_rows(blob)
+        if problem:
+            return self._error(400, "cannot read the document: %s" % problem,
+                               "invalid_request_error")
+        dry_run = bool(payload.get("dryRun"))
+        overwrite = bool(payload.get("overwrite"))
+        forced_realm = (payload.get("realm") or "").strip().lower() or None
+        if forced_realm and forced_realm not in ("intl", "cn"):
+            return self._error(400, "realm must be intl or cn", "invalid_request_error")
+        if dry_run:
+            # Validate every row without touching the pool so the caller can
+            # see exactly what an import would do before committing to it.
+            # Shares its rules with the real import, so the preview cannot
+            # disagree with what would actually happen.
+            return self._json(200, {
+                "dryRun": True,
+                "count": len(rows),
+                "result": POOL.preview_import_rows(rows, realm=forced_realm, overwrite=overwrite),
+                "accounts": account_views(),
+            })
+        report = POOL.import_rows(rows, realm=forced_realm, overwrite=overwrite)
+        log("account import: %d added, %d updated, %d skipped, %d invalid"
+            % (len(report["added"]), len(report["updated"]),
+               len(report["skipped"]), len(report["invalid"])))
+        return self._json(200, {
+            "count": len(rows),
+            "result": report,
+            "accounts": account_views(),
+        })
+
     def _handle_responses(self, payload):
         """Serve /v1/responses by translating to chat completions upstream."""
+        # The gateway is stateless: it keeps no store of previous responses,
+        # so it cannot replay a prior turn. Silently ignoring the field would
+        # answer a follow-up as if it were a fresh conversation - the client
+        # gets a normal-looking reply with the context missing. Say so instead.
+        if payload.get("previous_response_id"):
+            return self._error(
+                400,
+                "previous_response_id is not supported: this gateway does not "
+                "store response state. Send the full conversation in 'input' "
+                "instead, or use a stateless client.",
+                "invalid_request_error")
         session_key = extract_session_key(self.headers, payload)
         custom_names = custom_tool_names(payload.get("tools"))
         chat_req = responses_to_chat(payload)
+        # Echo these back on the response object; see chat_to_response.
+        request_meta = {
+            "tools": payload.get("tools") or [],
+            "tool_choice": payload.get("tool_choice", "auto"),
+            "parallel_tool_calls": payload.get("parallel_tool_calls", True),
+        }
         model = payload.get("model") or "deepseek-v4.1-flash"
         want_stream = bool(payload.get("stream"))
         t_start = time.time()
@@ -3656,6 +4097,12 @@ class Handler(BaseHTTPRequestHandler):
             if blocked:
                 return self._error(400, blocked, "invalid_request_error")
             upstream, account = open_upstream(chat_req, session_key=session_key, target_realm=req_realm)
+        except ContentRejected as exc:
+            record_error(model, 403, exc.detail[:200],
+                         elapsed_ms=int((time.time() - t_start) * 1000),
+                         account=getattr(exc, "account_uid", None))
+            return self._error(403, "upstream 403: %s" % (exc.detail or "content rejected"),
+                               "invalid_request_error")
         except RateLimited as exc:
             t = time.time() - t_start
             record_error(model, 429, exc.detail[:200], elapsed_ms=int(t * 1000),
@@ -3678,67 +4125,71 @@ class Handler(BaseHTTPRequestHandler):
             return self._error(502, f"upstream unreachable: {exc}")
         with upstream:
             if want_stream:
-                self.send_response(200)
-                self.send_header("Content-Type", "text/event-stream; charset=utf-8")
-                self.send_header("Cache-Control", "no-cache")
-                self.send_header("Connection", "close")
-                if cors_origin_allowed(self.path):
-                    self.send_header("Access-Control-Allow-Origin", "*")
-                self.end_headers()
-                holder = {"usage": None, "custom_names": custom_names}
-                first_ms = None
-                try:
-                    for frame in stream_responses_events(upstream, model, holder):
-                        if first_ms is None:
-                            first_ms = int((time.time() - t_start) * 1000)
-                        # PATCHED-BY-OPS: 与 chat completions 路径对齐，清洗噪音帧
-                        # （空 function_call 占位会让 sub2api 等严格解析器卡在
-                        #  legacy 工具调用分支，报 "no terminal response event"）
-                        self.wfile.write(clean_responses_frame(frame))
-                        self.wfile.flush()
-                except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
-                    wall = int((time.time() - t_start) * 1000)
-                    record_usage(model, holder.get("usage"), stream=True, elapsed_ms=wall,
-                                 ttft_ms=first_ms,
-                                 gen_ms=(wall - first_ms) if first_ms is not None else None,
-                                 fp=fp, account=account.uid)
-                    return
-                except Exception as exc:
-                    # Upstream died mid-stream (timeout, incomplete read, ...).
-                    # Without this the traceback escapes to the HTTP layer and
-                    # the client is left holding a half-finished stream with no
-                    # terminal event.
-                    wall = int((time.time() - t_start) * 1000)
-                    record_error(model, 502, "stream aborted: %s" % exc,
-                                 elapsed_ms=wall, account=account.uid)
-                    record_usage(model, holder.get("usage"), stream=True, elapsed_ms=wall,
-                                 ttft_ms=first_ms,
-                                 gen_ms=(wall - first_ms) if first_ms is not None else None,
-                                 fp=fp, account=account.uid)
-                    try:
-                        self.wfile.write(b"data: [DONE]\n\n")
-                        self.wfile.flush()
-                    except Exception:
-                        pass
-                    return
-                wall = int((time.time() - t_start) * 1000)
-                record_usage(model, holder.get("usage"), stream=True, elapsed_ms=wall,
-                             ttft_ms=first_ms,
-                             gen_ms=(wall - first_ms) if first_ms is not None else None,
-                             fp=fp, account=account.uid)
-                return
-            try:
-                chat_obj = aggregate_stream(upstream, model, None)
-            except Exception as exc:
-                record_error(model, 502, str(exc),
-                             elapsed_ms=int((time.time() - t_start) * 1000),
-                             account=account.uid)
-                return self._error(502, f"upstream stream error: {exc}")
+                return self._responses_stream_response(
+                    upstream, model, custom_names, request_meta, fp, account, t_start)
+            return self._responses_nonstream_response(
+                upstream, model, custom_names, request_meta, fp, account, t_start)
+
+    def _responses_stream_response(self, upstream, model, custom_names, request_meta, fp, account, t_start):
+        self.send_response(200)
+        self.send_header("Content-Type", "text/event-stream; charset=utf-8")
+        self.send_header("Cache-Control", "no-cache")
+        self.send_header("Connection", "close")
+        if cors_origin_allowed(self.path):
+            self.send_header("Access-Control-Allow-Origin", "*")
+        self.end_headers()
+        holder = {"usage": None, "custom_names": custom_names,
+                  "request_meta": request_meta}
+        first_ms = None
+        try:
+            for frame in stream_responses_events(upstream, model, holder):
+                if first_ms is None:
+                    first_ms = int((time.time() - t_start) * 1000)
+                self.wfile.write(clean_responses_frame(frame))
+                self.wfile.flush()
+        except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
             wall = int((time.time() - t_start) * 1000)
-            result = chat_to_response(chat_obj, model, custom_names)
-            record_usage(model, chat_obj.get("usage"), stream=False, elapsed_ms=wall, fp=fp,
+            record_usage(model, holder.get("usage"), stream=True, elapsed_ms=wall,
+                         ttft_ms=first_ms,
+                         gen_ms=(wall - first_ms) if first_ms is not None else None,
+                         fp=fp, account=account.uid,
+                         outcome="client_aborted")
+            return
+        except Exception as exc:
+            wall = int((time.time() - t_start) * 1000)
+            record_error(model, 502, "stream aborted: %s" % exc,
+                         elapsed_ms=wall, account=account.uid,
+                         usage=holder.get("usage"), stream=True,
+                         ttft_ms=first_ms,
+                         gen_ms=(wall - first_ms) if first_ms is not None else None,
+                         fp=fp, outcome="upstream_aborted")
+            try:
+                self.wfile.write(b"data: [DONE]" + bytes([10, 10]))
+                self.wfile.flush()
+            except Exception:
+                pass
+            return
+        wall = int((time.time() - t_start) * 1000)
+        record_usage(model, holder.get("usage"), stream=True, elapsed_ms=wall,
+                     ttft_ms=first_ms,
+                     gen_ms=(wall - first_ms) if first_ms is not None else None,
+                     fp=fp, account=account.uid)
+        return
+
+    def _responses_nonstream_response(self, upstream, model, custom_names, request_meta, fp, account, t_start):
+        try:
+            chat_obj = aggregate_stream(upstream, model, None)
+        except Exception as exc:
+            record_error(model, 502, str(exc),
+                         elapsed_ms=int((time.time() - t_start) * 1000),
                          account=account.uid)
-            return self._json(200, result)
+            return self._error(502, f"upstream stream error: {exc}")
+        wall = int((time.time() - t_start) * 1000)
+        result = chat_to_response(chat_obj, model, custom_names, request_meta)
+        record_usage(model, chat_obj.get("usage"), stream=False, elapsed_ms=wall, fp=fp,
+                     account=account.uid)
+        return self._json(200, result)
+
     def do_POST(self):
         path = self.path.split("?")[0]
         if path == "/settings/save":
@@ -3767,6 +4218,18 @@ class Handler(BaseHTTPRequestHandler):
             return
         if is_account_route:
             return self._handle_accounts(path, payload)
+        # Both OpenAI-shaped routes below can hold a thread for up to 600s.
+        # Take a slot for the duration; release it in finally so every early
+        # return (including client disconnects) gives the slot back.
+        if not _chat_slots.acquire(timeout=CHAT_SLOT_WAIT_SECONDS):
+            return self._error(503, "gateway is at its concurrent chat limit "
+                                    "(%d in flight); retry shortly" % MAX_CONCURRENT_CHAT)
+        try:
+            return self._dispatch_chat_post(path, payload)
+        finally:
+            _chat_slots.release()
+
+    def _dispatch_chat_post(self, path, payload):
         if path in ("/v1/responses", "/responses"):
             return self._handle_responses(payload)
         # Diagnostics: what the client actually asked for, and what we forward.
@@ -3795,6 +4258,12 @@ class Handler(BaseHTTPRequestHandler):
             if blocked:
                 return self._error(400, blocked, "invalid_request_error")
             upstream, account = open_upstream(payload, session_key=session_key, target_realm=req_realm)
+        except ContentRejected as exc:
+            record_error(model, 403, exc.detail[:200],
+                         elapsed_ms=int((time.time() - t_start) * 1000),
+                         account=getattr(exc, "account_uid", None))
+            return self._error(403, "upstream 403: %s" % (exc.detail or "content rejected"),
+                               "invalid_request_error")
         except RateLimited as exc:
             record_error(model, 429, exc.detail[:200],
                          elapsed_ms=int((time.time() - t_start) * 1000),
@@ -3818,89 +4287,127 @@ class Handler(BaseHTTPRequestHandler):
             return self._error(502, f"upstream unreachable: {exc}")
         with upstream:
             if want_stream:
-                self.send_response(200)
-                self.send_header("Content-Type", "text/event-stream; charset=utf-8")
-                self.send_header("Cache-Control", "no-cache")
-                self.send_header("Connection", "close")
-                if cors_origin_allowed(self.path):
-                    self.send_header("Access-Control-Allow-Origin", "*")
-                self.end_headers()
-                emitted = False
-                last_usage = None
-                first_ms = None
-                try:
-                    for line in upstream:
-                        data = strip_data_prefix(line.decode("utf-8", "replace"))
-                        if not data or data == "[DONE]" or data.startswith(":"):
-                            continue
-                        try:
-                            maybe = json.loads(data)
-                            if maybe.get("usage"):
-                                last_usage = maybe["usage"]
-                        except Exception:
-                            pass
-                        cleaned = clean_chunk(data)
-                        if not cleaned:
-                            continue
-                        if first_ms is None:
-                            first_ms = int((time.time() - t_start) * 1000)
-                        emitted = True
-                        self.wfile.write(f"data: {cleaned}\n\n".encode("utf-8"))
-                        self.wfile.flush()
-                except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
-                    # Client hung up; still account for what upstream produced.
-                    wall = int((time.time() - t_start) * 1000)
-                    record_usage(model, last_usage, stream=True,
-                                 elapsed_ms=wall, ttft_ms=first_ms,
-                                 gen_ms=(wall - first_ms) if first_ms is not None else None,
-                                 fp=fp, account=account.uid)
-                    return
-                except Exception as exc:
-                    # Upstream quit mid-stream (timeout, incomplete read, ...).
-                    # The client would otherwise get a truncated stream with no
-                    # terminal marker, and the traceback reached the HTTP layer.
-                    wall = int((time.time() - t_start) * 1000)
-                    record_error(model, 502, "stream aborted: %s" % exc,
-                                 elapsed_ms=wall, account=account.uid)
-                    record_usage(model, last_usage, stream=True,
-                                 elapsed_ms=wall, ttft_ms=first_ms,
-                                 gen_ms=(wall - first_ms) if first_ms is not None else None,
-                                 fp=fp, account=account.uid)
+                return self._chat_stream_response(
+                    upstream, model, fp, account, t_start)
+            return self._chat_nonstream_response(
+                upstream, model, fp, account, t_start)
+
+    def _chat_stream_response(self, upstream, model, fp, account, t_start):
+            self.send_response(200)
+            self.send_header("Content-Type", "text/event-stream; charset=utf-8")
+            self.send_header("Cache-Control", "no-cache")
+            self.send_header("Connection", "close")
+            if cors_origin_allowed(self.path):
+                self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+            emitted = False
+            last_usage = None
+            first_ms = None
+            streamed_text = []
+            try:
+                for line in upstream:
+                    data = strip_data_prefix(line.decode("utf-8", "replace"))
+                    if not data or data == "[DONE]" or data.startswith(":"):
+                        continue
                     try:
-                        self.wfile.write(b"data: [DONE]\n\n")
-                        self.wfile.flush()
+                        maybe = json.loads(data)
+                        u = maybe.get("usage")
+                        if u:
+                            if last_usage is None or (u.get("total_tokens") or 0) >= (last_usage.get("total_tokens") or 0):
+                                last_usage = u
+                        for ch in (maybe.get("choices") or []):
+                            delta = ch.get("delta") or {}
+                            if delta.get("content"):
+                                streamed_text.append(delta["content"])
+                            if delta.get("reasoning_content"):
+                                streamed_text.append(delta["reasoning_content"])
                     except Exception:
                         pass
-                    return
-                if not emitted:
-                    err = json.dumps({"error": {"message": "empty upstream stream", "type": "server_error"}})
-                    self.wfile.write(f"data: {err}\n\n".encode("utf-8"))
-                self.wfile.write(b"data: [DONE]\n\n")
-                self.wfile.flush()
+                    cleaned = clean_chunk(data)
+                    if not cleaned:
+                        continue
+                    if first_ms is None:
+                        first_ms = int((time.time() - t_start) * 1000)
+                    emitted = True
+                    self.wfile.write(f"data: {cleaned}\n\n".encode("utf-8"))
+                    self.wfile.flush()
+            except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
+                # Client hung up; still account for what upstream produced.
                 wall = int((time.time() - t_start) * 1000)
                 record_usage(model, last_usage, stream=True,
                              elapsed_ms=wall, ttft_ms=first_ms,
                              gen_ms=(wall - first_ms) if first_ms is not None else None,
-                             fp=fp, account=account.uid)
+                             fp=fp, account=account.uid,
+                             outcome="client_aborted")
                 return
-            try:
-                result = aggregate_stream(upstream, model, None)
             except Exception as exc:
-                record_error(model, 502, str(exc), elapsed_ms=int((time.time() - t_start) * 1000),
-                             account=account.uid)
-                return self._error(502, f"upstream stream error: {exc}")
+                # Upstream quit mid-stream (timeout, incomplete read, ...).
+                # The client would otherwise get a truncated stream with no
+                # terminal marker, and the traceback reached the HTTP layer.
+                wall = int((time.time() - t_start) * 1000)
+                record_error(model, 502, "stream aborted: %s" % exc,
+                             elapsed_ms=wall, account=account.uid,
+                            usage=last_usage, stream=True, ttft_ms=first_ms,
+                            gen_ms=(wall - first_ms) if first_ms is not None else None,
+                             fp=fp, outcome="upstream_aborted")
+                try:
+                    self.wfile.write(b"data: [DONE]\n\n")
+                    self.wfile.flush()
+                except Exception:
+                    pass
+                return
+            if not emitted:
+                err = json.dumps({"error": {"message": "empty upstream stream", "type": "server_error"}})
+                self.wfile.write(f"data: {err}\n\n".encode("utf-8"))
+            self.wfile.write(b"data: [DONE]\n\n")
+            self.wfile.flush()
             wall = int((time.time() - t_start) * 1000)
-            first_at = result.get("first_chunk_at")
-            # Measured from request arrival so streaming and non-streaming are comparable.
-            first_ms = int((first_at - t_start) * 1000) if first_at else None
-            record_usage(model, result.get("usage"), stream=False,
+            if last_usage is None or (last_usage.get("total_tokens") or 0) == 0:
+                full_s = "".join(streamed_text)
+                if full_s:
+                    comp = estimate_tokens(full_s)
+                    last_usage = {
+                        "prompt_tokens": max(1, comp // 2),
+                        "completion_tokens": comp,
+                        "total_tokens": max(1, comp // 2) + comp,
+                        "completion_tokens_details": {"reasoning_tokens": 0},
+                        "prompt_tokens_details": {"cached_tokens": 0},
+                    }
+            record_usage(model, last_usage, stream=True,
                          elapsed_ms=wall, ttft_ms=first_ms,
                          gen_ms=(wall - first_ms) if first_ms is not None else None,
                          fp=fp, account=account.uid)
-            return self._json(200, result)
+            return
+
+    def _chat_nonstream_response(self, upstream, model, fp, account, t_start):
+        try:
+            result = aggregate_stream(upstream, model, None)
+        except Exception as exc:
+            record_error(model, 502, str(exc), elapsed_ms=int((time.time() - t_start) * 1000),
+                         account=account.uid)
+            return self._error(502, f"upstream stream error: {exc}")
+        wall = int((time.time() - t_start) * 1000)
+        first_at = result.get("first_chunk_at")
+        # Measured from request arrival so streaming and non-streaming are comparable.
+        first_ms = int((first_at - t_start) * 1000) if first_at else None
+        record_usage(model, result.get("usage"), stream=False,
+                     elapsed_ms=wall, ttft_ms=first_ms,
+                     gen_ms=(wall - first_ms) if first_ms is not None else None,
+                     fp=fp, account=account.uid)
+        return self._json(200, result)
+
 def main():
-    global POOL, ACCOUNTS_DIR, API_KEY, SYSTEM_PROMPT, USAGE_DIR, USAGE_LOG
-    API_KEY_GENERATED = False
+    args = _parse_cli_args()
+    _apply_cli_overrides(args)
+    if _probe_running_instance(args):
+        return
+    api_key_generated = _bootstrap_runtime(args)
+    if _report_first_run(args):
+        return
+    _log_startup_summary(args, api_key_generated)
+    _serve_forever(args)
+
+def _parse_cli_args():
     ap = argparse.ArgumentParser(description="WorkBuddy (workbuddy.ai) -> OpenAI-compatible proxy")
     ap.add_argument("--info", help="path to the WorkBuddy *.info credential file")
     ap.add_argument("--host", default=os.environ.get("HOST") or "127.0.0.1")
@@ -3924,6 +4431,10 @@ def main():
     ap.add_argument("--panel-password", default=None,
                     help="set the web panel password on startup (default: admin)")
     args = ap.parse_args()
+    return args
+
+def _apply_cli_overrides(args):
+    global USAGE_DIR, USAGE_LOG
     # LAN mode binds every interface. The key is generated below, once
     # ACCOUNTS_DIR is resolved, so it can be persisted and reused.
     if args.lan and args.host == "127.0.0.1":
@@ -3934,6 +4445,8 @@ def main():
     if args.usage_dir:
         USAGE_DIR = os.path.abspath(args.usage_dir)
         USAGE_LOG = os.path.join(USAGE_DIR, "usage.jsonl")
+
+def _probe_running_instance(args):
     # Refuse to start a second copy. On Windows SO_REUSEADDR lets two sockets
     # bind the same port, which silently splits incoming connections between
     # them - confusing and hard to diagnose.
@@ -3972,7 +4485,16 @@ def main():
         print()
         print("  Nếu muốn khởi động lại: hãy đóng cửa sổ cũ (hoặc kết thúc tiến trình python), rồi chạy lại chương trình này.")
         print()
-        return
+        # Return True so main() stops here. A bare return gives None, which
+        # main() reads as "no running copy" and it would carry on to bind the
+        # port that is already taken.
+        return True
+    return False
+
+def _bootstrap_runtime(args):
+    global POOL, ACCOUNTS_DIR, API_KEY, SYSTEM_PROMPT
+    global API_KEY_FILE_SET, SCHEDULER
+    api_key_generated = False
     API_KEY = args.api_key
     SYSTEM_PROMPT = args.system_prompt
     if args.accounts_dir:
@@ -3981,7 +4503,7 @@ def main():
     # upstream quota, so a guessable default lets anyone on the network drain
     # it. Generate one on first use, persist it, and reuse it afterwards.
     if args.lan and not API_KEY:
-        API_KEY, API_KEY_GENERATED = wb_settings.ensure_launcher_key(ACCOUNTS_DIR)
+        API_KEY, api_key_generated = wb_settings.ensure_launcher_key(ACCOUNTS_DIR)
     # A key saved from the panel wins over an auto-generated LAN key so a
     # change made in the browser survives a restart of the .bat file. An
     # explicit --api-key on the command line still takes precedence.
@@ -4002,6 +4524,9 @@ def main():
     from wb_scheduler import Scheduler
     SCHEDULER = Scheduler(POOL)
     SCHEDULER.start()
+    return api_key_generated
+
+def _report_first_run(args):
     if args.info:
         account = POOL.import_desktop_credential(args.info, source="file")
         log("imported account %s from %s" % (account.uid[:8], args.info))
@@ -4028,6 +4553,8 @@ def main():
         for account in POOL.accounts:
             print("  %s  %s  %s" % (account.uid[:8], account.nickname, account.domain))
         return
+
+def _log_startup_summary(args, api_key_generated):
     rep = current_account()
     log("accounts   : %d total, %d usable" % (len(POOL.accounts), POOL.count_ready()))
     for account in POOL.accounts:
@@ -4057,7 +4584,7 @@ def main():
             print("    Dashboard : http://%s:%s/" % (ip, args.port))
         print()
         print("    API Key   : %s" % API_KEY)
-        if API_KEY_GENERATED:
+        if api_key_generated:
             print("                (newly generated & saved to accounts/settings.json)")
         else:
             print("                (reused from accounts/settings.json)")
@@ -4085,6 +4612,8 @@ def main():
         print("  " + "=" * 62)
         print()
         sys.stdout.flush()
+
+def _serve_forever(args):
     try:
         server = ThreadingHTTPServer((args.host, args.port), Handler)
     except OSError as exc:
@@ -4117,6 +4646,7 @@ def main():
             server.server_close()
         except Exception:
             pass
+
 if __name__ == "__main__":
     try:
         # Keep console output readable regardless of the active code page.
