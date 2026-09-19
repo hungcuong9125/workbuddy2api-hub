@@ -1398,6 +1398,22 @@ function accountRow(a){
     + (a.machineId ? ('<div class="mono" style="color:var(--dim);font-size:10px;margin-top:2px" title="由账号UID稳定派生的专属设备码，防多号关联风控">设备码: ' + esc(a.machineId.slice(0,14)) + '...</div>') : '')
     + err + '</td>'
     + '<td style="text-align:center">' + state + '</td>'
+    + '<td style="text-align:center;white-space:nowrap">'
+    +   '<div style="display:flex;flex-direction:column;gap:5px;align-items:center">'
+    +     (a.hasProxy
+            ? '<span class="badge ok" title="该账号的请求会经专属代理出网">代理: On</span>'
+            : '<span class="badge off" title="该账号直连出网">代理: Off</span>')
+    +     '<div style="display:flex;gap:4px;justify-content:center">'
+    +       '<button class="sec mini" onclick="proxyEdit(&quot;' + uidAttr + '&quot;, this)">' + (a.hasProxy ? '修改' : '设置') + '</button>'
+    +       '<button class="sec mini" onclick="proxyTest(&quot;' + uidAttr + '&quot;, this)">测试</button>'
+    +       (a.hasProxy ? '<button class="sec mini" onclick="proxyClear(&quot;' + uidAttr + '&quot;, this)">清除</button>' : '')
+    +     '</div>'
+    +     '<div id="proxyBox_' + uidAttr + '" style="display:none;gap:4px;justify-content:center">'
+    +       '<input id="proxyInput_' + uidAttr + '" type="text" autocomplete="off" spellcheck="false" placeholder="http://user:pass@host:port" style="width:170px;font-size:11px;padding:3px 6px">'
+    +       '<button class="sec mini" onclick="proxySave(&quot;' + uidAttr + '&quot;, this)">保存</button>'
+    +     '</div>'
+    +   '</div>'
+    + '</td>'
     + '<td style="text-align:left;white-space:nowrap">' + credText + '</td>'
     + '<td style="text-align:right">' + fmt(usage.requests) + '</td>'
     + '<td style="text-align:right">' + fmt(usage.total_tokens) + '</td>'
@@ -1443,6 +1459,7 @@ function renderAccounts(){
     + '<th style="text-align:center;width:76px">版本</th>'
     + '<th style="text-align:left">账号</th>'
     + '<th style="text-align:center;width:84px">状态</th>'
+    + '<th style="text-align:center;width:150px">代理</th>'
     + '<th style="text-align:left;width:120px">积分</th>'
     + '<th style="text-align:right;width:70px">请求</th>'
     + '<th style="text-align:right;width:88px">总 token</th>'
@@ -1529,6 +1546,72 @@ async function testAccount(uid, btn){
     if(btn){ btn.disabled = false; btn.textContent = '测试'; }
   }
 }
+/* Per-account proxy editor. The API never returns the proxy URL (only
+   hasProxy), so the input is write-only: it always starts empty and a save
+   replaces whatever is stored. Credentials are never logged here. */
+function proxyBox(uid){
+  const uidAttr = String(uid || '').replace(/[^\w.@-]/g, '');
+  return document.getElementById('proxyBox_' + uidAttr);
+}
+function proxyEdit(uid, btn){
+  const box = proxyBox(uid);
+  if(!box) return;
+  const showing = box.style.display !== 'none';
+  box.style.display = showing ? 'none' : 'flex';
+  if(!showing){
+    const uidAttr = String(uid || '').replace(/[^\w.@-]/g, '');
+    const input = document.getElementById('proxyInput_' + uidAttr);
+    if(input){ input.value = ''; input.focus(); }
+  }
+}
+async function proxySave(uid, btn){
+  const uidAttr = String(uid || '').replace(/[^\w.@-]/g, '');
+  const input = document.getElementById('proxyInput_' + uidAttr);
+  const value = (input && input.value || '').trim();
+  if(!value){ toast('请填写代理地址，或使用“清除”按钮', 'warn'); return; }
+  if(btn){ btn.disabled = true; btn.textContent = '保存中...'; }
+  try{
+    await postJSON('/accounts/' + encodeURIComponent(uid) + '/proxy', {proxy: value});
+    if(input) input.value = '';
+    const box = proxyBox(uid);
+    if(box) box.style.display = 'none';
+    await loadAccounts();
+    toast('代理已更新', 'ok');
+  }catch(e){
+    toast('保存代理失败: ' + e.message, 'bad');
+  }finally{
+    if(btn){ btn.disabled = false; btn.textContent = '保存'; }
+  }
+}
+async function proxyClear(uid, btn){
+  if(!confirm('确定清除该账号的代理？清除后该账号将直连出网。')) return;
+  if(btn) btn.disabled = true;
+  try{
+    await postJSON('/accounts/' + encodeURIComponent(uid) + '/proxy', {proxy: ''});
+    await loadAccounts();
+    toast('代理已清除', 'ok');
+  }catch(e){
+    toast('清除代理失败: ' + e.message, 'bad');
+  }finally{
+    if(btn) btn.disabled = false;
+  }
+}
+async function proxyTest(uid, btn){
+  if(btn){ btn.disabled = true; btn.textContent = '测试中...'; }
+  try{
+    const r = await postJSON('/accounts/' + encodeURIComponent(uid) + '/proxy/test', {});
+    if(r.ok){
+      toast('代理可用，出口 IP: ' + (r.egressIp || '未知'), 'ok');
+    } else {
+      toast('代理测试失败: ' + (r.error || '未知错误'), 'bad');
+    }
+  }catch(e){
+    toast('代理测试请求失败: ' + e.message, 'bad');
+  }finally{
+    if(btn){ btn.disabled = false; btn.textContent = '测试'; }
+  }
+}
+
 async function refreshAccounts(){
   try{ const r = await postJSON('/accounts/refresh', {});
        const okc = (r.results||[]).filter(x=>x.ok).length;
