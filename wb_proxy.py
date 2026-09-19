@@ -3909,6 +3909,8 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/accounts/import":
             return self._route_accounts_import(payload)
         # Per-account proxy editor: /accounts/{uid}/proxy and .../proxy/test
+        if path == "/accounts/proxy/test-all":
+            return self._route_accounts_proxy_test_all()
         proxy_match = re.match(r"^/accounts/([^/]+)/proxy(?:/(test))?$", path)
         if proxy_match:
             uid = unquote(proxy_match.group(1))
@@ -4210,22 +4212,28 @@ class Handler(BaseHTTPRequestHandler):
             account.proxy = text
         else:
             account.proxy = None
+        # Any change invalidates the previous health result: the old "ok" was
+        # for a different proxy, so showing it would be misleading.
+        account.proxy_status = None
         account.save(POOL.dir)
         log("account %s proxy %s" % (uid[:8], "set" if account.proxy else "cleared"),
             tag="accounts")
+        # Verify the new proxy right away so the dashboard can show a real
+        # status without a second click. Only meaningful when a proxy is set.
+        if account.proxy and not payload.get("skipTest"):
+            self._probe_proxy(account)
         return self._json(200, {"ok": True, "account": account.public()})
 
-    def _route_accounts_proxy_test(self, uid):
-        """Fetch an IP-echo endpoint through this account's proxy.
+    def _probe_proxy(self, account):
+        """Run one IP-echo request through the account proxy, record the result.
 
-        Returns the egress IP on success, or a fail-closed error. A 200 is
-        always returned so the dashboard can show the outcome uniformly.
+        Stores a small health snapshot on the account (runtime-only, no URL)
+        and returns it. Never raises: a broken proxy fails closed and is
+        reported as ok=False so callers can surface it.
         """
-        account = POOL.get(uid)
-        if account is None:
-            return self._error(404, "no such account")
         if not account.proxy:
-            return self._json(200, {"ok": False, "error": "no proxy configured"})
+            account.proxy_status = None
+            return {"ok": False, "error": "no proxy configured"}
         req = urllib.request.Request(
             "https://api.ipify.org?format=json",
             headers={"User-Agent": "curl/8", "Accept": "application/json"},
@@ -4238,16 +4246,51 @@ class Handler(BaseHTTPRequestHandler):
                 egress = json.loads(body).get("ip") or body.strip()
             except Exception:
                 egress = body.strip()
-            log("account %s proxy test ok (%dms)" % (uid[:8], int((time.time() - t0) * 1000)),
-                tag="accounts")
-            return self._json(200, {"ok": True, "egressIp": egress})
+            status = {"ok": True, "egressIp": egress, "error": None,
+                      "checkedAt": time.time(), "elapsedMs": int((time.time() - t0) * 1000)}
+            account.proxy_status = status
+            log("account %s proxy test ok (%dms)"
+                % (account.uid[:8], status["elapsedMs"]), tag="accounts")
+            return status
         except Exception as exc:
             # Log only the exception type: a proxy-related message could in
             # principle echo connection details, and the URL must never be
             # written to logs.
-            log("account %s proxy test failed: %s" % (uid[:8], type(exc).__name__),
-                level="WARN", tag="accounts")
-            return self._json(200, {"ok": False, "error": str(exc)})
+            status = {"ok": False, "egressIp": None, "error": str(exc),
+                      "checkedAt": time.time(), "elapsedMs": int((time.time() - t0) * 1000)}
+            account.proxy_status = status
+            log("account %s proxy test failed: %s"
+                % (account.uid[:8], type(exc).__name__), level="WARN", tag="accounts")
+            return status
+
+    def _route_accounts_proxy_test(self, uid):
+        """Fetch an IP-echo endpoint through this account's proxy.
+
+        Returns the egress IP on success, or a fail-closed error, and records
+        the outcome in account.proxy_status so the list view can show it. A
+        200 is always returned so the dashboard can show the outcome uniformly.
+        """
+        account = POOL.get(uid)
+        if account is None:
+            return self._error(404, "no such account")
+        result = self._probe_proxy(account)
+        return self._json(200, result)
+
+    def _route_accounts_proxy_test_all(self):
+        """Probe every account that has a proxy, sequentially.
+
+        Kept serial on purpose: dozens of parallel tunnel handshakes would
+        trip per-IP rate limits on the echo endpoint and on the proxies.
+        """
+        results = []
+        for account in list(POOL.accounts):
+            if not account.proxy:
+                continue
+            result = self._probe_proxy(account)
+            results.append({"uid": account.uid, "ok": result.get("ok"),
+                            "egressIp": result.get("egressIp"),
+                            "error": result.get("error")})
+        return self._json(200, {"results": results, "accounts": account_views()})
 
     def _route_accounts_import(self, payload):
         # Import a previously exported document (or any hand-written list

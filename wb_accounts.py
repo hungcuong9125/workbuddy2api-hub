@@ -182,6 +182,11 @@ class Account(object):
         # Optional per-account egress proxy: protocol://[user:pass@]host:port.
         # May embed credentials, so never log it or expose it in public().
         self.proxy = str(data.get("proxy") or "").strip() or None
+        # Result of the most recent proxy health check. Runtime-only (never
+        # persisted, never in to_dict()): a proxy can go down between runs, so
+        # a stored "ok" would be misleading. Shape:
+        #   {"ok": bool, "egressIp": str|None, "error": str|None, "checkedAt": float}
+        self.proxy_status = None
         # Serialise token refresh and file writes. Request threads, /health,
         # dashboard polls and the scheduler can all reach refresh()/save() for
         # the same account at once; without a lock the upstream rotates the
@@ -234,6 +239,9 @@ class Account(object):
             "lastCheckin": self.last_checkin,
             "canCheckin": self.realm == "cn",
             "hasProxy": bool(self.proxy),
+            # Health of the last proxy check (no URL/credentials). None until
+            # the account's proxy has been tested at least once.
+            "proxyStatus": dict(self.proxy_status) if self.proxy_status else None,
             "machineId": derive_id(self.uid, "machine"),
             "sessionId": derive_id(self.uid, "session"),
         }
