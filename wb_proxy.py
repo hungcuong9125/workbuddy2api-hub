@@ -34,6 +34,7 @@ import urllib.error
 import urllib.request
 import uuid
 import wb_accounts
+from wb_accounts import open_url
 import wb_catalog
 import wb_settings
 CURRENT_REALM = os.environ.get("WB_PROXY_DEFAULT_REALM", "intl")
@@ -81,7 +82,7 @@ def exclusive_realm(model_id):
         return "cn"
     return ""
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from urllib.parse import urlparse, parse_qs
+from urllib.parse import urlparse, parse_qs, urlsplit, unquote
 def install_console_close_handler():
     """Release the port when the console window is closed by the user.
     Windows does not kill child processes when a console window closes, so
@@ -943,6 +944,33 @@ def account_views(realm=None):
     if not POOL:
         return []
     return POOL.list_public(realm=realm)
+
+
+def validate_proxy_url(value):
+    """Validate a user-supplied proxy URL, returning (ok, error_message).
+
+    Accepts `protocol://[user:pass@]host:port` and a bare `host:port` (a
+    scheme is temporarily prepended for the check, matching open_url's own
+    normalization). Only the shape is validated here - reachability is the
+    job of the separate test endpoint. The value is never logged.
+    """
+    text = str(value or "").strip()
+    if not text:
+        return True, None
+    candidate = text if "://" in text else "http://" + text
+    try:
+        parts = urlsplit(candidate)
+        host = parts.hostname
+        port = parts.port
+    except ValueError:
+        return False, "proxy must look like protocol://[user:pass@]host:port"
+    if not host or port is None:
+        return False, "proxy must include a host and a port (host:port)"
+    if not (0 < port < 65536):
+        return False, "proxy port must be between 1 and 65535"
+    return True, None
+
+
 _byacct_cache = {"at": 0.0, "data": None}
 _byacct_lock = threading.Lock()
 
@@ -1611,7 +1639,7 @@ def fetch_endpoint_models():
         return [m for m, _ in (cached or [])]
     req = urllib.request.Request(UPSTREAM + MODELS_PATH, method="GET", headers=account.headers())
     try:
-        with urllib.request.urlopen(req, timeout=30) as resp:
+        with open_url(req, timeout=30, proxy=account.proxy) as resp:
             payload = json.loads(resp.read().decode("utf-8"))
     except Exception as exc:
         log(f"model discovery failed: {exc}")
@@ -2109,7 +2137,7 @@ def open_upstream(payload, session_key=None, target_realm=None):
         req = urllib.request.Request(chat_url, data=body, method="POST",
                                      headers=account.headers(purpose="chat"))
         try:
-            resp = urllib.request.urlopen(req, timeout=600)
+            resp = open_url(req, timeout=600, proxy=account.proxy)
             account.clear_error(model=model)
             return resp, account
         except urllib.error.HTTPError as exc:
@@ -3880,6 +3908,15 @@ class Handler(BaseHTTPRequestHandler):
             return self._route_accounts_delete(payload)
         if path == "/accounts/import":
             return self._route_accounts_import(payload)
+        # Per-account proxy editor: /accounts/{uid}/proxy and .../proxy/test
+        if path == "/accounts/proxy/test-all":
+            return self._route_accounts_proxy_test_all()
+        proxy_match = re.match(r"^/accounts/([^/]+)/proxy(?:/(test))?$", path)
+        if proxy_match:
+            uid = unquote(proxy_match.group(1))
+            if proxy_match.group(2) == "test":
+                return self._route_accounts_proxy_test(uid)
+            return self._route_accounts_proxy_set(uid, payload)
         return self._error(404, "unknown account endpoint", "invalid_request_error")
     def _route_accounts_credits_fetch(self, payload):
         uid = payload.get("uid")
@@ -4092,7 +4129,7 @@ class Handler(BaseHTTPRequestHandler):
         )
         t0 = time.time()
         try:
-            with urllib.request.urlopen(req, timeout=30) as resp:
+            with open_url(req, timeout=30, proxy=account.proxy) as resp:
                 chat_obj = aggregate_stream(resp, test_model, None)
                 wall_ms = int((time.time() - t0) * 1000)
                 choices = chat_obj.get("choices") or []
@@ -4154,6 +4191,106 @@ class Handler(BaseHTTPRequestHandler):
         removed = POOL.remove(uid)
         log("account %s deleted" % uid[:8])
         return self._json(200, {"deleted": removed, "accounts": account_views()})
+
+    def _route_accounts_proxy_set(self, uid, payload):
+        """Set or clear one account's egress proxy (never echoes the URL).
+
+        Body: {"proxy": "<url>"} to set, or ""/null to clear. The stored value
+        is kept exactly as typed (open_url normalizes a missing scheme at use
+        time). Only account.public() - which carries hasProxy, never the URL -
+        goes back to the client, and the value is never logged.
+        """
+        account = POOL.get(uid)
+        if account is None:
+            return self._error(404, "no such account")
+        raw = payload.get("proxy")
+        text = str(raw or "").strip()
+        if text:
+            ok, problem = validate_proxy_url(text)
+            if not ok:
+                return self._error(400, problem, "invalid_request_error")
+            account.proxy = text
+        else:
+            account.proxy = None
+        # Any change invalidates the previous health result: the old "ok" was
+        # for a different proxy, so showing it would be misleading.
+        account.proxy_status = None
+        account.save(POOL.dir)
+        log("account %s proxy %s" % (uid[:8], "set" if account.proxy else "cleared"),
+            tag="accounts")
+        # Verify the new proxy right away so the dashboard can show a real
+        # status without a second click. Only meaningful when a proxy is set.
+        if account.proxy and not payload.get("skipTest"):
+            self._probe_proxy(account)
+        return self._json(200, {"ok": True, "account": account.public()})
+
+    def _probe_proxy(self, account):
+        """Run one IP-echo request through the account proxy, record the result.
+
+        Stores a small health snapshot on the account (runtime-only, no URL)
+        and returns it. Never raises: a broken proxy fails closed and is
+        reported as ok=False so callers can surface it.
+        """
+        if not account.proxy:
+            account.proxy_status = None
+            return {"ok": False, "error": "no proxy configured"}
+        req = urllib.request.Request(
+            "https://api.ipify.org?format=json",
+            headers={"User-Agent": "curl/8", "Accept": "application/json"},
+        )
+        t0 = time.time()
+        try:
+            with open_url(req, timeout=15, proxy=account.proxy) as resp:
+                body = resp.read().decode("utf-8", "replace")
+            try:
+                egress = json.loads(body).get("ip") or body.strip()
+            except Exception:
+                egress = body.strip()
+            status = {"ok": True, "egressIp": egress, "error": None,
+                      "checkedAt": time.time(), "elapsedMs": int((time.time() - t0) * 1000)}
+            account.proxy_status = status
+            log("account %s proxy test ok (%dms)"
+                % (account.uid[:8], status["elapsedMs"]), tag="accounts")
+            return status
+        except Exception as exc:
+            # Log only the exception type: a proxy-related message could in
+            # principle echo connection details, and the URL must never be
+            # written to logs.
+            status = {"ok": False, "egressIp": None, "error": str(exc),
+                      "checkedAt": time.time(), "elapsedMs": int((time.time() - t0) * 1000)}
+            account.proxy_status = status
+            log("account %s proxy test failed: %s"
+                % (account.uid[:8], type(exc).__name__), level="WARN", tag="accounts")
+            return status
+
+    def _route_accounts_proxy_test(self, uid):
+        """Fetch an IP-echo endpoint through this account's proxy.
+
+        Returns the egress IP on success, or a fail-closed error, and records
+        the outcome in account.proxy_status so the list view can show it. A
+        200 is always returned so the dashboard can show the outcome uniformly.
+        """
+        account = POOL.get(uid)
+        if account is None:
+            return self._error(404, "no such account")
+        result = self._probe_proxy(account)
+        return self._json(200, result)
+
+    def _route_accounts_proxy_test_all(self):
+        """Probe every account that has a proxy, sequentially.
+
+        Kept serial on purpose: dozens of parallel tunnel handshakes would
+        trip per-IP rate limits on the echo endpoint and on the proxies.
+        """
+        results = []
+        for account in list(POOL.accounts):
+            if not account.proxy:
+                continue
+            result = self._probe_proxy(account)
+            results.append({"uid": account.uid, "ok": result.get("ok"),
+                            "egressIp": result.get("egressIp"),
+                            "error": result.get("error")})
+        return self._json(200, {"results": results, "accounts": account_views()})
 
     def _route_accounts_import(self, payload):
         # Import a previously exported document (or any hand-written list
