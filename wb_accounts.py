@@ -26,7 +26,7 @@ def _retryable(exc):
 
 
 def http_json(url, data=None, method=None, headers=None, timeout=30,
-              retries=3, backoff=1.0, log=None):
+              retries=3, backoff=1.0, log=None, proxy=None):
     """urlopen + json decode with retries.
 
     Chinese networks and CDN edges routinely drop a TLS handshake with
@@ -43,7 +43,7 @@ def http_json(url, data=None, method=None, headers=None, timeout=30,
             headers=headers or {},
         )
         try:
-            with urllib.request.urlopen(req, timeout=timeout) as resp:
+            with open_url(req, timeout=timeout, proxy=proxy) as resp:
                 return json.loads(resp.read().decode("utf-8"))
         except Exception as exc:
             last = exc
@@ -53,6 +53,24 @@ def http_json(url, data=None, method=None, headers=None, timeout=30,
                 log("network retry %d/%d after %s" % (attempt, attempts, exc))
             time.sleep(backoff * attempt)
     raise last
+
+
+def open_url(req, timeout=30, proxy=None):
+    """urlopen with an optional per-request proxy.
+
+    When *proxy* is a non-empty string the request is tunneled through it;
+    otherwise it uses the default opener (direct, honoring any env proxy just
+    like before). A bare "host:port" is treated as an http proxy. The returned
+    object is a normal HTTPResponse and supports the `with` statement, so all
+    call sites work whether or not a proxy is set. A broken proxy fails closed
+    (raises) rather than silently falling back to a direct connection.
+    """
+    if proxy:
+        p = proxy if "://" in proxy else "http://" + proxy
+        handler = urllib.request.ProxyHandler({"http": p, "https": p})
+        opener = urllib.request.build_opener(handler)
+        return opener.open(req, timeout=timeout)
+    return urllib.request.urlopen(req, timeout=timeout)
 
 REALM_CONFIGS = {
     "intl": {
@@ -161,6 +179,9 @@ class Account(object):
         self.model_cooldowns = {}
         self.credits = data.get("credits") or None
         self.last_checkin = data.get("lastCheckin") or None
+        # Optional per-account egress proxy: protocol://[user:pass@]host:port.
+        # May embed credentials, so never log it or expose it in public().
+        self.proxy = str(data.get("proxy") or "").strip() or None
         # Serialise token refresh and file writes. Request threads, /health,
         # dashboard polls and the scheduler can all reach refresh()/save() for
         # the same account at once; without a lock the upstream rotates the
@@ -187,6 +208,7 @@ class Account(object):
             "cooldownUntil": self.cooldown_until,
             "credits": self.credits,
             "lastCheckin": self.last_checkin,
+            "proxy": self.proxy,
         }
 
     def public(self):
@@ -211,6 +233,7 @@ class Account(object):
             "credits": self.credits,
             "lastCheckin": self.last_checkin,
             "canCheckin": self.realm == "cn",
+            "hasProxy": bool(self.proxy),
             "machineId": derive_id(self.uid, "machine"),
             "sessionId": derive_id(self.uid, "session"),
         }
@@ -332,7 +355,7 @@ class Account(object):
         if self.enterprise_id:
             headers["X-Enterprise-Id"] = self.enterprise_id
         try:
-            payload = http_json(url, data=b"{}", method="POST", headers=headers, timeout=30)
+            payload = http_json(url, data=b"{}", method="POST", headers=headers, timeout=30, proxy=self.proxy)
         except Exception as exc:
             self.last_error = "refresh failed: %s" % exc
             return False
@@ -366,7 +389,7 @@ class Account(object):
         url = cfg["billing_upstream"] + CHECKIN_PATH
         headers = self.headers(purpose="billing")
         try:
-            payload = http_json(url, data=b"{}", method="POST", headers=headers, timeout=15)
+            payload = http_json(url, data=b"{}", method="POST", headers=headers, timeout=15, proxy=self.proxy)
             code = payload.get("code", -1)
             msg = payload.get("msg") or "ok"
             self.last_checkin = time.strftime("%Y-%m-%d %H:%M:%S")
@@ -396,7 +419,7 @@ class Account(object):
         url = cfg["billing_upstream"] + GET_RESOURCE_PATH
         headers = self.headers(purpose="billing")
         try:
-            res = http_json(url, data=json.dumps(body).encode(), method="POST", headers=headers, timeout=30)
+            res = http_json(url, data=json.dumps(body).encode(), method="POST", headers=headers, timeout=30, proxy=self.proxy)
         except Exception as exc:
             return {"ok": False, "error": str(exc)}
         data = res.get("data", {}).get("Response", {}).get("Data", {})
@@ -548,6 +571,8 @@ class AccountPool(object):
                     account.credits = existing.credits
                 if not account.last_checkin and existing.last_checkin:
                     account.last_checkin = existing.last_checkin
+                if not account.proxy and existing.proxy:
+                    account.proxy = existing.proxy
                 self.accounts[self.accounts.index(existing)] = account
             else:
                 self.accounts.append(account)
@@ -1036,4 +1061,5 @@ def normalise_import_row(row, realm=None):
         # Volatile state is intentionally reset - see VOLATILE_FIELDS.
         "lastError": "",
         "cooldownUntil": 0.0,
+        "proxy": str(pick("proxy") or "").strip() or None,
     }
