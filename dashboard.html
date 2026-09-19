@@ -65,6 +65,8 @@ th:first-child,td:first-child{text-align:left}
 tbody tr:last-child td{border-bottom:none}
 tbody tr:hover{background:rgba(241,245,249,.6)}
 .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px}
+/* 输入 / 输出 / 思考：三个数字应该在一行内读完，不拆行 */
+.triple{white-space:nowrap}
 .bar-fill{height:6px;border-radius:3px;background:var(--accent);min-width:2px;display:inline-block;vertical-align:middle}
 .bar-fill.think{background:var(--think)}
 .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;width:100%;border-radius:8px}
@@ -190,13 +192,18 @@ a:hover{text-decoration:underline}
 .main-nav-btn{background:transparent;border:1px solid transparent;color:var(--dim);padding:6px 14px;border-radius:7px;font-size:13px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .15s ease}
 .main-nav-btn:hover{color:var(--fg);background:#fff}
 .main-nav-btn.active{background:#fff;color:var(--fg);border-color:var(--line);box-shadow:var(--shadow-sm);font-weight:600}
+/* The page sections are toggled by a class so the inline head script can
+   choose one before the body is parsed, avoiding a flash of the wrong
+   page on every reload. */
+.main-page{display:none}
+.main-page.active{display:block}
 .range-btn{background:transparent;border:none;color:var(--dim);padding:4px 12px;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;transition:all .15s ease}
 .range-btn:hover{color:var(--fg)}
 .range-btn.active{background:var(--accent);color:#fff;font-weight:600;box-shadow:var(--shadow-sm)}
 #analyticsKpiCards .card{padding:12px 16px;min-width:0;overflow:hidden;border-radius:12px;background:#fff;border:1px solid var(--line);box-shadow:var(--shadow)}
 #analyticsKpiCards .card .v{font-size:19px;font-weight:700;white-space:nowrap}
 #analyticsKpiCards .card .k{font-size:11px;white-space:nowrap;margin-bottom:3px;font-weight:600;color:var(--dim)}
-#analyticsKpiCards .card .s{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;color:var(--dim)}
+#analyticsKpiCards .card .s{font-size:10px;white-space:normal;line-height:1.35;margin-top:2px;color:var(--dim)}
 .model-pill{display:inline-flex;align-items:center;gap:4px;background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:2px 8px;font-size:11px;margin:2px 4px 2px 0;white-space:nowrap}
 .log-line{display:flex;align-items:flex-start;gap:8px;padding:3px 6px;border-radius:4px;font-family:Consolas,Monaco,'Courier New',monospace;font-size:12px;line-height:1.55;transition:background .1s}
 .log-line:hover{background:rgba(255,255,255,.05)}
@@ -216,6 +223,29 @@ a:hover{text-decoration:underline}
 .log-msg{color:#cbd5e1;flex:1;word-break:break-all;white-space:pre-wrap}
 .log-empty{padding:48px 24px;text-align:center;color:#64748b;font-size:13px;font-family:inherit}
 </style>
+<script>
+/* Runs before <body> is parsed, so the page the user last had is the
+   first one painted. Kept inline and dependency-free on purpose: an
+   external or deferred script would run too late to avoid the flash. */
+(function(){
+  var TABS = ['gateway','analytics','logs','settings'];
+  var pick = null;
+  try {
+    var q = new URLSearchParams(location.search).get('tab');
+    var s = localStorage.getItem('wb-proxy-main-tab');
+    pick = [q, s].find(function(t){ return TABS.indexOf(t) !== -1; }) || 'gateway';
+  } catch(e) { pick = 'gateway'; }
+  window.__MAIN_TAB__ = pick;
+  document.addEventListener('DOMContentLoaded', function(){
+    TABS.forEach(function(t){
+      var page = document.getElementById('page' + t.charAt(0).toUpperCase() + t.slice(1));
+      if(page) page.classList.toggle('active', t === pick);
+      var btn = document.getElementById('btnNav' + t.charAt(0).toUpperCase() + t.slice(1));
+      if(btn) btn.classList.toggle('active', t === pick);
+    });
+  });
+})();
+</script>
 </head>
 <body>
 <header>
@@ -265,6 +295,8 @@ a:hover{text-decoration:underline}
 <main>
   <div id="pageGateway">
   <!-- Thanh điều khiển trung tâm phiên bản (lưới 3 cột cao bằng nhau) -->
+  <div id="pageGateway" class="main-page">
+  <!-- 版本中枢控制栏 (三列等高对齐网格) -->
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-bottom:18px">
     
     <!-- Thẻ 1: Quốc Tế (Global) -->
@@ -446,7 +478,7 @@ a:hover{text-decoration:underline}
 
   
   </div><!-- /pageGateway -->
-  <div id="pageAnalytics" style="display:none">
+  <div id="pageAnalytics" class="main-page">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:12px">
       <div>
         <h2 style="margin:0;font-size:16px;color:var(--fg);display:flex;align-items:center;gap:8px">
@@ -466,11 +498,13 @@ a:hover{text-decoration:underline}
         <div class="k">Số token đã tiêu thụ hôm nay</div>
         <div class="v" id="kpiTodayTokens">0</div>
         <div class="s" id="kpiTodayTokensDetail">Input 0 · Output 0</div>
+        <div class="s" id="kpiTodayTokensDetail">输入 0 / 输出 0 / 思考 0</div>
       </div>
       <div class="card accent">
         <div class="k">Tổng lượng tiêu thụ token</div>
         <div class="v" id="kpiTotalTokens">0</div>
         <div class="s" id="kpiTotalTokensDetail">Input 0 · Output 0</div>
+        <div class="s" id="kpiTotalTokensDetail">输入 0 / 输出 0 / 思考 0</div>
       </div>
       <div class="card accent2">
         <div class="k">Tốc độ sinh trung bình</div>
@@ -497,6 +531,8 @@ a:hover{text-decoration:underline}
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
       <h2 style="margin:0">Tóm tắt các chỉ số hiệu suất và cách sử dụng mô hình <em id="matrixModelCount"></em></h2>
       <div style="font-size:12px;color:var(--dim)">Kết hợp độ trễ ký tự đầu (TTFT), tốc độ, thời gian và thống kê Token</div>
+      <h2 style="margin:0">模型性能指标与用量一览 <em id="matrixModelCount"></em></h2>
+      <div style="font-size:12px;color:var(--dim)">融合首字延迟 (TTFT)、生成速度、耗时与 Token 统计　·　含国际版与国内版全部渠道</div>
     </div>
     <div id="perfMatrix" style="overflow-x:auto"></div>
     <div class="legend" style="margin-top:12px">
@@ -509,7 +545,7 @@ a:hover{text-decoration:underline}
 
 
 
-  <div id="pageSettings" style="display:none">
+  <div id="pageSettings" class="main-page">
     <div style="margin-bottom:16px">
       <h2 style="margin:0;font-size:16px;color:var(--fg)">Cài Đặt Cổng</h2>
     </div>
@@ -562,7 +598,7 @@ a:hover{text-decoration:underline}
     </section>
   </div>
 
-  <div id="pageLogs" style="display:none">
+  <div id="pageLogs" class="main-page">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:12px">
       <div>
         <h2 style="margin:0;font-size:16px;color:var(--fg)">Nhật Ký Vận Hành</h2>
@@ -1230,6 +1266,14 @@ const fmt = n => (n ?? 0).toLocaleString('en-US');
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const ms = v => v == null ? '—' : (v >= 1000 ? (v/1000).toFixed(2) + ' s' : Math.round(v) + ' ms');
 const pct = v => v == null ? '—' : v.toFixed(1) + '%';
+// 输入 / 输出 / 思考 三个数字，各自一色，斜杠分隔。思考为 0 也写出来，
+// 列的形状因此固定，不会因某个模型不推理就缩短。
+const tripleTokens = (inp, out, think) =>
+  '<span style="color:var(--accent)">' + fmt(inp || 0) + '</span>' +
+  ' <span style="color:var(--dim-light)">/</span> ' +
+  '<span style="color:var(--accent2)">' + fmt(out || 0) + '</span>' +
+  ' <span style="color:var(--dim-light)">/</span> ' +
+  '<span style="color:var(--think)">' + fmt(think || 0) + '</span>';
 
 function perfRow(label, b, unit, fmtFn, color){
   if(!b) return '<tr><td>' + label + '</td><td colspan="5" style="color:var(--dim)">Chưa có dữ liệu</td></tr>';
@@ -1261,7 +1305,13 @@ let PANEL_STATUS = {};
     if(fromUrl){
       API_KEY = fromUrl.trim();
       localStorage.setItem(KEY_STORE, API_KEY);
-      history.replaceState(null, '', window.location.pathname);
+      // Drop the key from the address bar, but keep any other parameters:
+      // this used to clear the whole query string, which also discarded a
+      // ?tab= the user had been given.
+      const rest = new URLSearchParams(window.location.search);
+      rest.delete('key');
+      const qs = rest.toString();
+      history.replaceState(null, '', window.location.pathname + (qs ? '?' + qs : ''));
     } else {
       API_KEY = (localStorage.getItem(KEY_STORE) || '').trim();
     }
@@ -1286,7 +1336,7 @@ function authHeaders(base){
 
 async function getJSON(url){
   const r = await fetch(url, {cache:'no-store', headers: authHeaders()});
-  if(r.status === 401 || r.status === 403){ panelNeedsLogin(); throw new Error('unauthorized'); }
+  if(r.status === 401 || r.status === 403){ panelSessionLost(); throw new Error('unauthorized'); }
   if(!r.ok) throw new Error(r.status);
   return r.json();
 }
@@ -1296,12 +1346,15 @@ async function postJSON(url, body){
   const t = await r.text();
   let parsed = {};
   try { parsed = t ? JSON.parse(t) : {}; } catch(e) { parsed = {raw: t}; }
-  if(r.status === 401 || r.status === 403){ panelNeedsLogin(); throw new Error('unauthorized'); }
+  if(r.status === 401 || r.status === 403){ panelSessionLost(); throw new Error('unauthorized'); }
   if(!r.ok) throw new Error((parsed.error && parsed.error.message) || r.status);
   return parsed;
 }
 function toast(msg, kind){
   console.log('[wb]', msg);
+  // An expired session already raised the gate; a toast per failing poll
+  // would repeat the same line every few seconds until the user logs in.
+  if(String(msg).indexOf('unauthorized') !== -1) return;
   let box = document.getElementById('toastBox');
   if(!box){
     box = document.createElement('div');
@@ -1531,7 +1584,7 @@ async function downloadExport(query, fallbackLabel){
   // A plain <a href> would not carry the X-Panel-Token header, so a
   // password-only session would be rejected.
   const r = await fetch('/accounts/export' + (query || ''), {cache:'no-store', headers: authHeaders()});
-  if(r.status === 401 || r.status === 403){ panelNeedsLogin(); throw new Error('unauthorized'); }
+  if(r.status === 401 || r.status === 403){ panelSessionLost(); throw new Error('unauthorized'); }
   if(r.status === 404){
     let msg = 'Tài khoản không tồn tại';
     try{ const e = await r.json(); msg = (e.error && e.error.message) || msg; }catch(_){}
@@ -2122,17 +2175,46 @@ function generatePageList(current, total){
   return pages;
 }
 
+// Tab ids in nav order. One list so the restore path and the nav cannot
+// drift apart.
+const MAIN_TABS = ['gateway', 'analytics', 'logs', 'settings'];
+const MAIN_TAB_STORE = 'wb-proxy-main-tab';
 let currentMainTab = 'gateway';
 let analyticsRange = 'today';
 let cachedAnalyticsData = null;
+// Model allowlist for the combined matrix; filled by loadAnalyticsMatrix().
+let MATRIX_MODELS = new Set();
 
 
 /* ---- panel password gate ---- */
+function isAuthError(err){
+  // Every 401/403 from the JSON helpers carries this message; the gate is
+  // the single place that explains it, so callers stay quiet instead of
+  // stacking an identical toast on top of it.
+  return !!err && String(err.message) === 'unauthorized';
+}
+
 function panelNeedsLogin(){
   const gate = document.getElementById('panelGate');
   if(gate) gate.style.display = 'flex';
   const input = document.getElementById('panelPwdInput');
   if(input){ input.focus(); }
+}
+
+function panelSessionLost(){
+  // The session this tab holds is no longer valid - the gateway restarted,
+  // or the token expired. Drop it and stop every poller: leaving them
+  // running means each tick fails, re-opens the gate and logs another 401
+  // server-side, which is how a stale tab ends up filling the log.
+  PANEL_READY = false;
+  PANEL_TIMERS.forEach(t => clearInterval(t));
+  PANEL_TIMERS = [];
+  if(typeof stopLogPolling === 'function') stopLogPolling();
+  PANEL_TOKEN = '';
+  try { sessionStorage.removeItem(PANEL_STORE); } catch(e) {}
+  const msg = document.getElementById('panelLoginMsg');
+  if(msg) msg.textContent = '会话已失效，请重新输入密码';
+  panelNeedsLogin();
 }
 
 function panelHideGate(){
@@ -2217,17 +2299,16 @@ async function startDashboard(){
   await loadSchedulerStatus();
   await refresh();
   updateRecentLimitButtons();
-  const tabFromUrl = new URLSearchParams(window.location.search).get('tab');
-  if(tabFromUrl && ['gateway', 'analytics', 'logs', 'settings'].includes(tabFromUrl)){
-    switchMainTab(tabFromUrl);
-  }
+  // The head script already resolved this before first paint; re-apply it
+  // here so the data loaders for the active page actually run.
+  switchMainTab(MAIN_TABS.includes(window.__MAIN_TAB__) ? window.__MAIN_TAB__ : 'gateway');
   // Polling only starts after the panel is unlocked, so a locked browser
   // never hammers the server with 401s.
   PANEL_TIMERS.forEach(t => clearInterval(t));
   PANEL_TIMERS = [
     setInterval(() => {
       if(!PANEL_READY) return;
-      if(currentMainTab === 'analytics') loadAnalytics();
+      if(currentMainTab === 'analytics'){ loadAnalytics(); loadAnalyticsMatrix(); }
     }, 5000),
     setInterval(refresh, 5000),
     setInterval(loadSchedulerStatus, 30000),
@@ -2572,6 +2653,16 @@ async function saveApiKeys(btn){
 
 function switchMainTab(tab){
   currentMainTab = tab;
+  // Remember the page across reloads. The URL is updated so the address bar
+  // matches what is on screen and a copied link reopens the same page;
+  // storage covers a plain reload and the ?key= link, which strips the
+  // query string on load.
+  try {
+    const url = new URL(window.location.href);
+    url.searchParams.set('tab', tab);
+    history.replaceState(null, '', url.toString());
+  } catch(e){}
+  try { localStorage.setItem(MAIN_TAB_STORE, tab); } catch(e){}
   const btnGateway = document.getElementById('btnNavGateway');
   const btnAnalytics = document.getElementById('btnNavAnalytics');
   const btnLogs = document.getElementById('btnNavLogs');
@@ -2590,9 +2681,9 @@ function switchMainTab(tab){
     if(!btn || !page) return;
     const on = (name === tab);
     btn.classList.toggle('active', on);
-    page.style.display = on ? 'block' : 'none';
+    page.classList.toggle('active', on);
   });
-  if(tab === 'analytics') loadAnalytics();
+  if(tab === 'analytics'){ loadAnalytics(); loadAnalyticsMatrix(); }
   if(tab === 'settings') loadSettings();
   if(tab === 'logs'){
     startLogPolling();
@@ -2876,6 +2967,236 @@ function setAnalyticsRange(range){
   }
 }
 
+/* 模型性能指标与用量一览
+ *
+ * Reads the combined view on purpose. The table carries its own 区域
+ * column, so scoping it to the gateway's current exit would hide exactly the
+ * models this page exists to compare. */
+async function loadAnalyticsMatrix(){
+  try{
+    const [usage, perf, models] = await Promise.all([
+      getJSON('/usage?realm=all'),
+      getJSON('/usage/perf?realm=all'),
+      // The catalog is only a display filter, so a failure here must not
+      // blank the table; null keeps the previous allowlist.
+      getJSON('/v1/models?realm=all').catch(() => null),
+    ]);
+    if(models && models.data) MATRIX_MODELS = new Set(models.data.map(m => m.id));
+    renderPerfMatrix(usage, perf);
+  }catch(err){
+    if(!isAuthError(err)) console.error('loadAnalyticsMatrix failed:', err);
+  }
+}
+
+function renderPerfMatrix(usage, perf){
+  const matrixEl = document.getElementById("perfMatrix");
+  if(!matrixEl) return;
+  const bmPerf = (perf && perf.by_model) || {};
+  const validModels = MATRIX_MODELS;
+  const modelMap = {};
+  Object.entries(usage.by_model || {}).forEach(([id, m]) => {
+    if((!validModels.size || validModels.has(id)) && m.requests > 0 && !id.endsWith('-model')){
+      modelMap[id] = Object.assign({id: id}, m);
+    }
+  });
+  Object.entries(bmPerf).forEach(([id, p]) => {
+    if((!validModels.size || validModels.has(id)) && p.requests > 0 && !id.endsWith('-model') && !modelMap[id]){
+      modelMap[id] = {
+        id: id,
+        requests: p.requests || 0,
+        prompt_tokens: 0,
+        completion_tokens: 0,
+        reasoning_tokens: 0,
+        cached_tokens: 0,
+        total_tokens: 0
+      };
+    }
+  });
+  // One row per (model, exit). A model served by both exits gets two rows,
+  // each carrying its own tokens, latency and speed; the region column then
+  // describes exactly the numbers next to it instead of collapsing both.
+  const realmMap = (usage && usage.by_model_realm) || {};
+  const acctMap = (usage && usage.by_model_acct) || {};
+  const perfAcctMap = (perf && perf.by_model_acct) || {};
+  const rowsData = [];
+  Object.values(modelMap)
+    .sort((a,b) => (b.total_tokens || b.requests) - (a.total_tokens || a.requests))
+    .forEach(m => {
+      const per = realmMap[m.id];
+      const realms = per ? Object.keys(per).filter(r => (per[r].requests || 0) > 0) : [];
+      if(realms.length > 1){
+        // Most-used exit first, so the ordering stays meaningful.
+        realms.sort((x, y) => (per[y].total_tokens || 0) - (per[x].total_tokens || 0));
+      }
+      // Within an exit, one row per account: two accounts sharing an exit are
+      // two different consumers, and merging them hid which one spent what.
+      const parts = [];
+      (realms.length ? realms : ['']).forEach(r => {
+        const accts = ((acctMap[m.id] || {})[r]) || {};
+        const perfAccts = ((perfAcctMap[m.id] || {})[r]) || {};
+        // Union of both maps: a bucket holding only failures exists in perf
+        // alone, and dropping it would hide failures the total counts.
+        const keys = Array.from(new Set(
+          Object.keys(accts).concat(Object.keys(perfAccts))
+        )).filter(a => {
+          const u = accts[a] || {};
+          const p = perfAccts[a] || {};
+          return (u.requests || 0) > 0 || (u.errors || 0) > 0 ||
+                 (p.requests || 0) > 0 || (p.errors || 0) > 0 ||
+                 (p.client_aborted || 0) > 0;
+        });
+        if(keys.length){
+          keys.sort((x, y) =>
+            ((accts[y] || {}).total_tokens || 0) - ((accts[x] || {}).total_tokens || 0));
+          keys.forEach(a => {
+            // Tokens come from usage; a failure-only bucket has none.
+            const u = accts[a] || {requests: 0, prompt_tokens: 0, completion_tokens: 0,
+                                   reasoning_tokens: 0, cached_tokens: 0, total_tokens: 0};
+            parts.push({ stat: u, realm: r, acct: a,
+                         accts: { [a]: u.requests || 0 } });
+          });
+        } else {
+          // No per-account data for this exit (an older log, say): fall back
+          // to the exit totals rather than dropping the row.
+          const fallback = per ? per[r] : m;
+          parts.push({ stat: fallback, realm: r, acct: '',
+                       accts: fallback.accounts || {} });
+        }
+      });
+      parts.forEach((p, i) => {
+        rowsData.push(Object.assign({}, p.stat, {
+          id: m.id, realm: p.realm, acct: p.acct, accts: p.accts,
+          split: parts.length > 1, first: i === 0,
+        }));
+      });
+    });
+
+  const countEm = document.getElementById("matrixModelCount");
+  if(countEm){
+    const nModels = new Set(rowsData.map(r => r.id)).size;
+    countEm.textContent = nModels ? ("(有调用的模型: " + nModels +
+      " 个·共 " + rowsData.length + " 行明细)") : "";
+  }
+
+  if(!rowsData.length){
+    matrixEl.innerHTML = '<div class="empty">当前版本暂无模型请求或性能数据</div>';
+  } else {
+    const maxTok = Math.max(1, ...rowsData.map(m => m.total_tokens));
+    // 汇总行 (Total / All Models)
+    const totTtft = perf.ttft_ms ? (ms(perf.ttft_ms.avg) + " (P50 " + ms(perf.ttft_ms.p50) + ")") : "-";
+    const totTps = perf.tokens_per_sec ? (perf.tokens_per_sec.avg.toFixed(1) + " tok/s") : "-";
+    const totWall = perf.wall_ms ? ms(perf.wall_ms.avg) : "-";
+    const totCache = perf.cache_hit_pct ? (perf.cache_hit_pct.avg.toFixed(1) + "%") : "-";
+    const summaryRow = '<tr style="background:rgba(37,99,235,.06);font-weight:600">'
+      + '<td style="text-align:left"><b>全部模型合计 (Total)</b></td>'
+      + '<td style="text-align:center"><span style="color:var(--dim)">—</span></td>'
+      + '<td style="text-align:left"><span style="color:var(--dim)">全部账号</span></td>'
+      + '<td>' + fmt(usage.requests) + '</td>'
+      + '<td>' + (perf.errors
+          ? ('<span style="color:var(--bad)">' + fmt(perf.errors) + '</span>')
+          : '<span style="color:var(--dim)">0</span>') + '</td>'
+      + '<td><b style="color:var(--accent)">' + fmt(usage.total_tokens) + '</b></td>'
+      + '<td class="triple">' + tripleTokens(usage.prompt_tokens, usage.completion_tokens, usage.reasoning_tokens) + '</td>'
+      + '<td>' + totTtft + '</td>'
+      + '<td><b style="color:var(--accent2)">' + totTps + '</b></td>'
+      + '<td>' + totWall + '</td>'
+      + '<td>' + totCache + '</td>'
+      + '<td>100%</td>'
+      + '</tr>';
+
+    const rows = rowsData.map(m => {
+      // Latency/speed come from the matching (model, exit) bucket when the
+      // backend supplied one; otherwise fall back to the model-wide figure.
+      const mp = ((perf && perf.by_model_realm) || {})[m.id] || {};
+      const mpAcctAll = ((perf && perf.by_model_acct) || {})[m.id] || {};
+      const mpRealm = m.realm ? (mp[m.realm] || null) : null;
+      // Most specific first: this account on this exit, then the exit, then
+      // the model. A split row must not borrow another account's latency.
+      const mpAcct = (m.realm && m.acct && mpAcctAll[m.realm])
+        ? (mpAcctAll[m.realm][m.acct] || null) : null;
+      const mpEff = mpAcct || mpRealm || bmPerf[m.id] || {};
+      const m_ttft = mpEff.ttft_ms ? (ms(mpEff.ttft_ms.avg) + " <span style='color:var(--dim);font-size:11px'>(P50 " + ms(mpEff.ttft_ms.p50) + ")</span>") : "-";
+      const m_tps = mpEff.tokens_per_sec ? ('<b style="color:var(--accent2)">' + mpEff.tokens_per_sec.avg.toFixed(1) + '</b> <span style="font-size:11px;color:var(--dim)">tok/s</span>') : "-";
+      const m_wall = mpEff.wall_ms ? ms(mpEff.wall_ms.avg) : "-";
+      const m_cache = (m.prompt_tokens > 0) ? pct(m.cached_tokens / m.prompt_tokens * 100) : (mpEff.cache_hit_pct ? mpEff.cache_hit_pct.avg.toFixed(1) + "%" : "-");
+      const pctTok = Math.round(m.total_tokens / maxTok * 100);
+      // 0 is a real result (the model ran and never failed), so it stays
+      // visible as a muted zero rather than the dash used for no data.
+      const errCell = mpEff.errors
+        ? ('<span style="color:var(--bad)">' + fmt(mpEff.errors) + '</span>')
+        : '<span style="color:var(--dim)">0</span>';
+      const acctsMap = usage.accounts_map || {};
+      // This row's own accounts, not every account that touched the model.
+      const mAccts = m.accts || m.accounts || {};
+      const acctEntries = Object.entries(mAccts);
+      let realmCell = '<span style="color:var(--dim)">—</span>';
+      let acctCell = '<span style="color:var(--dim)">—</span>';
+      const realms = new Set();
+      if(m.realm){
+        realms.add(m.realm);
+      } else {
+        acctEntries.forEach(([uid]) => {
+          const info = acctsMap[uid] || {};
+          if(info.realm) realms.add(info.realm);
+        });
+      }
+      if(realms.size === 1){
+        const r = Array.from(realms)[0];
+        realmCell = r === 'cn' ? '<span class="realm-badge-cn">国内版</span>' : '<span class="realm-badge-intl">国际版</span>';
+      } else if(realms.size > 1){
+        realmCell = '<span class="realm-badge-intl">国际版</span> <span class="realm-badge-cn">国内版</span>';
+      } else {
+        // No account attribution on these rows (a test call,
+        // say). Decide from the model id itself: this table
+        // spans both realms, so the gateway's current exit
+        // would mislabel domestic-only models.
+        const isIntlOnly = ['gpt-6-astra', 'gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.6-luna', 'gpt-5.5', 'gpt-5.4', 'gpt-5.3-codex', 'gemini-3.5-flash'].includes(m.id);
+        const isCnOnly = ['deepseek-v4-pro', 'glm-5.3-flash', 'glm-5.1', 'glm-5v-turbo', 'kimi-k3-1', 'kimi-k2.8-preview', 'kimi-k2.7', 'minimax-m3'].includes(m.id);
+        realmCell = isIntlOnly ? '<span class="realm-badge-intl">国际版</span>'
+          : (isCnOnly ? '<span class="realm-badge-cn">国内版</span>'
+            : '<span style="color:var(--dim)">—</span>');
+      }
+      if(acctEntries.length === 1 && acctEntries[0][0] === '(unattributed)'){
+        acctCell = '<span style="color:var(--dim)">—</span>';
+      } else if(acctEntries.length === 1){
+        const [uid, count] = acctEntries[0];
+        const info = acctsMap[uid] || {};
+        const name = esc(info.nickname || uid.slice(0, 8));
+        acctCell = '<b>' + name + '</b>';
+      } else if(acctEntries.length > 1){
+        acctCell = acctEntries.map(([uid, count]) => {
+          const info = acctsMap[uid] || {};
+          const name = esc(info.nickname || uid.slice(0, 6));
+          return '<span class="badge mini" style="margin:1px 2px">' + name + ' <span style="color:var(--dim)">(' + count + ')</span></span>';
+        }).join('');
+      }
+      return '<tr>'
+        + '<td style="text-align:left" class="mono"><b>' + esc(m.id) + '</b></td>'
+        + '<td style="text-align:center;white-space:nowrap">' + realmCell + '</td>'
+        + '<td style="text-align:left">' + acctCell + '</td>'
+        + '<td>' + fmt(m.requests) + '</td>'
+        + '<td>' + errCell + '</td>'
+        + '<td><b>' + fmt(m.total_tokens) + '</b></td>'
+        + '<td class="triple">' + tripleTokens(m.prompt_tokens, m.completion_tokens, m.reasoning_tokens) + '</td>'
+        + '<td>' + m_ttft + '</td>'
+        + '<td>' + m_tps + '</td>'
+        + '<td>' + m_wall + '</td>'
+        + '<td>' + m_cache + '</td>'
+        + '<td style="min-width:90px"><span class="bar-fill" style="width:' + Math.max(3, pctTok) + '%"></span> <span style="font-size:11px;color:var(--dim)">' + pctTok + '%</span></td>'
+        + '</tr>';
+    }).join('');
+
+    matrixEl.innerHTML = '<table><thead><tr>'
+      + '<th style="text-align:left">模型名称</th>'
+      + '<th style="text-align:center;width:76px">区域</th>'
+      + '<th style="text-align:left">账号</th>'
+      + '<th>请求数</th><th>失败</th><th>总 Token</th><th style="min-width:190px">输入 / 输出 / 思考</th>'
+      + '<th>首字延迟 (TTFT)</th><th>生成速度</th><th>端到端耗时</th><th>缓存命中率</th><th>用量占比</th>'
+      + '</tr></thead><tbody>' + summaryRow + rows + '</tbody></table>';
+  }
+
+}
+
 async function loadAnalytics(){
   try {
     const data = await getJSON('/usage/analytics');
@@ -2898,12 +3219,20 @@ function renderAnalytics(data){
   const elTodayDetail = document.getElementById('kpiTodayTokensDetail');
   if(elTodayTok) elTodayTok.textContent = fmt(sumToday.total_tokens || 0);
   if(elTodayDetail) elTodayDetail.textContent = 'Vào ' + fmt(sumToday.prompt_tokens || 0) + ' · Ra ' + fmt(sumToday.completion_tokens || 0);
+  if(elTodayDetail) elTodayDetail.innerHTML =
+    '<span style="color:var(--accent)">输入 ' + fmt(sumToday.prompt_tokens || 0) + '</span>' +
+    ' <span style="color:var(--dim-light)">/</span> ' + '<span style="color:var(--accent2)">输出 ' + fmt(sumToday.completion_tokens || 0) + '</span>' +
+    ' <span style="color:var(--dim-light)">/</span> ' + '<span style="color:var(--think)">思考 ' + fmt(sumToday.reasoning_tokens || 0) + '</span>';
 
   // KPI 2: Token tiêu thụ tích lũy
   const elTotalTok = document.getElementById('kpiTotalTokens');
   const elTotalDetail = document.getElementById('kpiTotalTokensDetail');
   if(elTotalTok) elTotalTok.textContent = fmt(sumAll.total_tokens || 0);
   if(elTotalDetail) elTotalDetail.textContent = 'Vào ' + fmt(sumAll.prompt_tokens || 0) + ' · Ra ' + fmt(sumAll.completion_tokens || 0);
+  if(elTotalDetail) elTotalDetail.innerHTML =
+    '<span style="color:var(--accent)">输入 ' + fmt(sumAll.prompt_tokens || 0) + '</span>' +
+    ' <span style="color:var(--dim-light)">/</span> ' + '<span style="color:var(--accent2)">输出 ' + fmt(sumAll.completion_tokens || 0) + '</span>' +
+    ' <span style="color:var(--dim-light)">/</span> ' + '<span style="color:var(--think)">思考 ' + fmt(sumAll.reasoning_tokens || 0) + '</span>';
 
   // KPI 3: Tốc độ sinh trung bình cổng
   const elAvgSpeed = document.getElementById('kpiAvgSpeed');

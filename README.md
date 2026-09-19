@@ -1,7 +1,7 @@
 # WorkBuddy2API-Hub — 国际版、国内版多账号网关中枢
 
 <p align="center">
-  <a href="https://github.com/ardeyouxipianyi/workbuddy2api-hub/releases"><img src="https://img.shields.io/badge/Release-v1.4.5-2496ED?style=flat-square" alt="Version 1.4.5"></a>
+  <a href="https://github.com/ardeyouxipianyi/workbuddy2api-hub/releases"><img src="https://img.shields.io/badge/Release-v1.4.6-2496ED?style=flat-square" alt="Version 1.4.6"></a>
   <img src="https://img.shields.io/badge/Python-3.9+-blue.svg?style=flat-square" alt="Python">
   <img src="https://img.shields.io/badge/API-OpenAI_Compatible-412991?style=flat-square" alt="OpenAI API">
   <img src="https://img.shields.io/badge/Dual_Realm-Intl_&_CN-0DBD8B?style=flat-square" alt="Dual Realm">
@@ -178,7 +178,20 @@ export OPENAI_API_KEY="你在看板设置中添加并绑定的API_Key"
 
 ---
 
-## 六、致谢与引用声明 (Credits & References)
+## 六、版本更新记录 (Changelog)
+
+### v1.4.6
+
+- **看板数据口径与展示修正**：指标看板改为固定展示国际版与国内版合计数据，不再跟随网关当前出口；模型性能表按「模型 × 出口 × 账号」逐行展开，同一模型在两个出口或多个账号下的用量不再合并；新增「失败」列，输入 / 输出 / 思考三色分列展示。
+- **看板会话与页面保持**：会话失效（如网关重启）后前端立即停止轮询并清除旧凭证，不再每 5 秒刷一条 401 日志与重复弹窗；刷新后保持原本所在页面，且在首屏前完成切换，不再闪回网关页。
+
+### v1.4.5
+
+- **GPT 系列流式 Token 监控与生成速度修复**：修复腾讯 WorkBuddy 上游 GPT 系列模型流式传输时中间帧携带全 0 usage 占位导致最终 Token 被丢弃的缺陷；实现非零 usage 优先吸纳与断流 Fallback 估算器，彻底解决 `gpt-5.6-luna` / `gpt-6-astra` 等模型输入输出为 0 与生成速度缺失问题。
+
+---
+
+## 七、致谢与引用声明 (Credits & References)
 
 本项目在协议兼容、风控规避与任务链路设计过程中，深度参考并吸纳了开源社区现有项目的经验与逆向成果，特此致谢：
 
@@ -208,11 +221,10 @@ export OPENAI_API_KEY="你在看板设置中添加并绑定的API_Key"
   - **上游限频按模型冷却**（PR #22）：识别上游 429（code 6004）为模型级限流而非账号失效，将冷却粒度从账号级细化为账号加模型级，冷却时长优先采用上游返回的 reset 时间，并直接返回 429 与 Retry-After 头；修复单账号场景下一个模型被限频就连带拖垮同账号其它模型的问题。
   - **成长任务接取强化与轮询加速**（PR #27）：细化任务接取状态解析，未接取自动补救重试，杜绝静默失败导致全线 0 进度；调整判断顺序确保已达标任务先领奖再跳过；动态快查缩短任务轮询等待时间；
   - **网络抖动分类重试与 403 直通**（PR #28）：识别 SSL EOF / 连接重置等网络抖动并自动退避重试，不误记账号冷却，消除伪 429 误报；将 403（内容审核拦截）与 401 凭据失效严格解耦，单次违规请求原样透传，避免毒化全账号池。
-  - **GPT 系列流式 Token 监控与生成速度修复**（v1.4.5）：修复腾讯 WorkBuddy 上游 GPT 系列模型流式传输时中间帧携带全 0 usage 占位导致最终 Token 被丢弃的缺陷；实现非零 usage 优先吸纳与断流 Fallback 估算器，彻底解决 `gpt-5.6-luna` / `gpt-6-astra` 等模型输入输出为 0 与生成速度缺失问题。
 
 ---
 
-## 七、免责声明 (Disclaimer)
+## 八、免责声明 (Disclaimer)
 
 1. 本项目为非官方自托管网关，仅供技术研究、逆向协议学习与个人合法授权账号在私有环境测试使用。
 2. 本项目不提供任何账号及额度。请严格遵守官方服务条款，禁止用于任何商业转售、恶意并发或违规滥用。
