@@ -34,6 +34,7 @@ import urllib.error
 import urllib.request
 import uuid
 import wb_accounts
+from wb_accounts import open_url
 import wb_catalog
 import wb_settings
 CURRENT_REALM = os.environ.get("WB_PROXY_DEFAULT_REALM", "intl")
@@ -1611,7 +1612,7 @@ def fetch_endpoint_models():
         return [m for m, _ in (cached or [])]
     req = urllib.request.Request(UPSTREAM + MODELS_PATH, method="GET", headers=account.headers())
     try:
-        with urllib.request.urlopen(req, timeout=30) as resp:
+        with open_url(req, timeout=30, proxy=account.proxy) as resp:
             payload = json.loads(resp.read().decode("utf-8"))
     except Exception as exc:
         log(f"model discovery failed: {exc}")
@@ -2109,7 +2110,7 @@ def open_upstream(payload, session_key=None, target_realm=None):
         req = urllib.request.Request(chat_url, data=body, method="POST",
                                      headers=account.headers(purpose="chat"))
         try:
-            resp = urllib.request.urlopen(req, timeout=600)
+            resp = open_url(req, timeout=600, proxy=account.proxy)
             account.clear_error(model=model)
             return resp, account
         except urllib.error.HTTPError as exc:
@@ -4092,7 +4093,7 @@ class Handler(BaseHTTPRequestHandler):
         )
         t0 = time.time()
         try:
-            with urllib.request.urlopen(req, timeout=30) as resp:
+            with open_url(req, timeout=30, proxy=account.proxy) as resp:
                 chat_obj = aggregate_stream(resp, test_model, None)
                 wall_ms = int((time.time() - t0) * 1000)
                 choices = chat_obj.get("choices") or []
