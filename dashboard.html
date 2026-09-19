@@ -22,9 +22,12 @@
 body{margin:0;background:var(--bg);color:var(--fg);
   font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue","PingFang SC","Microsoft YaHei",sans-serif;
   -webkit-font-smoothing:antialiased}
-header{padding:16px 24px;border-bottom:1px solid var(--line);display:flex;
-  align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
+header{border-bottom:1px solid var(--line);
   position:sticky;top:0;background:rgba(255,255,255,.94);backdrop-filter:blur(10px);z-index:10;box-shadow:var(--shadow-sm)}
+header .header-inner{max-width:1280px;margin:0 auto;padding:24px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+header .header-left{display:flex;align-items:center;gap:8px}
+header .header-center{display:flex;justify-content:center;flex:1}
+header .header-right{display:flex;align-items:center;gap:12px}
 h1{margin:0;font-size:17px;font-weight:700;letter-spacing:-.2px;color:var(--fg)}
 h1 span{color:var(--dim);font-weight:400;font-size:13px;margin-left:8px}
 .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent2);
@@ -216,24 +219,31 @@ a:hover{text-decoration:underline}
 </head>
 <body>
 <header>
-  <div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap">
-    <h1><span class="dot" id="statusDot"></span>Bảng Điều Khiển</h1>
-    <nav class="main-nav">
-      <button class="main-nav-btn active" id="btnNavGateway" onclick="switchMainTab('gateway')">
-        Cổng & Vận Hành
-      </button>
-      <button class="main-nav-btn" id="btnNavAnalytics" onclick="switchMainTab('analytics')">
-        Bảng Chỉ Số Dữ Liệu
-      </button>
-      <button class="main-nav-btn" id="btnNavLogs" onclick="switchMainTab('logs')">
-        Nhật Ký Vận Hành
-      </button>
-      <button class="main-nav-btn" id="btnNavSettings" onclick="switchMainTab('settings')">
-        Cài Đặt
-      </button>
-    </nav>
+  <div class="header-inner">
+    <div class="header-left">
+      <h1><span class="dot" id="statusDot"></span>Workbuddy API</h1>
+    </div>
+    <div class="header-center">
+      <nav class="main-nav">
+        <button class="main-nav-btn active" id="btnNavGateway" onclick="switchMainTab('gateway')">
+          Cổng & Vận Hành
+        </button>
+        <button class="main-nav-btn" id="btnNavAnalytics" onclick="switchMainTab('analytics')">
+          Bảng Chỉ Số Dữ Liệu
+        </button>
+        <button class="main-nav-btn" id="btnNavLogs" onclick="switchMainTab('logs')">
+          Nhật Ký Vận Hành
+        </button>
+        <button class="main-nav-btn" id="btnNavSettings" onclick="switchMainTab('settings')">
+          Cài Đặt
+        </button>
+      </nav>
+    </div>
+    <div class="header-right">
+      <button class="sec mini" onclick="panelLogout()" style="border:none;background:transparent;color:var(--dim);font-size:12px;cursor:pointer">Đăng xuất tài khoản</button>
+      <div class="meta" id="meta"></div>
+    </div>
   </div>
-  <div class="meta" id="meta"></div>
 </header>
 <div id="panelGate" style="position:fixed;inset:0;z-index:600;display:none;
      align-items:center;justify-content:center;padding:20px;background:var(--bg)">
@@ -299,7 +309,7 @@ a:hover{text-decoration:underline}
     <div id="cardGatewayCtrl" class="realm-card gateway-ctrl" style="cursor:default">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
         <span style="font-size:11px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:.5px">Cổng xuất mặc định</span>
-        <span id="activeGatewayKeyCount" class="badge ok mini" style="font-weight:600">0 tài khoản Key có hiệu lực</span>
+        <span id="activeGatewayKeyCount" class="badge ok mini" style="font-weight:600">0 Key tài khoản có hiệu lực</span>
       </div>
       <div style="display:flex;align-items:center;gap:8px;margin:2px 0 8px">
         <span id="gatewayDot" class="dot" style="width:9px;height:9px"></span>
@@ -307,7 +317,7 @@ a:hover{text-decoration:underline}
       </div>
       <div style="margin-top:auto">
         <button class="toggle-realm-btn" id="btnToggleRealm" onclick="toggleActiveGatewayRealm()" style="cursor:pointer;width:100%;padding:7px 12px;font-size:12px">
-          ⇄ Chuyển cổng xuất mặc định thành【Trong Nước】
+          ⇄ Chuyển cổng mặc định thành【Trong Nước】
         </button>
       </div>
     </div>
@@ -317,7 +327,7 @@ a:hover{text-decoration:underline}
   <div id="schedulerBar" style="background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 14px;margin-bottom:16px;font-size:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
     <div style="display:flex;align-items:center;gap:8px">
       <span class="dot" id="schedDot"></span>
-      <span>Lịch Chạy Ngầm Định Kỳ: <b id="schedStatusText">Đang chạy</b></span>
+      <span>Lịch Chạy Định Kỳ: <b id="schedStatusText">Đang chạy</b></span>
       <span style="color:var(--dim);font-size:11px" id="schedTimes"></span>
     </div>
     <div style="display:flex;gap:8px">
@@ -442,7 +452,7 @@ a:hover{text-decoration:underline}
         <h2 style="margin:0;font-size:16px;color:var(--fg);display:flex;align-items:center;gap:8px">
           Phân Tích Tiêu Thụ Token & Chỉ Số Suy Luận
         </h2>
-        <div style="font-size:12px;color:var(--dim);margin-top:4px">Thống kê toàn diện Token vào/ra/Thinking, hiệu quả tiết kiệm cache và lượng dùng từng tài khoản/mô hình</div>
+        <div style="font-size:12px;color:var(--dim);margin-top:4px">Thống kê toàn diện Token Input/Output/Thinking, hiệu quả tiết kiệm cache và lượng dùng từng tài khoản/mô hình</div>
       </div>
       <div style="display:flex;gap:4px;background:var(--panel2);padding:3px;border-radius:8px;border:1px solid var(--line)">
         <button id="btnRangeToday" class="range-btn active" onclick="setAnalyticsRange('today')">Dữ Liệu Hôm Nay (Today)</button>
@@ -455,15 +465,15 @@ a:hover{text-decoration:underline}
       <div class="card think">
         <div class="k">Số token đã tiêu thụ hôm nay</div>
         <div class="v" id="kpiTodayTokens">0</div>
-        <div class="s" id="kpiTodayTokensDetail">Vào 0 · Ra 0</div>
+        <div class="s" id="kpiTodayTokensDetail">Input 0 · Output 0</div>
       </div>
       <div class="card accent">
         <div class="k">Tổng lượng tiêu thụ token</div>
         <div class="v" id="kpiTotalTokens">0</div>
-        <div class="s" id="kpiTotalTokensDetail">Vào 0 · Ra 0</div>
+        <div class="s" id="kpiTotalTokensDetail">Input 0 · Output 0</div>
       </div>
       <div class="card accent2">
-        <div class="k">Tốc độ tạo cổng trung bình</div>
+        <div class="k">Tốc độ sinh trung bình</div>
         <div class="v" id="kpiAvgSpeed">0.0 <span style="font-size:12px;font-weight:400;color:var(--dim)">tok/s</span></div>
         <div class="s" id="kpiAvgLatency">Độ trễ ký tự đầu TB 0 ms · thời gian 0 s</div>
       </div>
@@ -486,11 +496,11 @@ a:hover{text-decoration:underline}
     <section>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
       <h2 style="margin:0">Tóm tắt các chỉ số hiệu suất và cách sử dụng mô hình <em id="matrixModelCount"></em></h2>
-      <div style="font-size:12px;color:var(--dim)">Kết hợp độ trễ ký tự đầu (TTFT), tốc độ sinh, thời gian và thống kê Token</div>
+      <div style="font-size:12px;color:var(--dim)">Kết hợp độ trễ ký tự đầu (TTFT), tốc độ, thời gian và thống kê Token</div>
     </div>
     <div id="perfMatrix" style="overflow-x:auto"></div>
     <div class="legend" style="margin-top:12px">
-      <span><i style="background:var(--accent2)"></i>Tốc độ sinh: số ký tự sinh mỗi giây TB (tok/s)</span>
+      <span><i style="background:var(--accent2)"></i>Tốc Độ Sinh: số ký tự sinh mỗi giây TB (tok/s)</span>
       <span><i style="background:var(--think)"></i>Token suy nghĩ: lượng suy nghĩ của các mô hình Thinking như DeepSeek/R1</span>
       <span><i style="background:var(--accent)"></i>Token suy luận: Tỷ lệ phần trăm tổng số token được tạo ra</span>
     </div>
@@ -527,10 +537,10 @@ a:hover{text-decoration:underline}
         <div>
           <h2 style="margin:0">API Key & Gán Cổng Xuất <em id="setKeyState"></em></h2>
           <div style="font-size:12px;color:var(--dim);margin-top:4px">
-            cho mỗitài khoản Key Gán cổng xuất riêng。Client khiếndùng Key Yêu cầusẽ cố định đi qua khu vực tương ứng，Thực hiện song song hai cổng xuất。
+            cho mỗi Key tài khoản Gán cổng xuất riêng. Client khiếndùng Key Yêu cầusẽ cố định đi qua Khu Vực tương ứng，Thực hiện song song hai cổng xuất。
           </div>
         </div>
-        <button onclick="addApiKeyRow()">+ thêm API Key</button>
+        <button onclick="addApiKeyRow()">+ Thêm API Key</button>
       </div>
       <div id="keyList"></div>
     </section>
@@ -547,7 +557,7 @@ a:hover{text-decoration:underline}
       </table>
       <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
         <button class="sec" onclick="loadSettings(true)">Làm Mới</button>
-        <button class="sec" onclick="panelLogout()">Đăng Xuất Bảng Điều Khiển</button>
+        <button class="sec" onclick="panelLogout()">Đăng Xuất</button>
       </div>
     </section>
   </div>
@@ -582,7 +592,7 @@ a:hover{text-decoration:underline}
         <button class="range-btn active" id="btnLogTagAll" onclick="setLogFilterTag('')">Tất Cả Module</button>
         <button class="range-btn" id="btnLogTagChat" onclick="setLogFilterTag('chat')">Hội Thoại</button>
         <button class="range-btn" id="btnLogTagTasks" onclick="setLogFilterTag('tasks')">Nhiệm Vụ & Ưu Đãi</button>
-        <button class="range-btn" id="btnLogTagSched" onclick="setLogFilterTag('scheduler')">Bộ Lịch</button>
+        <button class="range-btn" id="btnLogTagSched" onclick="setLogFilterTag('scheduler')">Lịch</button>
         <button class="range-btn" id="btnLogTagAcct" onclick="setLogFilterTag('accounts')">Tài Khoản</button>
         <button class="range-btn" id="btnLogTagSys" onclick="setLogFilterTag('system')">Hệ Thống</button>
       </div>
@@ -819,7 +829,7 @@ function updateUI(){
 
   const btnToggle = document.getElementById("btnToggleRealm");
   if(btnToggle) {
-    btnToggle.textContent = isIntlGw ? "Chuyển cổng xuất mặc định thành【Trong Nước】" : "Chuyển cổng xuất mặc định thành【Quốc Tế】";
+    btnToggle.textContent = isIntlGw ? "Chuyển cổng mặc định thành【Trong Nước】" : "Chuyển cổng mặc định thành【Quốc Tế】";
     btnToggle.style.borderColor = isIntlGw ? "#dc2626" : "var(--accent)";
     btnToggle.style.color = isIntlGw ? "#dc2626" : "var(--accent)";
   }
@@ -840,7 +850,7 @@ function updateUI(){
   const activeKeysTotal = isIntlGw ? (intlKeys + followKeys) : (cnKeys + followKeys);
 
   const elGwKeyBadge = document.getElementById("activeGatewayKeyCount");
-  if(elGwKeyBadge) elGwKeyBadge.textContent = activeKeysTotal + ' tài khoản Key có hiệu lực';
+  if(elGwKeyBadge) elGwKeyBadge.textContent = activeKeysTotal + ' Key tài khoản có hiệu lực';
 
   const elIntlKey = document.getElementById("tabIntlKeyBadge");
   if(elIntlKey) elIntlKey.textContent = intlKeys + ' tài khoản Key';
@@ -1187,7 +1197,7 @@ async function toggleScheduler(btn){
   try{
     const r = await postJSON("/scheduler/toggle", {});
     await loadSchedulerStatus();
-    toast("nềnBộ Lịchđã" + (r.enabled ? "Bật" : "tạm dừng"), "ok");
+    toast("Lịch đã" + (r.enabled ? "Bật" : "tạm dừng"), "ok");
   }catch(e){
     toast("Chuyển đổi thất bại: " + e.message, "bad");
   }finally{
@@ -1432,7 +1442,7 @@ async function fetchCredits(btn){
     await loadAccounts();
     refresh();
     const count = (r.results || []).length;
-    toast('đã làm mới thành công' + viewName + ' ' + count + ' tài khoản (điểm)', 'ok');
+    toast(viewName + ' ' + count + ' tài khoản đã làm mới thành công', 'ok');
   }catch(e){
     toast('Làm Mới Credit thất bại: ' + e.message, 'bad');
   }finally{
@@ -1458,7 +1468,7 @@ async function refreshOne(uid, btn){
   try{
     const r = await postJSON('/accounts/refresh', {uid: uid});
     const ok = (r.results||[])[0];
-    toast(ok && ok.ok ? 'Tài Khoản thông tin làm mới thành công' : ('Làm Mớithất bại: ' + (ok && ok.error || 'không rõlỗi')), ok && ok.ok ? 'ok' : 'bad');
+    toast(ok && ok.ok ? 'Tài khoản làm mới thành công' : ('Làm Mới thất bại: ' + (ok && ok.error || 'không rõ lỗi')), ok && ok.ok ? 'ok' : 'bad');
     await loadAccounts();
   }catch(e){
     toast('Làm Mớithất bại: ' + e.message, 'bad');
@@ -1494,7 +1504,7 @@ async function setAll(enable, btn){
   try{
     await postJSON('/accounts/set-all', {enabled: enable});
     await loadAccounts();
-    toast(enable ? 'đãBật Tất Cảtất cảTài Khoản' : 'đãTắt Tất Cảtất cảTài Khoản', 'ok');
+    toast(enable ? 'Đã Bật Tất Cả Tài Khoản' : 'Đã Tắt Tất Cả Tài Khoản', 'ok');
   }catch(e){
     toast('hàng loạt thao tác thất bại: ' + e.message, 'bad');
   }finally{
@@ -1872,7 +1882,7 @@ async function refreshInner(){
   const activeAccts = (window.ACCOUNTS || []).filter(a => a.enabled).length;
   const totalAccts = (window.ACCOUNTS || []).length;
   const pctRemain = totSize > 0 ? ((totRemain / totSize) * 100).toFixed(1) + '%' : '';
-  const subCredit = totSize > 0 ? ('tổng Credit ' + fmt(totSize) + ' · còn lại ' + pctRemain) : 'Tài khoản hiện tại bình thường';
+  const subCredit = totSize > 0 ? ('Tổng Credit ' + fmt(totSize) + ' · còn lại ' + pctRemain) : 'Tài khoản hiện tại bình thường';
   const succStr = perf.success_rate_pct != null ? pct(perf.success_rate_pct) : '100.0%';
   const errSub = perf.errors ? (perf.errors + ' lượt chặn ngoại lệ') : 'Dịch vụ vận hành ổn định';
 
@@ -1908,7 +1918,7 @@ async function refreshInner(){
     .sort((a,b) => (b.total_tokens || b.requests) - (a.total_tokens || a.requests));
 
   const countEm = document.getElementById("matrixModelCount");
-  if(countEm) countEm.textContent = models.length ? "(mô hình có lượt gọi: " + models.length + " tài khoản)" : "";
+  if(countEm) countEm.textContent = models.length ? "(Mô hình có lượt gọi: " + models.length + " tài khoản)" : "";
 
   if(!models.length){
     matrixEl.innerHTML = '<div class="empty">Phiên Bản Hiện Tại: Chưa có yêu cầu mô hình hoặc dữ liệu hiệu năng</div>';
@@ -1920,7 +1930,7 @@ async function refreshInner(){
     const totWall = perf.wall_ms ? ms(perf.wall_ms.avg) : "-";
     const totCache = perf.cache_hit_pct ? (perf.cache_hit_pct.avg.toFixed(1) + "%") : "-";
     const summaryRow = '<tr style="background:rgba(37,99,235,.06);font-weight:600">'
-      + '<td style="text-align:left"><b>Tổng hợp tất cả mô hình (Total)</b></td>'
+      + '<td style="text-align:left"><b>Tất cả mô hình</b></td>'
       + '<td style="text-align:center"><span style="color:var(--dim)">—</span></td>'
       + '<td style="text-align:left"><span style="color:var(--dim)">Tất cả tài khoản</span></td>'
       + '<td>' + fmt(t.requests) + '</td>'
@@ -1989,10 +1999,10 @@ async function refreshInner(){
 
     matrixEl.innerHTML = '<table><thead><tr>'
       + '<th style="text-align:left">Tên Mô Hình</th>'
-      + '<th style="text-align:center;width:76px">khu vực</th>'
+      + '<th style="text-align:center;width:76px">Khu Vực</th>'
       + '<th style="text-align:left">Tài Khoản</th>'
-      + '<th>Số yêu cầu</th><th>tổng Token</th><th>Vào / Ra (suy nghĩ)</th>'
-      + '<th>Độ trễ ký tự đầu (TTFT)</th><th>tốc độ sinh</th><th>Thời gian đầu cuối</th><th>Tỷ lệ truy cập cache</th><th>Tỷ lệ lượng dùng</th>'
+      + '<th>Request</th><th>Tổng Token</th><th>Input / Output (Thinking)</th>'
+      + '<th>Độ trễ ký tự đầu (TTFT)</th><th>Tốc Độ Sinh</th><th>Thời Gian Phản Hồi</th><th>Cache</th><th>Mức Độ Sử Dụng</th>'
       + '</tr></thead><tbody>' + summaryRow + rows + '</tbody></table>';
   }
 
@@ -2002,7 +2012,7 @@ async function refreshInner(){
 
   const pageInfo = document.getElementById('recentPageInfo');
   if(pageInfo){
-    pageInfo.textContent = 'thứ ' + RECENT_PAGE + ' / ' + RECENT_TOTAL_PAGES + ' trang · Tổng ' + fmt(total) + ' bản ghi';
+    pageInfo.textContent = 'Trang ' + RECENT_PAGE + ' / ' + RECENT_TOTAL_PAGES + ' · Tổng ' + fmt(total) + ' bản ghi';
   }
   const btnPrev = document.getElementById('btnRecentPrev');
   if(btnPrev) btnPrev.disabled = (RECENT_PAGE <= 1);
@@ -2022,7 +2032,7 @@ async function refreshInner(){
 
   const rows = recent.rows || [];
   const countEl = document.getElementById('recentCount');
-  if(countEl) countEl.textContent = '(thứ ' + RECENT_PAGE + ' trang / Tổng ' + fmt(total) + ' dòng)';
+  if(countEl) countEl.textContent = '(Trang ' + RECENT_PAGE + ' / Tổng ' + fmt(total) + ' dòng)';
   document.getElementById('recent').innerHTML = rows.length ?
     '<table><thead><tr><th>Thời gian</th><th>Mô hình</th><th>Tài Khoản</th><th>Chế độ</th><th>Thời gian</th><th>Ký tự đầu</th><th>Speed</th><th>Input</th><th>Output</th><th>Suy nghĩ</th><th>Cache</th><th>Tổng Token</th></tr></thead><tbody>'
     + rows.map(r => '<tr>'
@@ -2302,7 +2312,7 @@ function renderKeyRows(){
   const box = document.getElementById('keyList');
   if(!box) return;
   if(!API_KEY_ROWS.length){
-    box.innerHTML = '<div class="empty" style="padding:24px 0">chưa cấu hình API Key，nhấn góc trên bên phải「+ thêm API Key」tạo。</div>';
+    box.innerHTML = '<div class="empty" style="padding:24px 0">Chưa cấu hình API Key, nhấn góc trên bên phải「+ Thêm API Key」để tạo.</div>';
     return;
   }
   box.innerHTML = API_KEY_ROWS.map((row, i) => {
@@ -2312,7 +2322,7 @@ function renderKeyRows(){
       ).join('');
       return '<div class="key-card" style="border-color:var(--accent);background:#ffffff;box-shadow:0 0 0 1px var(--accent), var(--shadow-md)">'
         + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">'
-        +   '<div style="font-size:14px;font-weight:700;color:var(--fg)">' + (row.id ? 'chỉnh sửa API Key' : 'tạo mới API Key') + '</div>'
+        +   '<div style="font-size:14px;font-weight:700;color:var(--fg)">' + (row.id ? 'Chỉnh sửa API Key' : 'Tạo mới API Key') + '</div>'
         +   '<span class="badge s mini">Cài Đặt cổng xuất</span>'
         + '</div>'
         + '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:14px">'
@@ -2322,7 +2332,7 @@ function renderKeyRows(){
         +       'style="width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:7px 10px;font:inherit;color:var(--fg)">'
         +   '</div>'
         +   '<div>'
-        +     '<div style="font-size:12px;color:var(--dim);margin-bottom:4px;font-weight:500">gán cổng xuất</div>'
+        +     '<div style="font-size:12px;color:var(--dim);margin-bottom:4px;font-weight:500">Gán cổng</div>'
         +     '<select id="editKeyRealm_' + i + '" style="width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:7px 10px;font:inherit;color:var(--fg)">'
         +       options
         +     '</select>'
@@ -2338,7 +2348,7 @@ function renderKeyRows(){
         + '</div>'
         + '<div style="display:flex;gap:8px;justify-content:flex-end">'
         +   '<button class="sec mini" style="border-radius:8px;padding:6px 16px" onclick="cancelEditKey(' + i + ')">Hủy</button>'
-        +   '<button class="mini" style="border-radius:8px;padding:6px 18px" onclick="saveSingleKey(' + i + ', this)">lưu</button>'
+        +   '<button class="mini" style="border-radius:8px;padding:6px 18px" onclick="saveSingleKey(' + i + ', this)">Lưu</button>'
         + '</div>'
         + '</div>';
     }
@@ -2427,7 +2437,7 @@ async function saveSingleKey(index, btn){
   if(btn) btn.disabled = true;
   try {
     await saveApiKeys();
-    toast('API Key [' + row.name + '] đãlưu', 'ok');
+    toast('API Key [' + row.name + '] đã lưu', 'ok');
   } catch(e){
     toast('Lưu thất bại: ' + e.message, 'bad');
   }
