@@ -367,6 +367,7 @@ a:hover{text-decoration:underline}
     <button class="sec" onclick="exportAccounts(this)">导出账号</button>
     <button class="sec" onclick="openImport()">导入账号</button>
     <button class="sec" onclick="fetchCredits(this)">刷新积分</button>
+    <button class="sec" onclick="proxyTestAll(this)">检测代理</button>
     <button class="sec" onclick="setAll(true, this)">全部启用</button>
     <button class="sec" onclick="setAll(false, this)">全部停用</button>
     
@@ -1388,6 +1389,22 @@ function accountRow(a){
               : a.expiresIn === 'expired' ? '<span class="badge bad">已过期</span>'
               : '<span class="badge ok">可用</span>';
   const err = a.lastError ? '<div class="hint" style="color:var(--warn);margin:2px 0 0">' + esc(a.lastError) + '</div>' : '';
+  // Proxy badge lives in the 状态 column. hasProxy comes from the API; the
+  // health of the last check (proxyStatus) is runtime-only and may be null
+  // until the proxy has been tested. The URL itself is never returned.
+  const ps = a.proxyStatus || null;
+  const proxyBadge = !a.hasProxy
+    ? '<span class="badge off" title="该账号直连出网，未配置代理">代理: Off</span>'
+    : (!ps
+        ? '<span class="badge warn" title="已配置代理，尚未检测是否可用">代理: 未检测</span>'
+        : (ps.ok
+            ? '<span class="badge ok" title="代理可用，出口 IP: ' + esc(ps.egressIp || '?') + '">代理: OK</span>'
+            : '<span class="badge bad" title="代理不可用: ' + esc(ps.error || '未知错误') + '">代理: 失败</span>'));
+  const proxyNote = (a.hasProxy && ps && ps.ok && ps.egressIp)
+    ? '<div class="mono" style="color:var(--dim);font-size:10px;margin-top:2px" title="经代理出网的公网 IP">出口 ' + esc(ps.egressIp) + '</div>'
+    : (a.hasProxy && ps && !ps.ok
+        ? '<div class="hint" style="color:var(--bad);margin:2px 0 0" title="' + esc(ps.error || '') + '">代理不可用</div>'
+        : '');
   const cred = a.credits;
   const credText = cred ? ('<b style="color:var(--accent2)">' + fmt(cred.remain) + '</b> / ' + fmt(cred.size)) : '<span style="color:var(--dim)">未查询</span>';
   return '<tr>'
@@ -1397,15 +1414,15 @@ function accountRow(a){
     + '<div class="mono" style="color:var(--dim);font-size:11px">' + esc(a.uid.slice(0,8)) + ' · ' + esc(a.source) + ' · 到期 ' + esc(a.expiresIn || '?') + '</div>'
     + (a.machineId ? ('<div class="mono" style="color:var(--dim);font-size:10px;margin-top:2px" title="由账号UID稳定派生的专属设备码，防多号关联风控">设备码: ' + esc(a.machineId.slice(0,14)) + '...</div>') : '')
     + err + '</td>'
-    + '<td style="text-align:center">' + state + '</td>'
+    + '<td style="text-align:center">'
+    +   '<div style="display:flex;flex-direction:column;gap:5px;align-items:center">'
+    +     state + proxyBadge + proxyNote
+    +   '</div></td>'
     + '<td style="text-align:center;white-space:nowrap">'
     +   '<div style="display:flex;flex-direction:column;gap:5px;align-items:center">'
-    +     (a.hasProxy
-            ? '<span class="badge ok" title="该账号的请求会经专属代理出网">代理: On</span>'
-            : '<span class="badge off" title="该账号直连出网">代理: Off</span>')
     +     '<div style="display:flex;gap:4px;justify-content:center">'
-    +       '<button class="sec mini" onclick="proxyEdit(&quot;' + uidAttr + '&quot;, this)">' + (a.hasProxy ? '修改' : '设置') + '</button>'
     +       '<button class="sec mini" onclick="proxyTest(&quot;' + uidAttr + '&quot;, this)">测试</button>'
+    +       '<button class="sec mini" onclick="proxyEdit(&quot;' + uidAttr + '&quot;, this)">代理</button>'
     +       (a.hasProxy ? '<button class="sec mini" onclick="proxyClear(&quot;' + uidAttr + '&quot;, this)">清除</button>' : '')
     +     '</div>'
     +     '<div id="proxyBox_' + uidAttr + '" style="display:none;gap:4px;justify-content:center">'
@@ -1571,12 +1588,17 @@ async function proxySave(uid, btn){
   if(!value){ toast('请填写代理地址，或使用“清除”按钮', 'warn'); return; }
   if(btn){ btn.disabled = true; btn.textContent = '保存中...'; }
   try{
-    await postJSON('/accounts/' + encodeURIComponent(uid) + '/proxy', {proxy: value});
+    // The server verifies the proxy right after saving and returns the account
+    // with its fresh proxyStatus, so we can report the real outcome here.
+    const r = await postJSON('/accounts/' + encodeURIComponent(uid) + '/proxy', {proxy: value});
     if(input) input.value = '';
     const box = proxyBox(uid);
     if(box) box.style.display = 'none';
     await loadAccounts();
-    toast('代理已更新', 'ok');
+    const ps = (r.account && r.account.proxyStatus) || null;
+    if(ps && ps.ok){ toast('代理已保存并检测通过，出口 IP: ' + (ps.egressIp || '未知'), 'ok'); }
+    else if(ps){ toast('代理已保存，但检测失败: ' + (ps.error || '未知错误'), 'bad'); }
+    else { toast('代理已保存', 'ok'); }
   }catch(e){
     toast('保存代理失败: ' + e.message, 'bad');
   }finally{
@@ -1597,18 +1619,34 @@ async function proxyClear(uid, btn){
   }
 }
 async function proxyTest(uid, btn){
-  if(btn){ btn.disabled = true; btn.textContent = '测试中...'; }
+  if(btn){ btn.disabled = true; btn.textContent = '检测中...'; }
   try{
     const r = await postJSON('/accounts/' + encodeURIComponent(uid) + '/proxy/test', {});
+    await loadAccounts();  // reflect the new proxyStatus badge
     if(r.ok){
       toast('代理可用，出口 IP: ' + (r.egressIp || '未知'), 'ok');
     } else {
-      toast('代理测试失败: ' + (r.error || '未知错误'), 'bad');
+      toast('代理检测失败: ' + (r.error || '未知错误'), 'bad');
     }
   }catch(e){
-    toast('代理测试请求失败: ' + e.message, 'bad');
+    toast('代理检测请求失败: ' + e.message, 'bad');
   }finally{
     if(btn){ btn.disabled = false; btn.textContent = '测试'; }
+  }
+}
+async function proxyTestAll(btn){
+  if(btn){ btn.disabled = true; btn.textContent = '检测中...'; }
+  try{
+    const r = await postJSON('/accounts/proxy/test-all', {});
+    const rows = r.results || [];
+    await loadAccounts();
+    if(!rows.length){ toast('没有配置代理的账号', 'warn'); return; }
+    const okc = rows.filter(x => x.ok).length;
+    toast('代理检测完成: ' + okc + '/' + rows.length + ' 可用', okc === rows.length ? 'ok' : 'warn');
+  }catch(e){
+    toast('批量检测失败: ' + e.message, 'bad');
+  }finally{
+    if(btn){ btn.disabled = false; btn.textContent = '检测代理'; }
   }
 }
 
