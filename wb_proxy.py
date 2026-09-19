@@ -205,6 +205,12 @@ def _empty_stats():
     return {"requests": 0, "errors": 0, "prompt_tokens": 0, "completion_tokens": 0,
             "reasoning_tokens": 0, "cached_tokens": 0, "total_tokens": 0,
             "credit": 0.0, "started": time.time(), "by_model": {},
+            # Same aggregation keyed by (model, realm), so the metrics table
+            # can show one row per exit for a model that ran through both.
+            "by_model_realm": {},
+            # And again keyed by (model, realm, account), so a model served
+            # by two accounts on the same exit can be split per account.
+            "by_model_acct": {},
             # latency accumulators (averages; percentiles come from the JSONL)
             "ttft_ms_sum": 0, "ttft_samples": 0,
             "gen_ms_sum": 0, "gen_samples": 0,
@@ -225,17 +231,48 @@ def _extract_usage(usage):
         "total_tokens": usage.get("total_tokens") or 0,
         "credit": usage.get("credit") or 0,
     }
-def row_matches_realm(row, realm):
-    if not realm: return True
+def row_realm(row):
+    """The realm a log row belongs to.
+
+    Rows written since the field was added carry it directly. Older rows are
+    attributed by their account, then by the model's home realm - the same
+    order row_matches_realm used, so a filter and a per-realm breakdown can
+    never disagree about the same row.
+    """
     r = row.get("realm")
-    if r: return r == realm
+    if r:
+        return r
     acct_uid = row.get("account")
     if acct_uid and POOL:
         acc = POOL.get(acct_uid)
-        if acc: return acc.realm == realm
+        if acc:
+            return acc.realm
     model = row.get("model")
-    if model: return detect_model_realm(model) == realm
-    return realm == "intl"
+    if model:
+        return detect_model_realm(model)
+    return "intl"
+
+
+def row_matches_realm(row, realm):
+    # None means every realm. "all" is accepted here as well so that a caller
+    # that forwards the literal cannot silently match nothing: the previous
+    # behaviour compared every row's realm against the string "all".
+    if not realm or realm == "all": return True
+    return row_realm(row) == realm
+def realm_scope(realm, fallback=None):
+    """Map a caller-supplied realm onto a log filter.
+
+    "all" means every realm, so it becomes None and disables filtering
+    entirely: passing the literal through would make row_matches_realm
+    compare every row against "all" and match nothing at all. An empty
+    or missing value falls back to the second argument: CURRENT_REALM for
+    the endpoints whose clients expect the global switch, None (everything)
+    for the analytics payload, which has always reported both realms
+    combined.
+    """
+    if realm == "all":
+        return None
+    return realm or fallback
 def row_outcome(row):
     """Terminal state of a request row.
 
@@ -404,17 +441,17 @@ def perf_stats(sample=5000, realm=None, ttl=None):
     Rebuilds under the lock so a burst of pollers cannot each start their own
     scan of the log."""
     ttl = _STATS_TTL if ttl is None else ttl
-    r = realm or CURRENT_REALM
+    r = realm_scope(realm, CURRENT_REALM)
     try:
-        key = (int(sample), r)
+        key = (int(sample), r or "all")
     except Exception:
-        key = (5000, r)
+        key = (5000, r or "all")
     now = time.time()
     with _perf_lock:
         hit = _perf_cache.get(key)
         if hit is not None and (now - hit[0]) < ttl:
             return hit[1]
-        data = _perf_stats_uncached(sample, realm)
+        data = _perf_stats_uncached(sample, r)
         _perf_cache[key] = (time.time(), data)
     return data
 
@@ -425,6 +462,12 @@ def _perf_stats_uncached(sample=5000, realm=None):
     total = ok = err = aborted = 0
     # 按模型聚合性能指标
     m_buckets = {}
+    # Same aggregation keyed by (model, realm), so the metrics table can
+    # report a model's latency per exit when it ran through both.
+    mr_buckets = {}
+    # And keyed by (model, realm, account), so two accounts on one exit can
+    # be shown as separate rows.
+    ma_buckets = {}
     # 只读日志末尾 sample 行：原先 readlines() 会把整个日志读成字符串列表
     rows = [raw.decode("utf-8", "replace") for raw in _tail_lines(USAGE_LOG, sample)]
     for line in rows:
@@ -443,44 +486,66 @@ def _perf_stats_uncached(sample=5000, realm=None):
         # that only ever saw cancellations still shows up with a zero success
         # count instead of silently vanishing from the per-model table.
         m_id = r.get("model") or "unknown"
+        r_realm = row_realm(r)
         mb = m_buckets.setdefault(m_id, {"total": 0, "ok": 0, "err": 0, "aborted": 0,
                                         "ttfts": [], "gens": [], "walls": [],
                                         "tok_rates": [], "hits": []})
+        rb = mr_buckets.setdefault(m_id, {}).setdefault(
+            r_realm, {"total": 0, "ok": 0, "err": 0, "aborted": 0,
+                      "ttfts": [], "gens": [], "walls": [],
+                      "tok_rates": [], "hits": []})
+        ab = ma_buckets.setdefault(m_id, {}).setdefault(r_realm, {}).setdefault(
+            r.get("account") or "(unattributed)",
+            {"total": 0, "ok": 0, "err": 0, "aborted": 0,
+             "ttfts": [], "gens": [], "walls": [],
+             "tok_rates": [], "hits": []})
         mb["total"] += 1
+        rb["total"] += 1
+        ab["total"] += 1
         # A client that walks away is not a gateway failure, so it counts as
         # neither ok nor err - it gets its own bucket instead of silently
         # dragging the success rate down.
         if outcome == "client_aborted":
             aborted += 1
-            mb["aborted"] += 1
+            for b in (mb, rb, ab):
+                b["aborted"] += 1
+                if r.get("elapsed_ms"):
+                    b["walls"].append(r["elapsed_ms"])
             if r.get("elapsed_ms"):
                 walls.append(r["elapsed_ms"])
-                mb["walls"].append(r["elapsed_ms"])
             continue
         if outcome != "completed":
             err += 1
-            mb["err"] += 1
+            for b in (mb, rb, ab):
+                b["err"] += 1
+                if r.get("elapsed_ms"):
+                    b["walls"].append(r["elapsed_ms"])
             if r.get("elapsed_ms"):
                 walls.append(r["elapsed_ms"])
-                mb["walls"].append(r["elapsed_ms"])
             continue
         ok += 1
-        mb["ok"] += 1
+        for b in (mb, rb, ab):
+            b["ok"] += 1
         if r.get("ttft_ms") is not None:
             ttfts.append(r["ttft_ms"])
-            mb["ttfts"].append(r["ttft_ms"])
+            for b in (mb, rb, ab):
+                b["ttfts"].append(r["ttft_ms"])
         if r.get("gen_ms") is not None:
             gens.append(r["gen_ms"])
-            mb["gens"].append(r["gen_ms"])
+            for b in (mb, rb, ab):
+                b["gens"].append(r["gen_ms"])
         if r.get("elapsed_ms") is not None:
             walls.append(r["elapsed_ms"])
-            mb["walls"].append(r["elapsed_ms"])
+            for b in (mb, rb, ab):
+                b["walls"].append(r["elapsed_ms"])
         if r.get("tokens_per_sec"):
             tok_rates.append(r["tokens_per_sec"])
-            mb["tok_rates"].append(r["tokens_per_sec"])
+            for b in (mb, rb, ab):
+                b["tok_rates"].append(r["tokens_per_sec"])
         if r.get("cache_hit_pct") is not None:
             hits.append(r["cache_hit_pct"])
-            mb["hits"].append(r["cache_hit_pct"])
+            for b in (mb, rb, ab):
+                b["hits"].append(r["cache_hit_pct"])
     def block(vals):
         if not vals:
             return None
@@ -519,6 +584,40 @@ def _perf_stats_uncached(sample=5000, realm=None):
                 "tokens_per_sec": block(mb["tok_rates"]),
                 "cache_hit_pct": block(mb["hits"]),
             } for mid, mb in m_buckets.items()
+        },
+        "by_model_realm": {
+            mid: {
+                realm: {
+                    "requests": rb["total"],
+                    "errors": rb["err"],
+                    "client_aborted": rb.get("aborted", 0),
+                    "success_rate_pct": round(rb["ok"] * 100.0 / (rb["ok"] + rb["err"]), 1)
+                                         if (rb["ok"] + rb["err"]) else None,
+                    "ttft_ms": block(rb["ttfts"]),
+                    "generation_ms": block(rb["gens"]),
+                    "wall_ms": block(rb["walls"]),
+                    "tokens_per_sec": block(rb["tok_rates"]),
+                    "cache_hit_pct": block(rb["hits"]),
+                } for realm, rb in realms.items()
+            } for mid, realms in mr_buckets.items()
+        },
+        "by_model_acct": {
+            mid: {
+                realm: {
+                    acct: {
+                        "requests": ab["total"],
+                        "errors": ab["err"],
+                        "client_aborted": ab.get("aborted", 0),
+                        "success_rate_pct": round(ab["ok"] * 100.0 / (ab["ok"] + ab["err"]), 1)
+                                             if (ab["ok"] + ab["err"]) else None,
+                        "ttft_ms": block(ab["ttfts"]),
+                        "generation_ms": block(ab["gens"]),
+                        "wall_ms": block(ab["walls"]),
+                        "tokens_per_sec": block(ab["tok_rates"]),
+                        "cache_hit_pct": block(ab["hits"]),
+                    } for acct, ab in accts.items()
+                } for realm, accts in realms.items()
+            } for mid, realms in ma_buckets.items()
         }
     }
 _snap_cache = {}
@@ -538,19 +637,21 @@ def usage_snapshot(realm=None, ttl=None):
     of the same file.
     """
     ttl = _STATS_TTL if ttl is None else ttl
-    r = realm or CURRENT_REALM
+    r = realm_scope(realm, CURRENT_REALM)
     now = time.time()
     with _snap_lock:
-        hit = _snap_cache.get(r)
+        hit = _snap_cache.get(r or "all")
         if hit is not None and (now - hit[0]) < ttl:
             return hit[1]
         data = _usage_snapshot_uncached(r)
-        _snap_cache[r] = (time.time(), data)
+        _snap_cache[r or "all"] = (time.time(), data)
     return data
 
 
 def _usage_snapshot_uncached(realm=None):
-    r = realm or CURRENT_REALM
+    # None means every realm; usage_snapshot() has already mapped "all"
+    # onto it, so the filter below is simply skipped.
+    r = realm
     rep = POOL.representative(realm=r) if POOL else current_account()
     snap = _empty_stats()
     snap["started"] = _usage.get("started", time.time())
@@ -575,22 +676,30 @@ def _usage_snapshot_uncached(realm=None):
                         if k in row:
                             snap[k] += (row[k] or 0)
                     m = row.get("model") or "unknown"
+                    rr = row_realm(row)
                     per = snap["by_model"].setdefault(m, {"requests": 0, "accounts": {}, **{k: 0 for k in USAGE_FIELDS}})
-                    per["requests"] += 1
-                    for k in USAGE_FIELDS:
-                        if k in row:
-                            per[k] += (row[k] or 0)
+                    per_realm = snap["by_model_realm"].setdefault(m, {}).setdefault(
+                        rr, {"requests": 0, "accounts": {}, **{k: 0 for k in USAGE_FIELDS}})
                     acct_id = row.get("account")
-                    if acct_id:
-                        per.setdefault("accounts", {})
-                        per["accounts"][acct_id] = per["accounts"].get(acct_id, 0) + 1
+                    acct_key = acct_id or "(unattributed)"
+                    per_acct = (snap["by_model_acct"].setdefault(m, {})
+                                .setdefault(rr, {})
+                                .setdefault(acct_key, {"requests": 0, "accounts": {},
+                                                       **{k: 0 for k in USAGE_FIELDS}}))
+                    for bucket in (per, per_realm, per_acct):
+                        bucket["requests"] += 1
+                        for k in USAGE_FIELDS:
+                            if k in row:
+                                bucket[k] += (row[k] or 0)
+                        if acct_id:
+                            bucket["accounts"][acct_id] = bucket["accounts"].get(acct_id, 0) + 1
     except FileNotFoundError:
         pass
     except Exception as exc:
         log(f"usage snapshot read failed: {exc}")
     snap["since"] = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(snap.get("started", time.time())))
     snap["log_file"] = USAGE_LOG
-    snap["realm"] = r
+    snap["realm"] = r or "all"
     snap["accounts_map"] = {a.uid: {"nickname": a.nickname, "realm": a.realm} for a in POOL.accounts} if POOL else {}
     snap["account"] = {
         "uid": (rep.uid if rep else ""),
@@ -659,6 +768,9 @@ def count_usage_rows(realm=None):
     its cost on a 45MB log). A short TTL keeps the number honest while
     removing the scan from the poll path.
     """
+    # Normalise first: the needle below is built from this value, so a
+    # literal "all" would search for a realm field that never exists.
+    realm = realm_scope(realm)
     r = realm or ""
     now = time.time()
     with _count_lock:
@@ -715,6 +827,7 @@ def recent_usage(limit=100, realm=None, page=1):
         page = max(1, int(page))
     except Exception:
         page = 1
+    realm = realm_scope(realm)
     total = count_usage_rows(realm)
     total_pages = max(1, (total + limit - 1) // limit) if total > 0 else 1
     page = min(page, total_pages)
@@ -884,11 +997,11 @@ def _usage_by_account_uncached():
     for item in out:
         item["models"] = sorted(item["models"].items(), key=lambda kv: -kv[1])[:5]
     return out
-_analytics_cache = {"at": 0.0, "data": None}
+_analytics_cache = {}
 _analytics_lock = threading.Lock()
 
 
-def compute_usage_analytics(ttl=None):
+def compute_usage_analytics(ttl=None, realm=None):
     """Cached analytics payload.
 
     Unlike perf_stats/usage_snapshot/usage_by_account this used to run
@@ -898,13 +1011,13 @@ def compute_usage_analytics(ttl=None):
     """
     ttl = _STATS_TTL if ttl is None else ttl
     now = time.time()
+    cache_key = realm or "all"
     with _analytics_lock:
-        hit = _analytics_cache["data"]
-        if hit is not None and (now - _analytics_cache["at"]) < ttl:
-            return hit
-        data = _compute_usage_analytics_uncached()
-        _analytics_cache["at"] = time.time()
-        _analytics_cache["data"] = data
+        entry = _analytics_cache.get(cache_key)
+        if entry is not None and (now - entry["at"]) < ttl:
+            return entry["data"]
+        data = _compute_usage_analytics_uncached(realm=realm_scope(realm))
+        _analytics_cache[cache_key] = {"at": time.time(), "data": data}
     return data
 
 
@@ -919,7 +1032,7 @@ def _new_analytics_stat():
         }
 
 
-def _scan_usage_log(all_summary, today_summary, acct_map, model_map, today_ts):
+def _scan_usage_log(all_summary, today_summary, acct_map, model_map, today_ts, realm=None):
     """Walk the usage JSONL once, folding every row into the maps."""
     if os.path.exists(USAGE_LOG):
         try:
@@ -931,6 +1044,8 @@ def _scan_usage_log(all_summary, today_summary, acct_map, model_map, today_ts):
                     try:
                         r = json.loads(line)
                     except Exception:
+                        continue
+                    if realm and not row_matches_realm(r, realm):
                         continue
                     # Only a genuine gateway/upstream failure is an error.
                     # A client cancellation is not: its token counts are
@@ -1004,10 +1119,12 @@ def _scan_usage_log(all_summary, today_summary, acct_map, model_map, today_ts):
             log("compute_usage_analytics failed: %s" % exc)
 
 
-def _enrich_accounts_from_pool(acct_map):
+def _enrich_accounts_from_pool(acct_map, realm=None):
     """Attach nickname/realm/credits for accounts that saw no traffic."""
     if POOL:
         for a in POOL.accounts:
+            if realm and a.realm != realm:
+                continue
             if a.uid in acct_map:
                 acct_map[a.uid]["nickname"] = a.nickname
                 acct_map[a.uid]["realm"] = a.realm
@@ -1039,7 +1156,7 @@ def _finalize_analytics_stat(stat_obj):
         stat_obj["elapsed_ms_avg"] = round(stat_obj["elapsed_sum"] / stat_obj["elapsed_n"]) if stat_obj["elapsed_n"] > 0 else 0
         return stat_obj
 
-def _compute_usage_analytics_uncached():
+def _compute_usage_analytics_uncached(realm=None):
     """Detailed analytics for Token, Cache, and Reasoning metrics page."""
     now = time.localtime()
     today_ts = time.mktime((now.tm_year, now.tm_mon, now.tm_mday, 0, 0, 0, 0, 0, -1))
@@ -1047,8 +1164,8 @@ def _compute_usage_analytics_uncached():
     today_summary = _new_analytics_stat()
     acct_map = {}
     model_map = {}
-    _scan_usage_log(all_summary, today_summary, acct_map, model_map, today_ts)
-    _enrich_accounts_from_pool(acct_map)
+    _scan_usage_log(all_summary, today_summary, acct_map, model_map, today_ts, realm=realm)
+    _enrich_accounts_from_pool(acct_map, realm=realm)
     _finalize_analytics_stat(all_summary)
     _finalize_analytics_stat(today_summary)
     for a in acct_map.values():
@@ -1061,6 +1178,7 @@ def _compute_usage_analytics_uncached():
     models_list = sorted(model_map.values(), key=lambda m: (-m["today"]["total_tokens"], -m["all_time"]["total_tokens"]))
     return {
         "today_ts": today_ts,
+        "realm": realm or "all",
         "summary": {"today": today_summary, "all_time": all_summary},
         "accounts": accts_list,
         "models": models_list,
@@ -1094,7 +1212,7 @@ def runtime_settings_view():
         "accounts_dir": ACCOUNTS_DIR,
         "usage_dir": USAGE_DIR,
         "settings_file": wb_settings.settings_path(ACCOUNTS_DIR),
-        "version": "1.4.5",
+        "version": "1.4.6",
     }
 def current_account():
     """Account used for display purposes (health / usage summaries)."""
@@ -1294,10 +1412,18 @@ INTL_UI_ORDER = [
 def merge_catalog(primary, realm=None):
     r = realm or CURRENT_REALM
     merged = {}
-    source_static = getattr(wb_catalog, "STATIC_CN_MODELS" if r == "cn" else "STATIC_INTL_MODELS", wb_catalog.STATIC_MODELS)
+    # "all" is the union of both realms. The analytics dashboard lists every
+    # model the gateway has served, so it must not drop the ones that only
+    # one side's catalog knows about.
+    if r == "all":
+        source_static = list(wb_catalog.STATIC_INTL_MODELS) + list(wb_catalog.STATIC_CN_MODELS)
+    else:
+        source_static = getattr(wb_catalog, "STATIC_CN_MODELS" if r == "cn" else "STATIC_INTL_MODELS", wb_catalog.STATIC_MODELS)
     for item in source_static:
         mid = item.get("id")
-        if mid and is_chat_model(mid):
+        # First catalog wins for a shared id, so the intl entry is not
+        # overwritten by its cn counterpart when both are merged.
+        if mid and is_chat_model(mid) and mid not in merged:
             merged[mid] = dict(item)
     for mid, meta in primary or []:
         if not is_chat_model(mid):
@@ -1310,8 +1436,12 @@ def merge_catalog(primary, realm=None):
             merged[mid] = {}
     order = CN_UI_ORDER if r == "cn" else INTL_UI_ORDER
     out = []
+    if r == "all":
+        order = list(INTL_UI_ORDER) + [m for m in CN_UI_ORDER if m not in INTL_UI_ORDER]
+    seen = set()
     for mid in order:
-        if mid in merged:
+        if mid in merged and mid not in seen:
+            seen.add(mid)
             out.append((mid, merged[mid]))
     return out
 def fetch_models(realm=None):
@@ -1321,7 +1451,7 @@ def fetch_models(realm=None):
         if c["data"] and time.time() - c["at"] < 300:
             return c["data"]
     live = read_product_config_models(realm=r)
-    if not live and r == "intl":
+    if not live and r in ("intl", "all"):
         live = [(m, {}) for m in fetch_endpoint_models()]
     entries = merge_catalog(live, realm=r)
     with _lock:
@@ -1432,10 +1562,24 @@ def model_entry(mid, meta):
         item["tags"] = tags
     return item
 def read_product_config_models(realm=None):
-    """Read the desktop app's cached catalog: [(id, meta), ...]."""
+    """Read the desktop app's cached catalog: [(id, meta), ...].
+
+    "all" reads both apps when they are installed, so the combined view gets
+    each side's metadata instead of only the domestic one.
+    """
     r = realm or CURRENT_REALM
+    if r == "all":
+        out = _read_product_config_dir(".workbuddy-ai")
+        seen = set(mid for mid, _ in out)
+        for mid, meta in _read_product_config_dir(".workbuddy"):
+            if mid not in seen:
+                out.append((mid, meta))
+        return out
+    return _read_product_config_dir(".workbuddy-ai" if r == "intl" else ".workbuddy")
+
+
+def _read_product_config_dir(cache_dir):
     home = os.path.expanduser("~")
-    cache_dir = ".workbuddy-ai" if r == "intl" else ".workbuddy"
     p = os.path.join(home, cache_dir, "cache", "acc-product-config-v3.json")
     try:
         with open(p, encoding="utf-8") as fh:
@@ -3061,7 +3205,7 @@ class Handler(BaseHTTPRequestHandler):
             super().finish()
         except (ConnectionResetError, BrokenPipeError, ConnectionAbortedError):
             pass
-    server_version = "wb-proxy/1.4.5"
+    server_version = "wb-proxy/1.4.6"
     def log_message(self, fmt, *args):
         # 静默过滤前端看板高频定时心跳的正常 200 GET 请求（/logs、/usage、/accounts 轮询等）
         # 避免自增死循环刷屏与日志污染。遇 4xx/5xx 异常或所有非 GET 业务操作依然如实记录。
@@ -3274,7 +3418,7 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/accounts/login/poll":
             return self._get_accounts_login_poll(query)
         if path == "/usage/analytics":
-            return self._get_usage_analytics()
+            return self._get_usage_analytics(query)
         if path == "/usage/by-account":
             return self._get_usage_by_account()
         if path == "/usage/perf":
@@ -3428,10 +3572,11 @@ class Handler(BaseHTTPRequestHandler):
         state = (query.get("state") or [""])[0]
         return self._json(200, POOL.poll_login(state))
 
-    def _get_usage_analytics(self):
+    def _get_usage_analytics(self, query):
         if not self._authorized():
             return
-        return self._json(200, compute_usage_analytics())
+        req_realm = query.get("realm", [None])[0] or None
+        return self._json(200, compute_usage_analytics(realm=req_realm))
 
     def _get_usage_by_account(self):
         if not self._authorized():
