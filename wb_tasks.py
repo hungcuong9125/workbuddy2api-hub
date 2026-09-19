@@ -160,18 +160,65 @@ def fetch_growth_summary(account):
     return out
 
 
-def accept_tasks(account, codes):
-    """批量接取任务。"""
-    if not codes: return True
+def accept_tasks(account, codes, chunk=20):
+    """批量接取任务。
+
+    上游按批返回 results, 单个任务可能 status=accepted / already_accepted /
+    其它失败原因。过去这里只返回 bool 且吞掉异常, 接取失败时上层完全看不见,
+    于是后续上报的事件全部作用在未接取的任务上 —— 进度永远 0, 领奖必然
+    "task not completed", 表现就是"接取了一堆但一个都没点亮"。
+    现在返回 {"ok": bool, "accepted": [...], "failed": [...], "msg": str}。
+    """
+    out = {"ok": True, "accepted": [], "failed": [], "msg": ""}
+    if not codes:
+        return out
     url = CHAT_BASE + "/v2/activity/growth/tasks/accept"
-    body = json.dumps({"task_codes": codes}).encode("utf-8")
-    req = urllib.request.Request(url, data=body, method="POST", headers=account.headers("chat"))
-    try:
-        with urllib.request.urlopen(req, timeout=15) as resp:
-            d = json.loads(resp.read().decode("utf-8"))
-            return d.get("code") == 0
-    except Exception:
-        return False
+    for i in range(0, len(codes), max(1, chunk)):
+        part = codes[i:i + max(1, chunk)]
+        body = json.dumps({"task_codes": part}).encode("utf-8")
+        req = urllib.request.Request(url, data=body, method="POST",
+                                     headers=account.headers("chat"))
+        try:
+            with urllib.request.urlopen(req, timeout=15) as resp:
+                d = json.loads(resp.read().decode("utf-8"))
+        except urllib.error.HTTPError as exc:
+            detail = ""
+            try:
+                detail = exc.read(300).decode("utf-8", "replace")
+            except Exception:
+                pass
+            out["ok"] = False
+            out["msg"] = "HTTP %s: %s" % (exc.code, detail[:200])
+            out["failed"].extend(part)
+            _log(f"accept batch failed: {out['msg']}")
+            continue
+        except Exception as exc:
+            out["ok"] = False
+            out["msg"] = str(exc)[:200]
+            out["failed"].extend(part)
+            _log(f"accept batch failed: {exc}")
+            continue
+        if d.get("code") != 0:
+            out["ok"] = False
+            out["msg"] = d.get("msg") or ("code=%s" % d.get("code"))
+            out["failed"].extend(part)
+            _log(f"accept rejected: {out['msg']}")
+            continue
+        results = (d.get("data") or {}).get("results") or []
+        seen = set()
+        for item in results:
+            code = item.get("task_code")
+            st = str(item.get("status") or "")
+            seen.add(code)
+            if st in ("accepted", "already_accepted"):
+                out["accepted"].append(code)
+            else:
+                out["failed"].append(code)
+                _log(f"task {code} accept status={st}")
+        for code in part:
+            if code not in seen:
+                out["failed"].append(code)
+    return out
 
 
 def claim_task(account, code):
@@ -392,9 +439,32 @@ def run_growth_tasks(account, gap=1.0):
     unaccepted = [t["task_code"] for t in tasks if t["status"] == "not_accepted" and not t.get("unforgeable")]
     if unaccepted:
         logs.append(f"发现 {len(unaccepted)} 个待接取任务，正在批量接取...")
-        accept_tasks(account, unaccepted)
+        acc = accept_tasks(account, unaccepted)
+        if acc.get("failed"):
+            logs.append(f"! 接取未成功 {len(acc['failed'])} 个: {', '.join(acc['failed'][:5])}"
+                        + (" ..." if len(acc["failed"]) > 5 else "")
+                        + (f" ({acc['msg']})" if acc.get("msg") else ""))
+        if acc.get("accepted"):
+            logs.append(f"✓ 已接取 {len(acc['accepted'])} 个任务")
         time.sleep(gap)
         tasks = fetch_growth_tasks(account)
+        # 复核一次: 上游偶尔会瞬时拒绝整个批次, 复查后仍处于未接取的再补一次,
+        # 否则后面所有上报都作用在未接取的任务上 —— 进度全是 0。
+        still = [t["task_code"] for t in tasks if t["status"] == "not_accepted"]
+        if still:
+            logs.append(f"仍有 {len(still)} 个未接取，重试接取一次...")
+            retry = accept_tasks(account, still)
+            if retry.get("accepted"):
+                logs.append(f"✓ 重试接取成功 {len(retry['accepted'])} 个")
+            time.sleep(gap)
+            tasks = fetch_growth_tasks(account)
+        if not tasks:
+            logs.append("! 接取后无法获取任务清单，本轮中止")
+            return {"ok": False, "logs": logs, "earned_credit": 0}
+        still_pending = [t["task_code"] for t in tasks if t["status"] == "not_accepted"]
+        if still_pending:
+            logs.append(f"! 仍有 {len(still_pending)} 个任务处于未接取状态，"
+                        f"对未接取任务上报事件不会计入进度，本轮跳过这些任务")
 
     total_earned = 0
     # 2. 处理每个任务
@@ -411,6 +481,20 @@ def run_growth_tasks(account, gap=1.0):
         if status == "claimed":
             continue
 
+        # 已完成的任务先领奖 —— 桌面端/夜间任务也可能被真实操作完成
+        # (例如用户自己在桌面端用了一次, 或夜里调度器点亮了), 这类任务必须
+        # 先结算, 不能因为"只能靠真实操作"就直接跳过丢掉奖励。
+        if status == "completed" or cur >= tgt:
+            res = claim_task(account, code)
+            if res.get("ok"):
+                cr = res.get("credit", 0)
+                total_earned += cr
+                logs.append(f"✓ 任务 [{spec['name']}] 领奖成功: +{cr} 积分")
+            else:
+                logs.append(f"! 任务 [{spec['name']}] 领奖失败: {res.get('msg') or '未知原因'}")
+            time.sleep(gap)
+            continue
+
         # 只认桌面端真实行为的任务: 伪造事件不会推进进度, 诚实跳过并给出深链。
         if code in DESKTOP_ONLY_TASKS:
             jump = t.get("jump_url") or "workbuddy://chat"
@@ -424,16 +508,9 @@ def run_growth_tasks(account, gap=1.0):
                         f" (每日 01:00 调度器自动执行, 累计 3 天)")
             continue
 
-        if status == "completed" or cur >= tgt:
-            # 直接领奖
-            res = claim_task(account, code)
-            if res.get("ok"):
-                cr = res.get("credit", 0)
-                total_earned += cr
-                logs.append(f"✓ 任务 [{spec['name']}] 领奖成功: +{cr} 积分")
-            else:
-                logs.append(f"! 任务 [{spec['name']}] 领奖失败: {res.get('msg') or '未知原因'}")
-            time.sleep(gap)
+        if status == "not_accepted":
+            # 接取没成功就上报是白费功夫: 上游只对已接取的任务累计进度。
+            logs.append(f"⏭ 任务 [{spec['name']}] 仍未接取, 跳过 (先解决接取失败)")
             continue
 
         # 3. 需点亮上报 —— 专家/团队事件必须使用互不相同的 id, 否则上游按
@@ -459,16 +536,23 @@ def run_growth_tasks(account, gap=1.0):
             logs.append(f"! 任务 [{spec['name']}] 部分事件上报失败 (上游拒绝), 继续尝试领奖")
         time.sleep(1.5)
 
-        # 等上游把进度落账再领奖: 上报到进度可见存在秒级延迟, 立刻领奖会吃
-        # 400 "task not completed", 表现为全部 +0。
+        # 等上游把进度落账再领奖。进度通常 1-3 秒就可见, 因此先快查几次;
+        # 只有确实在动才继续等, 免得每个卡住的任务都空等 20 秒 (整轮要几分钟)。
         prog = cur
-        for _ in range(5):
+        for attempt in range(6):
             fresh = next((x for x in fetch_growth_tasks(account) if x["task_code"] == code), None)
             if fresh:
                 prog = fresh.get("current", 0)
                 if prog >= tgt or fresh.get("status") in ("completed", "claimed"):
                     break
-            time.sleep(4)
+                if prog > cur:
+                    # 已经在涨了, 值得多等一会儿
+                    time.sleep(2.5)
+                    continue
+            if attempt < 2:
+                time.sleep(1.5)
+            else:
+                break
         if prog < tgt:
             logs.append(f"? 任务 [{spec['name']}] 已上报但进度 {prog}/{tgt} 未达成, 领奖顺延到下次运行")
             time.sleep(gap)
