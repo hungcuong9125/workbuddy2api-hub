@@ -24,3 +24,7 @@ desktop.ini
 .idea/
 
 usage/*.bak*
+
+# Local compose override (contains secret API_KEY) - never commit
+/docker-compose.yml
+docker-compose.yml
