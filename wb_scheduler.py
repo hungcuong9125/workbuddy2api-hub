@@ -53,19 +53,19 @@ class Scheduler:
         self._stop_event.clear()
         self._thread = threading.Thread(target=self._run_loop, daemon=True)
         self._thread.start()
-        self.log("后台定时调度器已启动")
+        self.log("Bộ lịch định kỳ nền đã khởi động")
 
     def stop(self):
         self._stop_event.set()
-        self.log("后台定时调度器已暂停")
+        self.log("Bộ lịch định kỳ nền đã tạm dừng")
 
     def _run_loop(self):
         # 启动后先休眠 10 秒等待主服务就绪，然后执行初次检查
         time.sleep(10)
         try:
-            self._execute_cycle("启动初次初始化巡检")
+            self._execute_cycle("khởi tạo kiểm tra lần đầu khi khởi động")
         except Exception as exc:
-            self.log(f"初次巡检异常: {exc}")
+            self.log(f"Lỗi kiểm tra lần đầu: {exc}")
 
         while not self._stop_event.is_set():
             self._calc_next_fire()
@@ -76,11 +76,11 @@ class Scheduler:
             if self.enabled:
                 # 到达设定的整点前 1 分钟内触发
                 if cur_min == 0 and cur_hour in self.all_hours:
-                    reason = f"整点排程命中 ({cur_hour}:00)"
+                    reason = f"trúng lịch giờ chẵn ({cur_hour}:00)"
                     try:
                         self._execute_cycle(reason)
                     except Exception as exc:
-                        self.log(f"排程执行异常: {exc}")
+                        self.log(f"Lỗi thực thi lịch trình: {exc}")
                     time.sleep(65) # 避开当前这一分钟重复触发
             self._stop_event.wait(30)
 
@@ -106,24 +106,24 @@ class Scheduler:
     def trigger_now(self):
         """手动立即触发一次调度检查。"""
         if self._run_lock.locked():
-            return {"ok": False, "msg": "已有巡检正在执行，请稍候再试"}
-        threading.Thread(target=self._execute_cycle, args=("手动立即触发",), daemon=True).start()
-        return {"ok": True, "msg": "已触发后台调度执行"}
+            return {"ok": False, "msg": "Đang có lượt kiểm tra đang chạy, vui lòng chờ"}
+        threading.Thread(target=self._execute_cycle, args=("kích hoạt thủ công ngay",), daemon=True).start()
+        return {"ok": True, "msg": "Đã kích hoạt thực thi lịch nền"}
 
-    def _execute_cycle(self, trigger_reason="周期巡检"):
+    def _execute_cycle(self, trigger_reason="kiểm tra định kỳ"):
         if not self._run_lock.acquire(blocking=False):
-            self.log(f"跳过本次巡检 ({trigger_reason})：上一轮仍在执行")
+            self.log(f"Bỏ qua lượt kiểm tra này ({trigger_reason}): lượt trước vẫn đang chạy")
             return
         try:
             self._run_cycle(trigger_reason)
         finally:
             self._run_lock.release()
 
-    def _run_cycle(self, trigger_reason="周期巡检"):
+    def _run_cycle(self, trigger_reason="kiểm tra định kỳ"):
         self.last_run_time = time.strftime("%Y-%m-%d %H:%M:%S")
-        self.log(f"开始执行任务 ({trigger_reason})...")
+        self.log(f"Bắt đầu thực thi nhiệm vụ ({trigger_reason})...")
         if not self.pool or not self.pool.accounts:
-            self.log("暂无可用的活跃账号，跳过本次巡检")
+            self.log("Tạm thời không có tài khoản hoạt động, bỏ qua lượt kiểm tra này")
             return
 
         refreshed_count = 0
@@ -135,48 +135,46 @@ class Scheduler:
             # 1. 检查 Token 剩余寿命 (小于 2 小时自动刷新保活)
             exp = acc.expires_at or 0
             if exp and (exp - time.time()) < 7200:
-                self.log(f"账号 [{uid8}] Token 即将到期，执行主动保活刷新...")
+                self.log(f"Tài khoản [{uid8}] Token sắp hết hạn, thực hiện làm mới bảo lưu chủ động...")
                 if acc.refresh():
                     refreshed_count += 1
-                    self.log(f"✓ 账号 [{uid8}] Token 自动保活刷新成功")
+                    self.log(f"✓ Tài khoản [{uid8}] làm mới bảo lưu Token tự động thành công")
                 else:
-                    self.log(f"! 账号 [{uid8}] Token 保活刷新失败: {acc.last_error}")
+                    self.log(f"! Tài khoản [{uid8}] làm mới bảo lưu Token thất bại: {acc.last_error}")
 
             # 2. 如果是国内版账号，检查每日签到与猫猫旅行
             if acc.realm == "cn":
                 if acc.can_checkin():
-                    self.log(f"检测到国内版账号 [{uid8}] 今日尚未签到，执行自动签到...")
+                    self.log(f"Phát hiện tài khoản Trong Nước [{uid8}] chưa điểm danh hôm nay, thực hiện điểm danh tự động...")
                     res = acc.checkin()
                     if res.get("ok"):
                         checkin_count += 1
-                        self.log(f"✓ 账号 [{uid8}] 自动签到成功: {res.get('msg')}")
+                        self.log(f"✓ Tài khoản [{uid8}] điểm danh tự động thành công: {res.get('msg')}")
                     else:
-                        self.log(f"! 账号 [{uid8}] 自动签到未成功: {res.get('error') or res.get('msg')}")
+                        self.log(f"! Tài khoản [{uid8}] điểm danh tự động chưa thành công: {res.get('error') or res.get('msg')}")
                     time.sleep(1.0)
 
                 # 检查猫猫旅行
                 tr = do_cat_travel(acc)
                 if tr.get("action") in ("claim", "depart"):
                     travel_count += 1
-                    self.log(f"🐱 账号 [{uid8}] 猫猫日常处理: {tr.get('msg')}")
+                    self.log(f"🐱 Tài khoản [{uid8}] xử lý mèo hàng ngày: {tr.get('msg')}")
                 time.sleep(1.0)
 
-                # 01:00 夜猫子专属任务: black_cat 只在 23:00-08:00 上报计数,
-                # 之前这个整点只是空转通用巡检, 从未真正上报过夜猫事件。
                 if time.localtime().tm_hour in self.cat_hours:
                     night = wb_tasks.run_night_growth(acc)
                     for line in night.get("logs", []):
                         self.log(f"🌙 {line}")
                     time.sleep(1.0)
 
-        self.log(f"巡检完成：Token保活 {refreshed_count} 个，每日签到 {checkin_count} 个，猫猫日常 {travel_count} 个")
+        self.log(f"Hoàn tất kiểm tra: Token bảo lưu {refreshed_count}, điểm danh hàng ngày {checkin_count}, mèo hàng ngày {travel_count}")
 
     def status(self):
         return {
             "enabled": self.enabled,
             "mode": "整点排程 (09:00/21:00 签到旅行 · 22:00 保活 · 01:00 夜猫)",
             "mode_cn": "整点排程 (09:00/21:00 签到旅行 · 22:00 保活 · 01:00 夜猫)",
-            "mode_intl": "账号 Token 自动保活与凭证常驻 (每日 22:00 集中巡检)",
+            "mode_intl": "Token tài khoản tự động bảo lưu & thông tin thường trú (kiểm tra tập trung 22:00 hàng ngày)",
             "last_run_time": self.last_run_time or "尚未运行",
             "next_run_time": self.next_run_time or "待调度",
             "logs": self.logs[-20:],
