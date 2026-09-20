@@ -11,7 +11,7 @@ services:
       - PORT=8788
       # 在此填写你的网关 API Key；本地自定义 docker-compose.yml 已通过 .gitignore 忽略，不会上传仓库
       - API_KEY=your_api_key_here
-      - TZ=Asia/Shanghai
+        - TZ=Asia/Ho_Chi_Minh
     volumes:
       # 持久化挂载账号凭证与用量流水
       - ./accounts:/app/accounts

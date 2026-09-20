@@ -28,7 +28,7 @@ def get_desktop_fingerprint(uid: str, nickname: str = "", os_name: str = "win32"
     """生成上报事件所需的标准完整桌面端指纹。"""
     now = int(time.time() * 1000)
     return {
-        "timezone": "Asia/Shanghai",
+        "timezone": "Asia/Ho_Chi_Minh",
         "reportDelay": 2000,
         "userId": uid,
         "username": nickname,

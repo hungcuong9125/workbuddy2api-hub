@@ -17,7 +17,7 @@ services:
     environment:
       - HOST=0.0.0.0
       - PORT=8788
-      - TZ=Asia/Shanghai
+        - TZ=Asia/Ho_Chi_Minh
     volumes:
       - ./accounts:/app/accounts
       - ./usage:/app/usage

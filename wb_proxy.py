@@ -2123,7 +2123,7 @@ def parse_rate_limit_reset(detail):
     """Pull the reset time out of an upstream 429 body, if it names one.
 
     Upstream answers code 6004 with "... your usage will reset at
-    2026-09-19 18:29:03 UTC+8 ...". Returns an epoch or None. Kept tolerant on
+      2026-09-19 18:29:03 UTC+7 ...". Returns an epoch or None. Kept tolerant on
     purpose: an unparseable body must not break the request path.
     """
     if not detail:

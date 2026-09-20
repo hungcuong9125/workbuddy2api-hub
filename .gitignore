@@ -28,6 +28,8 @@ usage/*.bak*
 # Local compose override (contains secret API_KEY) - never commit
 /docker-compose.yml
 docker-compose.yml
+/docker-compose.yaml
+docker-compose.yaml
 
 # Local scratch (release zips, account backups with credentials) - never commit
 tmp/

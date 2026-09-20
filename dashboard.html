@@ -65,7 +65,7 @@ th:first-child,td:first-child{text-align:left}
 tbody tr:last-child td{border-bottom:none}
 tbody tr:hover{background:rgba(241,245,249,.6)}
 .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px}
-/* Vào / Ra / Suy luận: ba số nên đọc gọn trên một dòng, không ngắt dòng */
+/* Input / Output / Thinking: ba số nên đọc gọn trên một dòng, không ngắt dòng */
 .triple{white-space:nowrap}
 .bar-fill{height:6px;border-radius:3px;background:var(--accent);min-width:2px;display:inline-block;vertical-align:middle}
 .bar-fill.think{background:var(--think)}
@@ -510,12 +510,12 @@ a:hover{text-decoration:underline}
       <div class="card think">
         <div class="k">Số token đã tiêu thụ hôm nay</div>
         <div class="v" id="kpiTodayTokens">0</div>
-        <div class="s" id="kpiTodayTokensDetail">Vào 0 / Ra 0 / Suy luận 0</div>
+        <div class="s" id="kpiTodayTokensDetail">Input 0 / Output 0 / Thinking 0</div>
       </div>
       <div class="card accent">
         <div class="k">Tổng lượng tiêu thụ token</div>
         <div class="v" id="kpiTotalTokens">0</div>
-        <div class="s" id="kpiTotalTokensDetail">Vào 0 / Ra 0 / Suy luận 0</div>
+        <div class="s" id="kpiTotalTokensDetail">Input 0 / Output 0 / Thinking 0</div>
       </div>
       <div class="card accent2">
         <div class="k">Tốc độ sinh trung bình</div>
@@ -1293,7 +1293,7 @@ const fmt = n => (n ?? 0).toLocaleString('en-US');
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const ms = v => v == null ? '—' : (v >= 1000 ? (v/1000).toFixed(2) + ' s' : Math.round(v) + ' ms');
 const pct = v => v == null ? '—' : v.toFixed(1) + '%';
-// Vào / Ra / Suy luận: ba số, mỗi số một màu, phân tách bằng dấu gạch chéo. Suy luận = 0 vẫn hiển thị,
+// Input / Output / Thinking: ba số, mỗi số một màu, phân tách bằng dấu gạch chéo. Thinking = 0 vẫn hiển thị,
 // nhờ đó hình dạng cột cố định, không ngắn lại khi một mô hình không suy luận.
 const tripleTokens = (inp, out, think) =>
   '<span style="color:var(--accent)">' + fmt(inp || 0) + '</span>' +
@@ -3421,7 +3421,7 @@ function renderPerfMatrix(usage, perf){
       + '<th style="text-align:left">Tên Mô Hình</th>'
       + '<th style="text-align:center;width:76px">Khu Vực</th>'
       + '<th style="text-align:left">Tài Khoản</th>'
-      + '<th>Số Yêu Cầu</th><th>Thất Bại</th><th>Tổng Token</th><th style="min-width:190px">Vào / Ra / Suy luận</th>'
+      + '<th>Số Yêu Cầu</th><th>Thất Bại</th><th>Tổng Token</th><th style="min-width:190px">Input / Output / Thinking</th>'
       + '<th>Độ trễ ký tự đầu (TTFT)</th><th>Tốc Độ Sinh</th><th>Thời Gian Xử Lý</th><th>Tỷ Lệ Cache</th><th>Tỷ Lệ Sử Dụng</th>'
       + '</tr></thead><tbody>' + summaryRow + rows + '</tbody></table>';
   }
@@ -3449,21 +3449,21 @@ function renderAnalytics(data){
   const elTodayTok = document.getElementById('kpiTodayTokens');
   const elTodayDetail = document.getElementById('kpiTodayTokensDetail');
   if(elTodayTok) elTodayTok.textContent = fmt(sumToday.total_tokens || 0);
-  if(elTodayDetail) elTodayDetail.textContent = 'Vào ' + fmt(sumToday.prompt_tokens || 0) + ' · Ra ' + fmt(sumToday.completion_tokens || 0);
+  if(elTodayDetail) elTodayDetail.textContent = 'Input ' + fmt(sumToday.prompt_tokens || 0) + ' · Output ' + fmt(sumToday.completion_tokens || 0);
   if(elTodayDetail) elTodayDetail.innerHTML =
-    '<span style="color:var(--accent)">Vào ' + fmt(sumToday.prompt_tokens || 0) + '</span>' +
-    ' <span style="color:var(--dim-light)">/</span> ' + '<span style="color:var(--accent2)">Ra ' + fmt(sumToday.completion_tokens || 0) + '</span>' +
-    ' <span style="color:var(--dim-light)">/</span> ' + '<span style="color:var(--think)">Suy luận ' + fmt(sumToday.reasoning_tokens || 0) + '</span>';
+    '<span style="color:var(--accent)">Input ' + fmt(sumToday.prompt_tokens || 0) + '</span>' +
+    ' <span style="color:var(--dim-light)">/</span> ' + '<span style="color:var(--accent2)">Output ' + fmt(sumToday.completion_tokens || 0) + '</span>' +
+    ' <span style="color:var(--dim-light)">/</span> ' + '<span style="color:var(--think)">Thinking ' + fmt(sumToday.reasoning_tokens || 0) + '</span>';
 
   // KPI 2: Token tiêu thụ tích lũy
   const elTotalTok = document.getElementById('kpiTotalTokens');
   const elTotalDetail = document.getElementById('kpiTotalTokensDetail');
   if(elTotalTok) elTotalTok.textContent = fmt(sumAll.total_tokens || 0);
-  if(elTotalDetail) elTotalDetail.textContent = 'Vào ' + fmt(sumAll.prompt_tokens || 0) + ' · Ra ' + fmt(sumAll.completion_tokens || 0);
+  if(elTotalDetail) elTotalDetail.textContent = 'Input ' + fmt(sumAll.prompt_tokens || 0) + ' · Output ' + fmt(sumAll.completion_tokens || 0);
   if(elTotalDetail) elTotalDetail.innerHTML =
-    '<span style="color:var(--accent)">Vào ' + fmt(sumAll.prompt_tokens || 0) + '</span>' +
-    ' <span style="color:var(--dim-light)">/</span> ' + '<span style="color:var(--accent2)">Ra ' + fmt(sumAll.completion_tokens || 0) + '</span>' +
-    ' <span style="color:var(--dim-light)">/</span> ' + '<span style="color:var(--think)">Suy luận ' + fmt(sumAll.reasoning_tokens || 0) + '</span>';
+    '<span style="color:var(--accent)">Input ' + fmt(sumAll.prompt_tokens || 0) + '</span>' +
+    ' <span style="color:var(--dim-light)">/</span> ' + '<span style="color:var(--accent2)">Output ' + fmt(sumAll.completion_tokens || 0) + '</span>' +
+    ' <span style="color:var(--dim-light)">/</span> ' + '<span style="color:var(--think)">Thinking ' + fmt(sumAll.reasoning_tokens || 0) + '</span>';
 
   // KPI 3: Tốc độ sinh trung bình cổng
   const elAvgSpeed = document.getElementById('kpiAvgSpeed');
