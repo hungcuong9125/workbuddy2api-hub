@@ -24,7 +24,7 @@ body{margin:0;background:var(--bg);color:var(--fg);
   -webkit-font-smoothing:antialiased}
 header{border-bottom:1px solid var(--line);
   position:sticky;top:0;background:rgba(255,255,255,.94);backdrop-filter:blur(10px);z-index:10;box-shadow:var(--shadow-sm)}
-header .header-inner{max-width:1280px;margin:0 auto;padding:24px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+header .header-inner{max-width:1280px;margin:0 auto;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
 header .header-left{display:flex;align-items:center;gap:8px}
 header .header-center{display:flex;justify-content:center;flex:1}
 header .header-right{display:flex;align-items:center;gap:12px}
@@ -295,7 +295,7 @@ a:hover{text-decoration:underline}
               border-radius:14px;padding:26px 24px;box-shadow:0 10px 30px rgba(15,23,42,.12)">
     <div style="font-size:16px;font-weight:700;margin-bottom:6px">Bảng Điều Khiển</div>
     <div style="font-size:12px;color:var(--dim);margin-bottom:18px">Vui lòng nhập mật khẩu truy cập bảng điều khiển</div>
-    <input id="panelPwdInput" type="password" placeholder="mật khẩu bảng điều khiển" autocomplete="current-password"
+    <input id="panelPwdInput" type="password" placeholder="Nhập mật khẩu của bạn" autocomplete="current-password"
            onkeydown="if(event.key==='Enter') submitPanelLogin()"
            style="width:100%;background:var(--panel2);border:1px solid var(--line);
                   border-radius:8px;padding:9px 12px;color:var(--fg);font:inherit">
@@ -2131,7 +2131,7 @@ async function refreshInner(){
   const countEl = document.getElementById('recentCount');
   if(countEl) countEl.textContent = '(Trang ' + RECENT_PAGE + ' / Tổng ' + fmt(total) + ' dòng)';
   document.getElementById('recent').innerHTML = rows.length ?
-    '<table><thead><tr><th>Thời gian</th><th>Mô hình</th><th>Tài Khoản</th><th>Chế độ</th><th>Kết quả</th><th>Thời gian</th><th>Ký tự đầu</th><th>Speed</th><th>Input</th><th>Output</th><th>Suy nghĩ</th><th>Cache</th><th>Tổng Token</th></tr></thead><tbody>'
+    '<table><thead><tr><th>Thời gian</th><th>Mô hình</th><th>Tài Khoản</th><th>Chế độ</th><th>Kết quả</th><th>Thời gian</th><th>Ký tự đầu</th><th>Speed</th><th>Input</th><th>Output</th><th>Thinking</th><th>Cache</th><th>Tổng Token</th></tr></thead><tbody>'
     + rows.map(r => '<tr>'
         + '<td class="mono">' + esc((r.iso||'').replace('T',' ').slice(5)) + '</td>'
         + '<td class="mono">' + esc(r.model) + '</td>'
