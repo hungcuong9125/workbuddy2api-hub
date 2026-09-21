@@ -352,7 +352,7 @@ a:hover{text-decoration:underline}
 <body>
 <header>
   <div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap">
-    <h1><span class="dot" id="statusDot"></span>WorkBuddy Bảng Điều Khiển Cổng</h1>
+    <h1><span class="dot" id="statusDot"></span>WorkBuddy Bảng Điều Khiển</h1>
     <nav class="main-nav">
       <button class="main-nav-btn active" id="btnNavGateway" onclick="switchMainTab('gateway')">
         Cổng & Vận Hành
@@ -380,7 +380,7 @@ a:hover{text-decoration:underline}
      align-items:center;justify-content:center;padding:20px;background:var(--bg)">
   <div style="width:min(380px,100%);background:var(--panel);border:1px solid var(--line);
               border-radius:14px;padding:26px 24px;box-shadow:0 10px 30px rgba(15,23,42,.12)">
-    <div style="font-size:16px;font-weight:700;margin-bottom:6px">WorkBuddy Bảng Điều Khiển Cổng</div>
+    <div style="font-size:16px;font-weight:700;margin-bottom:6px">WorkBuddy Bảng Điều Khiển</div>
     <div style="font-size:12px;color:var(--dim);margin-bottom:18px">Vui lòng nhập mật khẩu truy cập bảng điều khiển</div>
     <input id="panelPwdInput" type="password" placeholder="Mật khẩu bảng điều khiển" autocomplete="current-password"
            onkeydown="if(event.key==='Enter') submitPanelLogin()"
@@ -389,7 +389,7 @@ a:hover{text-decoration:underline}
     <div id="panelLoginMsg" style="font-size:12px;color:var(--bad);min-height:17px;margin:8px 0 12px"></div>
     <button onclick="submitPanelLogin()" style="width:100%;padding:9px 12px;font-size:13px">Vào Bảng Điều Khiển</button>
     <div id="panelDefaultHint" style="display:none;font-size:11px;color:var(--warn);margin-top:12px">
-      Hiện đang sử dụng mật khẩu mặc định <b>admin</b>，sau khi đăng nhập hãy đổi trong「Cài Đặt」 trong Cài Đặt.。
+      Hiện đang sử dụng mật khẩu mặc định <b>admin</b>; sau khi đăng nhập hãy đổi trong 「Cài Đặt」.
     </div>
   </div>
 </div>
@@ -439,8 +439,8 @@ a:hover{text-decoration:underline}
     <!-- Thẻ 3: Điều Khiển Cổng Xuất -->
     <div id="cardGatewayCtrl" class="realm-card gateway-ctrl" style="cursor:default">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-        <span style="font-size:11px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:.5px">Cổng xuất mặc định</span>
-        <span id="activeGatewayKeyCount" class="badge ok mini" style="font-weight:600">0  Key tài khoản tài khoản có hiệu lực</span>
+        <span style="font-size:11px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:.5px">Cổng Proxy mặc định</span>
+        <span id="activeGatewayKeyCount" class="badge ok mini" style="font-weight:600">0 Key có hiệu lực</span>
       </div>
       <div style="display:flex;align-items:center;gap:8px;margin:2px 0 8px">
         <span id="gatewayDot" class="dot" style="width:9px;height:9px"></span>
@@ -516,7 +516,7 @@ a:hover{text-decoration:underline}
   <!-- Danh mục mô hình & năng lực theo phiên bản -->
   <section>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-      <h2 style="margin:0">Danh mục mô hình & năng lực phiên bản hiện tại <em id="availModelCount"></em></h2>
+      <h2 style="margin:0">Danh mục mô hình & năng lực phiên bản <em id="availModelCount"></em></h2>
       <div style="font-size:12px;color:var(--dim)">Hiển thị mô hình hội thoại chính thức, dung lượng context, năng lực suy luận/vision và tỷ lệ giá hiện tại</div>
     </div>
     <div style="overflow-x:auto">
@@ -846,13 +846,13 @@ a:hover{text-decoration:underline}
 <div class="modal-mask" id="desktopScanModal">
   <div class="modal" role="dialog" aria-modal="true" style="width:min(720px,100%)">
     <div class="modal-hd">
-      <h2>client desktop trên máyTài Khoản</h2>
+      <h2>Tài Khoản Client Máy Tính</h2>
       <button class="modal-x" onclick="closeDesktopScan()" aria-label="Đóng">×</button>
     </div>
     <div class="modal-bd">
       <p class="hint" style="margin-top:0">
-        Bên dưới làclient desktop trên máytrongđã đăng nhậpcủaTài Khoản（chỉ kiểm tra đọc，nhấn「nhậpvào」mớisẽthêm vào cổng）。
-        Quốc TếTài Khoảnđưa vàoQuốc Tếdanh sách，Trong NướcTài Khoảnđưa vàoTrong Nướcdanh sách。
+        Bên dưới là các tài khoản đã đăng nhập trong client desktop trên máy (chỉ kiểm tra đọc; nhấn「Nhập」mới thêm vào cổng).
+        Tài khoản Quốc Tế và Trong Nước sẽ được đưa vào danh sách tương ứng.
       </p>
       <div id="desktopScanBody"><p class="hint">Đang kiểm tra…</p></div>
     </div>
@@ -871,7 +871,7 @@ a:hover{text-decoration:underline}
     </div>
     <div class="modal-bd">
       <p class="hint" style="margin-top:0">
-        ChọnmộtmụcTài Khoản JSON tệp。Hỗ trợnàymạngđóngXuấtcủatệp、Tài Khoảnmảng、mộtTài Khoảnđối tượng，
+        Chọn một tệp JSON tài khoản. Hỗ trợ tệp xuất từ cổng này, mảng tài khoản, một đối tượng tài khoản,
         vàclient desktopcủa <code>{"account":…,"auth":…}</code> định dạng。
       </p>
       <div id="importBody"><p class="hint">Chưa chọntệp。</p></div>
@@ -942,7 +942,7 @@ async function triggerLoginForSelectedRealm(){
   if(s3) s3.className = "step";
 
   const s1Text = document.getElementById("step1Text");
-  if(s1Text) s1Text.textContent = isCn ? "Đang yêu cầu tới copilot.tencent.com (Trong Nước) yêu cầuủy quyền..." : "Đang yêu cầu tới www.workbuddy.ai (Quốc Tế) yêu cầuủy quyền...";
+  if(s1Text) s1Text.textContent = isCn ? "Đang yêu cầu ủy quyền tại copilot.tencent.com (Trong Nước)..." : "Đang yêu cầu ủy quyền tại www.workbuddy.ai (Quốc Tế)...";
 
   try{
     const r = await postJSON("/accounts/login/start", {platform: "CLI", realm: realm});
@@ -951,11 +951,11 @@ async function triggerLoginForSelectedRealm(){
     if(s2) s2.className = "step active";
     if(linkBox) linkBox.innerHTML =
       '<a class="login-link" href="' + esc(r.authUrl) + '" target="_blank" rel="noopener">' + esc(r.authUrl) + '</a>'
-      + '<div class="hint">nhấntrênphươngliên kếttrongtrình duyệttrongxongthànhĐăng nhậpủy quyền。Đăng nhậpxongthànhsaucửa sổ nàysẽtự độngkiểm travàthêm vào pool。</div>';
+      + '<div class="hint">Nhấn liên kết phía trên trong trình duyệt để hoàn tất ủy quyền đăng nhập. Sau khi đăng nhập, cửa sổ này sẽ tự động kiểm tra và thêm tài khoản vào pool.</div>';
     pollLogin();
     loginTimer = setInterval(pollLogin, 2500);
   }catch(e){
-    if(statusBox) statusBox.textContent = "Khởi tạoThất bại: " + e.message;
+    if(statusBox) statusBox.textContent = "Khởi tạo thất bại: " + e.message;
     if(s1) s1.className = "step";
   }
 }
@@ -970,7 +970,7 @@ async function pollLogin(){
     if(statusBox) statusBox.textContent = r.message || r.status;
     if(r.status === "ok"){
       if(s3) s3.className = "step done";
-      if(statusBox) statusBox.textContent = "Đăng nhập thành công：" + (r.account && r.account.nickname) + " đã thêm vàoTài Khoảnpool";
+      if(statusBox) statusBox.textContent = "Đăng nhập thành công: " + (r.account && r.account.nickname) + " đã được thêm vào pool tài khoản";
       if(loginTimer){ clearInterval(loginTimer); loginTimer = null; }
       loginState = null;
       await loadAccounts();
@@ -1036,15 +1036,15 @@ function updateUI(){
   const activeKeysTotal = isIntlGw ? (intlKeys + followKeys) : (cnKeys + followKeys);
 
   const elGwKeyBadge = document.getElementById("activeGatewayKeyCount");
-  if(elGwKeyBadge) elGwKeyBadge.textContent = activeKeysTotal + '  Key tài khoản tài khoản có hiệu lực';
+  if(elGwKeyBadge) elGwKeyBadge.textContent = activeKeysTotal + ' Key có hiệu lực';
 
   const elIntlKey = document.getElementById("tabIntlKeyBadge");
-  if(elIntlKey) elIntlKey.textContent = intlKeys + '  Key tài khoản';
+  if(elIntlKey) elIntlKey.textContent = intlKeys + ' Key tài khoản';
 
   const elCnKey = document.getElementById("tabCnKeyBadge");
-  if(elCnKey) elCnKey.textContent = cnKeys + '  Key tài khoản';
+  if(elCnKey) elCnKey.textContent = cnKeys + ' Key tài khoản';
 
-  // các thẻ bên tráiTài KhoảnsốvàĐiểmthống kêtính
+  // Tính số tài khoản và điểm trên các thẻ bên trái
   const allAccts = window.ACCOUNTS || [];
   const intlAccts = allAccts.filter(a => a.realm === 'intl' || !a.realm);
   const cnAccts = allAccts.filter(a => a.realm === 'cn');
@@ -1083,14 +1083,14 @@ async function toggleActiveGatewayRealm(){
   try {
     const res = await postJSON("/realm", {realm: next});
     window.ACTIVE_GATEWAY_REALM = res.current || next;
-    toast("mạngđóngmặc địnhtrêndu lịchĐã Chuyểnvàvĩnh viễnlâuLưulà: " + (window.ACTIVE_GATEWAY_REALM === "intl" ? "Quốc Tế" : "Trong Nước"));
+    toast("Đã chuyển và lưu vĩnh viễn cổng mặc định thành: " + (window.ACTIVE_GATEWAY_REALM === "intl" ? "Quốc Tế" : "Trong Nước"));
     window.VIEW_REALM = window.ACTIVE_GATEWAY_REALM;
     window.updateUI();
     await loadAccounts();
     await loadModels();
     await refresh();
   }catch(e){
-    alert("ChuyểnThất bại: " + e.message);
+    alert("Chuyển thất bại: " + e.message);
   }
 };
 
@@ -1123,7 +1123,7 @@ function renderAvailableModels(){
   const countEm = document.getElementById('availModelCount');
   if(countEm) countEm.textContent = '(Tổng ' + MODELS_DATA.length + ' mục)';
   if(!MODELS_DATA.length){
-    tb.innerHTML = '<tr><td colspan="6" class="empty">Chưa cóMô hình</td></tr>';
+      tb.innerHTML = '<tr><td colspan="6" class="empty">Chưa có mô hình khả dụng</td></tr>';
     return;
   }
   tb.innerHTML = MODELS_DATA.map(m => {
@@ -1246,13 +1246,13 @@ async function loadGrowthTasks(){
     if(elCat){
       if(tr.state === 'arrived') {
         elCat.innerHTML = '<span style="color:#26bb82">Đã về từ chuyến đi! Chờ nhận thưởng</span>';
-        if(elCatDesc) elCatDesc.textContent = 'nhậnPhần Thưởng +' + (tr.reward_credit || 0) + ' Điểm';
+        if(elCatDesc) elCatDesc.textContent = 'Nhận thưởng +' + (tr.reward_credit || 0) + ' Điểm';
       } else if(tr.state === 'traveling') {
         elCat.innerHTML = '<span style="color:var(--accent)">Đang du lịch...</span>';
         if(elCatDesc) elCatDesc.textContent = 'Dự kiến sẽ về sau';
       } else if(tr.daily_limit_reached) {
         elCat.textContent = 'Đã dùng hết lượt hôm nay';
-        if(elCatDesc) elCatDesc.textContent = 'Ngày mai 00:00 Làm Mới';
+        if(elCatDesc) elCatDesc.textContent = 'Ngày mai 00:00 làm mới';
       } else {
         elCat.textContent = 'Đang chờ tại nhà';
         if(elCatDesc) elCatDesc.textContent = 'Sẵn sàng khởi hành';
@@ -1262,7 +1262,7 @@ async function loadGrowthTasks(){
     const tb = document.querySelector("#growthTable tbody");
     if(!tb) return;
     if(!tasks.length){
-      tb.innerHTML = '<tr><td colspan="5" class="empty">tạmkhôngNhiệm VụhoặcchưaĐăng nhậpTrong NướcTài Khoản</td></tr>';
+      tb.innerHTML = '<tr><td colspan="5" class="empty">Chưa có nhiệm vụ hoặc chưa đăng nhập tài khoản Trong Nước</td></tr>';
       return;
     }
     tb.innerHTML = tasks.map(t => {
@@ -1295,7 +1295,7 @@ async function loadGrowthTasks(){
 async function runGrowthTasks(btn){
   btn.disabled = true;
   const oldText = btn.textContent;
-  btn.textContent = 'Nhiệm Vụđang thực hiện...';
+  btn.textContent = 'Đang thực hiện nhiệm vụ...';
   const logBox = document.getElementById("taskLogBox");
   if(logBox){
     logBox.style.display = 'block';
@@ -1315,10 +1315,10 @@ async function runGrowthTasks(btn){
     await loadAccounts();
     await loadGrowthTasks();
     const sumC = r.credit_added != null ? ('，tăng tổng cộng +' + r.credit_added + ' Điểm') : '';
-    toast("thànhdàiNhiệm Vụluồngnướcthực hiện xong" + sumC + "！");
+    toast("Đã hoàn tất quy trình nhiệm vụ" + sumC + "!", "ok");
   }catch(e){
     if(logBox) logBox.innerHTML += '<div style="color:var(--warn)">Lỗi thực thi: ' + esc(e.message) + '</div>';
-    alert("Nhiệm Vụthực thidòngThất bại: " + e.message);
+    alert("Thực hiện nhiệm vụ thất bại: " + e.message);
   }finally{
     btn.disabled = false;
     btn.textContent = oldText;
@@ -1333,11 +1333,11 @@ async function triggerCatTravel(btn){
       payload.uid = CURRENT_GROWTH_UID;
     }
     const r = await postJSON("/tasks/travel", payload);
-    toast(r.msg || (r.ok ? "Mèo Du Lịchquyết toán xong" : "Thao tácThất bại"), r.ok ? "ok" : "warn");
+    toast(r.msg || (r.ok ? "Mèo Du Lịch đã quyết toán xong" : "Thao tác thất bại"), r.ok ? "ok" : "warn");
     await loadAccounts();
     await loadGrowthTasks();
   }catch(e){
-    toast("Mèo Du LịchThất bại: " + e.message, "bad");
+    toast("Mèo Du Lịch thất bại: " + e.message, "bad");
   }finally{
     if(btn){ btn.disabled = false; btn.textContent = 'Mèo Du Lịch'; }
   }
@@ -1360,8 +1360,8 @@ async function loadSchedulerStatus(){
       : (s.mode_cn || s.mode || 'lịch theo giờ');
     if(txt) txt.textContent = s.enabled ? ('Đang chạy · ' + modeText) : 'Đã tạm dừng';
     if(times) times.textContent = 'lần trước: ' + (s.last_run_time || '-') + ' · lần tới: ' + (s.next_run_time || '-');
-    if(btn) btn.textContent = s.enabled ? 'Tạm Dừng Lịch' : 'Bậtđiều chỉnhmức';
-    if(btnTrig) btnTrig.textContent = (window.VIEW_REALM === 'intl') ? 'Duy trì ngayLàm Mới' : 'Kiểm Tra & Duy Trì Ngay';
+    if(btn) btn.textContent = s.enabled ? 'Tạm Dừng Lịch' : 'Bật Lịch';
+    if(btnTrig) btnTrig.textContent = 'Làm mới lịch trình';
   }catch(e){}
 }
 
@@ -1372,9 +1372,9 @@ async function triggerSchedulerNow(btn){
     toast(r.msg || "Đã kích hoạt kiểm tra duy trì", "ok");
     setTimeout(loadSchedulerStatus, 2000);
   }catch(e){
-    toast("Kích hoạtThất bại: " + e.message, "bad");
+    toast("Kích hoạt thất bại: " + e.message, "bad");
   }finally{
-    if(btn){ btn.disabled = false; btn.textContent = (window.VIEW_REALM === 'intl') ? 'Duy trì ngayLàm Mới' : 'Kiểm Tra & Duy Trì Ngay'; }
+    if(btn){ btn.disabled = false; btn.textContent = 'Làm mới lịch trình'; }
   }
 }
 
@@ -1385,7 +1385,7 @@ async function toggleScheduler(btn){
     await loadSchedulerStatus();
     toast("nềnLịchĐã " + (r.enabled ? "Bật" : "Tạm dừng"), "ok");
   }catch(e){
-    toast("ChuyểnThất bại: " + e.message, "bad");
+    toast("Chuyển thất bại: " + e.message, "bad");
   }finally{
     if(btn){ btn.disabled = false; }
   }
@@ -1398,17 +1398,17 @@ function filterRealm(m){
   renderAccounts();
 }
 async function doCheckin(btn){
-  btn.disabled = true; const ot = btn.textContent; btn.textContent = "Điểm danhtrong...";
+  btn.disabled = true; const ot = btn.textContent; btn.textContent = "Đang điểm danh...";
   try {
     const r = await postJSON("/accounts/checkin", {});
     const res = r.results || [];
-    if(!res.length) toast("Không tìm thấyTrong NướcTài Khoản", "warn");
+    if(!res.length) toast("Không tìm thấy tài khoản Trong Nước", "warn");
     else {
       const summary = res.map(x => (x.nickname||x.uid.slice(0,6)) + ": " + (x.ok ? "Điểm danhthành công" : (x.error||x.msg))).join("；");
       toast("Điểm Danh Hàng Ngày: " + summary, res.some(x => x.ok) ? "ok" : "warn");
     }
     await initRealm(); loadAccounts(); loadModels();
-  }catch(e){ toast("Điểm danhThất bại: " + e.message, "bad"); }
+  }catch(e){ toast("Điểm danh thất bại: " + e.message, "bad"); }
   finally { btn.disabled = false; btn.textContent = ot; }
 }
 
@@ -1550,23 +1550,23 @@ function accountRow(a){
   const nameAttr = esc(String(a.nickname || '').replace(/["'\\<>]/g, ''));
   const usage = USAGE_BY_ACCOUNT[a.uid] || {};
   const state = !a.enabled ? '<span class="badge off">Đã Tắt</span>'
-              : a.inCooldown ? '<span class="badge warn">làm mátnhưng ' + (a.cooldownFor||0) + 's</span>'
-              : a.expiresIn === 'expired' ? '<span class="badge bad">Đã quahạn</span>'
+              : a.inCooldown ? '<span class="badge warn">Đang làm mát ' + (a.cooldownFor||0) + 's</span>'
+              : a.expiresIn === 'expired' ? '<span class="badge bad">Đã hết hạn</span>'
               : '<span class="badge ok">Khả dụng</span>';
   const err = a.lastError ? '<div class="hint" style="color:var(--warn);margin:2px 0 0">' + esc(a.lastError) + '</div>' : '';
   const cred = a.credits;
   const credText = cred ? ('<b style="color:var(--accent2)">' + fmt(cred.remain) + '</b> / ' + fmt(cred.size)) : '<span style="color:var(--dim)">Chưa truy vấn</span>';
   return '<tr>'
-    + '<td style="text-align:center;white-space:nowrap" data-label="bảnnày">' + realmBadge + '</td>'
+    + '<td style="text-align:center;white-space:nowrap" data-label="Phiên bản">' + realmBadge + '</td>'
     + '<td style="text-align:left" data-label="Tài Khoản">'
     +   '<div style="font-weight:600;font-size:13px;color:var(--fg)">' + esc(a.nickname) + '</div>'
     + '<div class="mono" style="color:var(--dim);font-size:11px">' + esc(a.uid.slice(0,8)) + ' · ' + esc(a.source) + ' · hết hạn ' + esc(a.expiresIn || '?') + '</div>'
-    + (a.machineId ? ('<div class="mono" style="color:var(--dim);font-size:10px;margin-top:2px" title="bởiTài KhoảnUIDổn địnhđịnhphân phátsinhcủariêngthuộcMã thiết bị，chốngnhiềusốđóngliên kếtrủi rođiều khiển">Mã thiết bị: ' + esc(a.machineId.slice(0,14)) + '...</div>') : '')
+    + (a.machineId ? ('<div class="mono" style="color:var(--dim);font-size:10px;margin-top:2px" title="Mã thiết bị riêng được dẫn xuất ổn định từ UID tài khoản, giúp chống liên kết nhiều tài khoản">Mã thiết bị: ' + esc(a.machineId.slice(0,14)) + '...</div>') : '')
     + err + '</td>'
     + '<td style="text-align:center" data-label="Trạng Thái">' + state + '</td>'
-    + '<td style="text-align:center" data-label="Cổng xuất">' + slotSelectHtml(a) + '</td>'
+    + '<td style="text-align:center" data-label="Cổng Proxy">' + slotSelectHtml(a) + '</td>'
     + '<td style="text-align:left;white-space:nowrap" data-label="Điểm">' + credText + '</td>'
-    + '<td style="text-align:right" data-label="yêu cầu">' + fmt(usage.requests) + '</td>'
+    + '<td style="text-align:right" data-label="Request">' + fmt(usage.requests) + '</td>'
     + '<td style="text-align:right" data-label="Tổng token">' + fmt(usage.total_tokens) + '</td>'
     + '<td style="text-align:right" data-label="Cache">' + fmt(usage.cached_tokens) + '</td>'
     + '<td class="acct-actions" style="text-align:center;white-space:nowrap;vertical-align:middle">'
@@ -1597,32 +1597,32 @@ function renderAccounts(){
   const usable = list.filter(a => a.enabled).length;
   const viewName = currentView === 'cn' ? 'Trong Nước' : 'Quốc Tế';
   document.getElementById('acctCount').textContent =
-    list.length ? ('（' + viewName + 'Tổng ' + list.length + ' mục，Bật ' + usable + ' mục）') : '';
+    list.length ? ('（Tổng ' + list.length + ' mục, Bật ' + usable + ' mục）') : '';
   if(!list.length){
     box.innerHTML =
       '<div style="text-align:center;padding:30px 16px">'
-      + '<div style="font-size:15px;margin-bottom:8px">Hiện tại' + viewName + 'Chưa cóTài Khoản</div>'
+      + '<div style="font-size:15px;margin-bottom:8px">Hiện tại chưa có tài khoản</div>'
       + '<div style="color:var(--dim);font-size:13px;margin-bottom:18px">'
-      +   'Vui lòng trước tiênĐăng nhậphoặcnhậpvàomộtmục ' + viewName + ' Tài Khoản，sau đócác yêu cầu liên quanđềusẽđi quaTài Khoản'
+      +   'Vui lòng đăng nhập hoặc nhập một tài khoản ' + viewName + ', sau đó các yêu cầu đều đi qua tài khoản đó.'
       + '</div>'
       + '<button onclick="startLogin()" style="font-size:14px;padding:10px 22px">'
-      +   'Đăng nhậpmớiTài Khoản (OAuth)'
+      +   'Đăng nhập tài khoản mới (OAuth)'
       + '</button>'
       + '</div>';
     return;
   }
   box.innerHTML = '<div class="table-wrap"><table class="data-cards account-cards"><thead><tr>'
-    + '<th style="text-align:center;width:76px">bảnnày</th>'
+    + '<th style="text-align:center;width:76px">Phiên bản</th>'
     + '<th style="text-align:left">Tài Khoản</th>'
     + '<th style="text-align:center;width:84px">Trạng Thái</th>'
-    + '<th style="text-align:center;width:150px">Cổng xuất</th>'
+    + '<th style="text-align:center;width:150px">Cổng Proxy</th>'
     + '<th style="text-align:left;width:120px">Điểm</th>'
-    + '<th style="text-align:right;width:70px">yêu cầu</th>'
+    + '<th style="text-align:right;width:70px">Request</th>'
     + '<th style="text-align:right;width:88px">Tổng token</th>'
     + '<th style="text-align:right;width:80px">Cache</th>'
     + '<th style="text-align:center;width:150px">Thao tác</th>'
     + '</tr></thead><tbody>' + list.map(accountRow).join('') + '</tbody></table></div>'
-    + '<div class="legend"><span>nhiềumụcTài Khoảnnhấnđộ dính phiên + dùng luân phiên；mộtmụcTài Khoảnbị upstream từ chốithời giantự độngchuyểnđếndướimộtmục</span></div>';
+    + '<div class="legend"><span>Nhiều tài khoản dùng theo độ dính phiên + luân phiên; khi một tài khoản bị upstream từ chối sẽ tự chuyển sang tài khoản kế tiếp</span></div>';
 }
 
 async function loadAccounts(){
@@ -1641,11 +1641,11 @@ async function loadAccounts(){
         renderAccounts();
       }).catch(()=>{});
     }
-  }catch(e){ toast('Tài KhoảnthêmtảiThất bại: ' + e.message); }
+  }catch(e){ toast('Tải tài khoản thất bại: ' + e.message, 'bad'); }
 }
 
 async function fetchCredits(btn){
-  if(btn){ btn.disabled = true; btn.textContent = 'Làm Mớitrong...'; }
+  if(btn){ btn.disabled = true; btn.textContent = 'Đang làm mới...'; }
   const currentView = (window.VIEW_REALM || "intl");
   const viewName = currentView === 'cn' ? 'Trong Nước' : 'Quốc Tế';
   try{
@@ -1653,9 +1653,9 @@ async function fetchCredits(btn){
     await loadAccounts();
     refresh();
     const count = (r.results || []).length;
-    toast('Đã thành côngLàm MớiHiện tại' + viewName + ' ' + count + ' mụcTài KhoảncủaĐiểm', 'ok');
+    toast('Đã làm mới điểm của ' + count + ' tài khoản ' + viewName + ' thành công', 'ok');
   }catch(e){
-    toast('Làm Mới CreditThất bại: ' + e.message, 'bad');
+    toast('Làm mới Credit thất bại: ' + e.message, 'bad');
   }finally{
     if(btn){ btn.disabled = false; btn.textContent = 'Làm Mới Credit'; }
   }
@@ -1667,9 +1667,9 @@ async function toggleAccount(uid, enable, btn){
   try{
     await postJSON('/accounts/set', {uid: uid, enabled: enable});
     await loadAccounts();
-    toast(enable ? 'Tài KhoảnĐã thành côngBật' : 'Tài KhoảnĐã Tắt', 'ok');
+    toast(enable ? 'Tài khoản đã bật thành công' : 'Tài khoản đã tắt', 'ok');
   }catch(e){
-    toast('Thao tácThất bại: ' + e.message, 'bad');
+    toast('Thao tác thất bại: ' + e.message, 'bad');
   }finally{
     if(btn) btn.disabled = false;
   }
@@ -1692,30 +1692,30 @@ async function switchProduct(uid, btn){
 }
 
 async function refreshOne(uid, btn){
-  if(btn){ btn.disabled = true; btn.textContent = 'Làm Mớitrong...'; }
+  if(btn){ btn.disabled = true; btn.textContent = 'Đang làm mới...'; }
   try{
     const r = await postJSON('/accounts/refresh', {uid: uid});
     const ok = (r.results||[])[0];
-    toast(ok && ok.ok ? 'Tài Khoảnxác thựcchứng thựcLàm Mớithành công' : ('Làm MớiThất bại: ' + (ok && ok.error || 'Lỗi không rõ')), ok && ok.ok ? 'ok' : 'bad');
+    toast(ok && ok.ok ? 'Đã làm mới thông tin xác thực tài khoản thành công' : ('Làm mới thất bại: ' + (ok && ok.error || 'Lỗi không rõ')), ok && ok.ok ? 'ok' : 'bad');
     await loadAccounts();
   }catch(e){
-    toast('Làm MớiThất bại: ' + e.message, 'bad');
+    toast('Làm mới thất bại: ' + e.message, 'bad');
   }finally{
     if(btn){ btn.disabled = false; btn.textContent = 'Làm Mới'; }
   }
 }
 async function testAccount(uid, btn){
-  if(btn){ btn.disabled = true; btn.textContent = 'Kiểm tratrong...'; }
+  if(btn){ btn.disabled = true; btn.textContent = 'Đang kiểm tra...'; }
   try{
     const r = await postJSON('/accounts/test', {uid: uid});
     if(r.ok){
-      toast('Kiểm trathôngqua (' + r.elapsed_ms + 'ms) [' + r.model + ']: ' + (r.reply || 'Bình thường'), 'ok');
+      toast('Kiểm tra thành công (' + r.elapsed_ms + 'ms) [' + r.model + ']: ' + (r.reply || 'Bình thường'), 'ok');
     } else {
-      toast('Kiểm traThất bại: ' + (r.error || r.status || 'bất thườngthường'), 'bad');
+      toast('Kiểm tra thất bại: ' + (r.error || r.status || 'Bất thường'), 'bad');
     }
     await loadAccounts();
   }catch(e){
-    toast('Kiểm trayêu cầuThất bại: ' + e.message, 'bad');
+    toast('Yêu cầu kiểm tra thất bại: ' + e.message, 'bad');
   }finally{
     if(btn){ btn.disabled = false; btn.textContent = 'Kiểm tra'; }
   }
@@ -1723,7 +1723,7 @@ async function testAccount(uid, btn){
 async function refreshAccounts(){
   try{ const r = await postJSON('/accounts/refresh', {});
        const okc = (r.results||[]).filter(x=>x.ok).length;
-       toast('Làm Mớixongthành: ' + okc + '/' + (r.results||[]).length);
+       toast('Làm mới hoàn tất: ' + okc + '/' + (r.results||[]).length, 'ok');
        await loadAccounts(); }
   catch(e){ toast(e.message); }
 }
@@ -1732,28 +1732,28 @@ async function setAll(enable, btn){
   try{
     await postJSON('/accounts/set-all', {enabled: enable});
     await loadAccounts();
-    toast(enable ? 'Đã Bật Tất CảnơicóTài Khoản' : 'Đã Tắt Tất CảnơicóTài Khoản', 'ok');
+    toast(enable ? 'Đã bật tất cả tài khoản' : 'Đã tắt tất cả tài khoản', 'ok');
   }catch(e){
-    toast('hàng loạtThao tácThất bại: ' + e.message, 'bad');
+    toast('Thao tác hàng loạt thất bại: ' + e.message, 'bad');
   }finally{
     if(btn) btn.disabled = false;
   }
 }
 async function deleteAccount(uid, name, btn){
-  if(!confirm("xác nhậnđịnhXóaTài Khoản " + name + "？")) return;
+  if(!confirm("Xác nhận xóa tài khoản " + name + "？")) return;
   if(btn) btn.disabled = true;
   try{
     await postJSON('/accounts/delete', {uid: uid});
     await loadAccounts();
-    toast('Đã thành côngXóaTài Khoản ' + name, 'ok');
+    toast('Đã xóa tài khoản ' + name, 'ok');
   }catch(e){
-    toast('XóaThất bại: ' + e.message, 'bad');
+    toast('Xóa thất bại: ' + e.message, 'bad');
   }finally{
     if(btn) btn.disabled = false;
   }
 }
 
-/* ---- Tài KhoảnXuất / nhậpvào ---- */
+/* ---- Xuất / nhập tài khoản ---- */
 async function downloadExport(query, fallbackLabel){
   // Fetch through the authorised JSON API and save the blob client-side.
   // A plain <a href> would not carry the X-Panel-Token header, so a
@@ -1761,7 +1761,7 @@ async function downloadExport(query, fallbackLabel){
   const r = await fetch('/accounts/export' + (query || ''), {cache:'no-store', headers: authHeaders()});
   if(r.status === 401 || r.status === 403){ panelSessionLost(); throw new Error('unauthorized'); }
   if(r.status === 404){
-    let msg = 'Tài Khoảnkhônglưutrong';
+    let msg = 'Tài khoản không tồn tại';
     try{ const e = await r.json(); msg = (e.error && e.error.message) || msg; }catch(_){}
     throw new Error(msg);
   }
@@ -1781,12 +1781,12 @@ async function downloadExport(query, fallbackLabel){
 }
 
 async function exportAccounts(btn){
-  if(btn){ btn.disabled = true; btn.textContent = 'Xuấttrong...'; }
+  if(btn){ btn.disabled = true; btn.textContent = 'Đang xuất...'; }
   try{
     const r = await downloadExport('', '');
-    toast('Đã Xuất ' + r.count + ' mụcTài Khoản → ' + r.name);
+    toast('Đã xuất ' + r.count + ' tài khoản → ' + r.name);
   }catch(e){
-    toast('XuấtThất bại: ' + e.message, 'err');
+    toast('Xuất thất bại: ' + e.message, 'err');
   }finally{
     if(btn){ btn.disabled = false; btn.textContent = 'Xuất Tài Khoản'; }
   }
@@ -1797,13 +1797,13 @@ async function exportOne(uid){
   // the file can be re-imported on another instance without editing.
   try{
     const r = await downloadExport('?uid=' + encodeURIComponent(uid), uid.slice(0,8) + '-');
-    toast('Đã Xuất 1 mụcTài Khoản → ' + r.name);
+    toast('Đã xuất 1 tài khoản → ' + r.name);
   }catch(e){
-    toast('XuấtThất bại: ' + e.message, 'err');
+    toast('Xuất thất bại: ' + e.message, 'err');
   }
 }
 
-let importRows = null;   // Đã phân tích、chờ nhậpcủaTài Khoảndòng
+let importRows = null;   // Đã phân tích, đang chờ nhập dòng tài khoản
 
 function openImport(){
   importRows = null;
@@ -1846,9 +1846,9 @@ async function readImportFile(file){
     if(Array.isArray(doc)) rows = doc;
     else if(doc && Array.isArray(doc.accounts)) rows = doc.accounts;
     else if(doc && (doc.accessToken || doc.auth)) rows = [doc];
-    else throw new Error('Không tìm thấy trong tệpTài Khoản（không có accounts mảng，cũngkhônglàmộtTài Khoản）');
+    else throw new Error('Không tìm thấy tài khoản trong tệp (không có mảng accounts hoặc đối tượng tài khoản đơn)');
 
-    if(!rows.length) throw new Error('Tài Khoảndanh sáchlàtrốngcủa');
+    if(!rows.length) throw new Error('Danh sách tài khoản trống');
     importRows = rows;
 
     // Dry-run first so the user sees exactly what will happen.
@@ -1858,7 +1858,7 @@ async function readImportFile(file){
     importRows = null;
     const btn = document.getElementById('btnImportCommit');
     if(btn) btn.disabled = true;
-    if(body) body.innerHTML = '<p class="hint" style="color:var(--warn)">ĐọcThất bại: ' + esc(e.message) + '</p>';
+    if(body) body.innerHTML = '<p class="hint" style="color:var(--warn)">Đọc thất bại: ' + esc(e.message) + '</p>';
   }
 }
 
@@ -1889,8 +1889,8 @@ function renderImportPreview(filename, res, total){
   if(invalid.length) html += '<div style="margin-bottom:8px"><b>Không thể phân tích</b><ul class="hint" style="margin:4px 0 0 18px;padding:0">' + rowsHtml(invalid) + '</ul></div>';
 
   if(!added.length && !updated.length){
-    html += '<p class="hint" style="color:var(--warn)">Không cóTài Khoản。'
-      + (skipped.length ? 'Nếu muốn ghi đèTài Khoản，hãy chọn bên dưới「Ghi đè cùng UID Tài Khoản」。' : '') + '</p>';
+    html += '<p class="hint" style="color:var(--warn)">Không có tài khoản.'
+      + (skipped.length ? 'Nếu muốn ghi đè tài khoản, hãy chọn bên dưới「Ghi đè cùng UID tài khoản」.' : '') + '</p>';
   }
   if(body) body.innerHTML = html;
 
@@ -1905,7 +1905,7 @@ async function commitImport(btn){
   if(!importRows) return;
   const ow = document.getElementById('importOverwrite');
   const overwrite = !!(ow && ow.checked);
-  if(overwrite && !confirm('sẽGhi đè cùng UID củahiện cóTài Khoản（kèm thông tin xác thực），Xác nhận tiếp tục？')) return;
+  if(overwrite && !confirm('Sẽ ghi đè tài khoản hiện có cùng UID (kèm thông tin xác thực). Xác nhận tiếp tục?')) return;
 
   if(btn){ btn.disabled = true; btn.textContent = 'Đang nhập...'; }
   try{
@@ -1917,16 +1917,16 @@ async function commitImport(btn){
           + '，Bỏ qua ' + (res.skipped || []).length
           + '，Không hợp lệ ' + (res.invalid || []).length);
     if(n > 0){ closeImport(); await loadAccounts(); }
-    else { renderImportPreview('（Đã nhậpvào）', res, importRows.length); }
+    else { renderImportPreview('（Đã nhập）', res, importRows.length); }
   }catch(e){
-    toast('nhậpvàoThất bại: ' + e.message, 'err');
+    toast('Nhập thất bại: ' + e.message, 'err');
     if(btn){ btn.disabled = false; btn.textContent = 'Xác nhận nhập'; }
   }
 }
 
-/* client desktopTài Khoản：haibướcXác nhận（trướcQuéthiển thịhiển thịbậtcửa sổ，lạitừng dòngnhậpvào） */
+/* Client desktop: xác nhận hai bước, quét trước rồi nhập từng dòng. */
 async function scanDesktop(btn){
-  if(btn){ btn.disabled = true; btn.textContent = 'Quéttrong...'; }
+  if(btn){ btn.disabled = true; btn.textContent = 'Đang quét...'; }
   openDesktopScan();
   try{
     const acct = await getJSON('/accounts?realm=all').catch(() => ({accounts: []}));
@@ -1935,7 +1935,7 @@ async function scanDesktop(btn){
     renderDesktopScan(r.detected || []);
   }catch(e){
     const body = document.getElementById('desktopScanBody');
-    if(body) body.innerHTML = '<p class="hint" style="color:var(--warn)">QuétThất bại: ' + esc(e.message) + '</p>';
+    if(body) body.innerHTML = '<p class="hint" style="color:var(--warn)">Quét thất bại: ' + esc(e.message) + '</p>';
   }finally{
     if(btn){ btn.disabled = false; btn.textContent = 'Quét Tài Khoản Ở Máy Tính'; }
   }
@@ -1944,7 +1944,7 @@ async function scanDesktop(btn){
 function openDesktopScan(){
   const m = document.getElementById('desktopScanModal');
   const body = document.getElementById('desktopScanBody');
-  if(body) body.innerHTML = '<p class="hint">Đang kiểm traclient desktop trên máyTài Khoản…</p>';
+  if(body) body.innerHTML = '<p class="hint">Đang kiểm tra tài khoản client desktop trên máy…</p>';
   if(m) m.classList.add('show');
 }
 
@@ -1954,14 +1954,14 @@ function closeDesktopScan(){
 }
 
 async function refreshDesktopScan(btn){
-  if(btn){ btn.disabled = true; btn.textContent = 'Quéttrong...'; }
+  if(btn){ btn.disabled = true; btn.textContent = 'Đang quét...'; }
   const body = document.getElementById('desktopScanBody');
-  if(body) body.innerHTML = '<p class="hint">Đang kiểm traclient desktop trên máyTài Khoản…</p>';
+  if(body) body.innerHTML = '<p class="hint">Đang kiểm tra tài khoản client desktop trên máy…</p>';
   try{
     const r = await postJSON('/accounts/import/desktop', {});
     renderDesktopScan(r.detected || []);
   }catch(e){
-    if(body) body.innerHTML = '<p class="hint" style="color:var(--warn)">QuétThất bại: ' + esc(e.message) + '</p>';
+    if(body) body.innerHTML = '<p class="hint" style="color:var(--warn)">Quét thất bại: ' + esc(e.message) + '</p>';
   }finally{
     if(btn){ btn.disabled = false; btn.textContent = 'Quét lại'; }
   }
@@ -1979,8 +1979,8 @@ function renderDesktopScan(list){
     : new Set((window.ACCOUNTS || []).map(a => a.uid));
 
   if(!list.length){
-    body.innerHTML = '<p class="hint">chưatrongmáy nàykiểm trađếnclient desktopĐăng nhậpxác thựcchứng thực。<br>'
-      + 'vui lòngXác nhậnĐã an toàncài đặtvàĐăng nhập WorkBuddy kháchtài khoảnđầusauđiểm「Quét lại」。</p>';
+    body.innerHTML = '<p class="hint">Chưa phát hiện thông tin xác thực client desktop trên máy.<br>'
+      + 'Vui lòng cài đặt và đăng nhập WorkBuddy, sau đó nhấn「Quét lại」.</p>';
     return;
   }
 
@@ -1988,20 +1988,20 @@ function renderDesktopScan(list){
     let html = '<div style="margin:14px 0 6px;font-size:12px;font-weight:600" class="' + cls + '">'
       + title + ' <span style="color:var(--dim);font-weight:400">(' + items.length + ')</span></div>';
     if(!items.length){
-      html += '<div class="hint" style="margin:4px 0 10px">Không phát hiệnmục nàybảnnàyTài Khoản</div>';
+      html += '<div class="hint" style="margin:4px 0 10px">Không phát hiện tài khoản phiên bản này</div>';
       return html;
     }
-    html += '<table><thead><tr><th>Tài Khoản</th><th>vùngtên</th><th>Thời hạn</th><th></th></tr></thead><tbody>';
+    html += '<table><thead><tr><th>Tài Khoản</th><th>Tên miền</th><th>Thời hạn</th><th></th></tr></thead><tbody>';
     items.forEach(d => {
       const dup = already.has(d.uid);
       // NOTE: never interpolate the path into an inline onclick - JSON.stringify
       // emits double quotes, which would terminate the HTML attribute and make
       // the button silently do nothing. Use a data attribute + delegation.
       const act = dup
-        ? '<span class="badge off">Đã nhậpvào</span>'
+        ? '<span class="badge off">Đã nhập</span>'
         : '<button class="primary mini btn-import-desktop"'
           + ' data-path="' + esc(d.path) + '"'
-          + ' data-realm="' + esc(d.realm) + '">nhậpvào</button>';
+          + ' data-realm="' + esc(d.realm) + '">Nhập</button>';
       html += '<tr>'
         + '<td><b>' + esc(d.nickname || (d.uid||'').slice(0,8)) + '</b>'
         + '<div class="mono" style="font-size:11px;color:var(--dim)">' + esc((d.uid||'').slice(0,8)) + ' · ' + esc(d.file) + '</div></td>'
@@ -2043,7 +2043,7 @@ async function doImportDesktop(btn, path, realm){
     try{
     const r = await postJSON('/accounts/import/desktop', {path: path, realm: realm});
     const a = (r.imported || [])[0] || {};
-    toast('Đã nhậpvào ' + (a.nickname || (a.uid||'').slice(0,8)) + ' đến ' + (a.realm === 'cn' ? 'Trong Nước' : 'Quốc Tế'));
+    toast('Đã nhập ' + (a.nickname || (a.uid||'').slice(0,8)) + ' đến ' + (a.realm === 'cn' ? 'Trong Nước' : 'Quốc Tế'));
     if(a.uid && window.SCAN_POOL) window.SCAN_POOL.add(a.uid);
     await loadAccounts();
     await refresh();
@@ -2055,13 +2055,13 @@ async function doImportDesktop(btn, path, realm){
     // The scan list is filtered by the current view; tell the user where the
     // account actually landed so this never looks like a no-op.
     if(a.realm && a.realm !== window.VIEW_REALM){
-      toast('mục nàyTài Khoảnthuộc' + (a.realm === 'cn' ? 'Trong Nước' : 'Quốc Tế')
+      toast('Tài khoản này thuộc' + (a.realm === 'cn' ? 'Trong Nước' : 'Quốc Tế')
             + 'danh sách，nhấntrênphươngtabđể xem', 'err');
     }
   }catch(e){
-    toast('nhậpvàoThất bại: ' + e.message, 'err');
+    toast('Nhập thất bại: ' + e.message, 'err');
     btn.disabled = false;
-    btn.textContent = 'nhậpvào';
+    btn.textContent = 'Nhập';
   }
 }
 
@@ -2110,15 +2110,15 @@ async function refreshInner(){
   const activeAccts = (window.ACCOUNTS || []).filter(a => a.enabled).length;
   const totalAccts = (window.ACCOUNTS || []).length;
   const pctRemain = totSize > 0 ? ((totRemain / totSize) * 100).toFixed(1) + '%' : '';
-  const subCredit = totSize > 0 ? ('TổngĐiểm ' + fmt(totSize) + ' · còn lại ' + pctRemain) : 'Hiện tạiTài KhoảnBình thường';
+  const subCredit = totSize > 0 ? ('Tổng điểm ' + fmt(totSize) + ' · còn lại ' + pctRemain) : 'Tài khoản hiện hoạt động bình thường';
   const succStr = perf.success_rate_pct != null ? pct(perf.success_rate_pct) : '100.0%';
   const errSub = perf.errors ? (perf.errors + ' lượtlỗi bị chặn') : 'Dịch vụ hoạt động ổn định';
 
   document.getElementById('cards').innerHTML =
-    card('Khả dụngTài Khoảnpool', activeAccts + ' <span style="font-size:13px;font-weight:400;color:var(--dim)">/ ' + totalAccts + ' Bình thường</span>', (totalAccts - activeAccts > 0 ? (totalAccts - activeAccts) + ' mụcTắt' : 'Bật Tất Cả · trạng thái tốt'), 'accent') +
+    card('Pool tài khoản khả dụng', activeAccts + ' <span style="font-size:13px;font-weight:400;color:var(--dim)">/ ' + totalAccts + ' bình thường</span>', (totalAccts - activeAccts > 0 ? (totalAccts - activeAccts) + ' tài khoản đã tắt' : 'Bật tất cả · trạng thái tốt'), 'accent') +
     card('Số dư điểm', hasCreds ? (fmt(totRemain) + ' <span style="font-size:13px;font-weight:400;color:var(--dim)">Điểm</span>') : 'Hoạt động bình thường', subCredit, 'accent2') +
     card('Lượng gọi cổng', fmt(t.requests) + ' <span style="font-size:13px;font-weight:400;color:var(--dim)">lượt</span>', 'Tiêu thụ tích lũy ' + fmt(t.total_tokens) + ' Token', '') +
-    card('yêu cầuTỷ lệ thành công', succStr, errSub, perf.errors ? 'warn' : 'accent2');
+    card('Tỷ lệ Request thành công', succStr, errSub, perf.errors ? 'warn' : 'accent2');
 
   const total = recent.total || 0;
   RECENT_PAGE = recent.page || 1;
@@ -2126,7 +2126,7 @@ async function refreshInner(){
 
   const pageInfo = document.getElementById('recentPageInfo');
   if(pageInfo){
-    pageInfo.textContent = 'thứ ' + RECENT_PAGE + ' / ' + RECENT_TOTAL_PAGES + ' trang · Tổng ' + fmt(total) + '  dòngbản ghi';
+    pageInfo.textContent = 'Trang ' + RECENT_PAGE + ' / ' + RECENT_TOTAL_PAGES + ' · Tổng ' + fmt(total) + ' dòng bản ghi';
   }
   const btnPrev = document.getElementById('btnRecentPrev');
   if(btnPrev) btnPrev.disabled = (RECENT_PAGE <= 1);
@@ -2150,20 +2150,20 @@ async function refreshInner(){
   // apart from a real failure because the gateway did nothing wrong.
   const outcomeBadge = r => {
     const o = r.outcome || (r.error ? 'failed' : 'completed');
-    if(o === 'completed') return '<span class="badge ok">xongthành</span>';
-    if(o === 'client_aborted') return '<span class="badge off">kháchtài khoảnđầuHủy</span>';
+    if(o === 'completed') return '<span class="badge ok">Thành công</span>';
+    if(o === 'client_aborted') return '<span class="badge off">Client hủy</span>';
     if(o === 'upstream_aborted') return '<span class="badge warn">Upstream ngắt</span>';
     return '<span class="badge bad">Thất bại</span>';
   };
   const countEl = document.getElementById('recentCount');
-  if(countEl) countEl.textContent = '(thứ ' + RECENT_PAGE + ' trang / Tổng ' + fmt(total) + '  dòng)';
+  if(countEl) countEl.textContent = '(Trang ' + RECENT_PAGE + ' / Tổng ' + fmt(total) + ' dòng)';
   document.getElementById('recent').innerHTML = rows.length ?
-    '<table class="data-cards"><thead><tr><th>Thời gian</th><th>Mô hình</th><th>Tài Khoản</th><th>mô hìnhkiểu</th><th>Kết quả</th><th>Thời gian xử lý</th><th>Ký tự đầu</th><th>Tốc độ</th><th>Input</th><th>Output</th><th>Thinking</th><th>Cache</th><th>Tổng token</th></tr></thead><tbody>'
+    '<table class="data-cards"><thead><tr><th>Thời gian</th><th>Mô hình</th><th>Tài Khoản</th><th>Kiểu mô hình</th><th>Kết quả</th><th>Thời gian xử lý</th><th>Ký tự đầu</th><th>Tốc độ</th><th>Input</th><th>Output</th><th>Thinking</th><th>Cache</th><th>Tổng token</th></tr></thead><tbody>'
     + rows.map(r => '<tr>'
         + '<td class="mono" data-label="Thời gian">' + esc((r.iso||'').replace('T',' ').slice(5)) + '</td>'
         + '<td class="mono" data-label="Mô hình">' + esc(r.model) + '</td>'
         + '<td class="mono" style="font-size:11px;color:var(--dim)" data-label="Tài Khoản">' + esc((r.account||'—').slice(0,8)) + '</td>'
-        + '<td data-label="mô hìnhkiểu"><span class="badge ' + (r.stream?'s':'') + '">' + (r.stream?'Có luồng':'Không luồng') + '</span></td>'
+        + '<td data-label="Kiểu mô hình"><span class="badge ' + (r.stream?'s':'') + '">' + (r.stream?'Có luồng':'Không luồng') + '</span></td>'
         + '<td data-label="Kết quả">' + outcomeBadge(r) + '</td>'
         + '<td data-label="Thời gian xử lý">' + (r.elapsed_ms!=null ? fmt(r.elapsed_ms)+' ms' : '—') + '</td>'
         + '<td data-label="Ký tự đầu">' + (r.ttft_ms!=null ? fmt(r.ttft_ms)+' ms' : '—') + '</td>'
@@ -2313,7 +2313,7 @@ async function submitPanelLogin(){
     }
     await startDashboard();
   } catch(e) {
-    if(msg) msg.textContent = 'Đăng nhậpThất bại: ' + e.message;
+    if(msg) msg.textContent = 'Đăng nhập thất bại: ' + e.message;
   }
 }
 
@@ -2391,7 +2391,7 @@ async function loadSettings(showToast){
     const keyState = document.getElementById('setKeyState');
     if(keyState){
       const count = (data.api_keys || []).filter(k => k.enabled).length;
-      keyState.textContent = count ? ('(' + count + ' mụcsinhhiệu lực)') : '(hiện không kiểm tra)';
+      keyState.textContent = count ? ('(' + count + ' Key có hiệu lực)') : '(hiện không kiểm tra)';
       keyState.style.color = count ? 'var(--accent2)' : 'var(--dim)';
     }
     // Rebuild the editable rows, keeping stored values so an untouched field
@@ -2418,16 +2418,16 @@ async function loadSettings(showToast){
     set('setUsageDir', data.usage_dir);
     set('setFile', data.settings_file);
     set('setSettingsFile', data.settings_file);
-    if(showToast) toast('Cài ĐặtĐã Làm Mới', 'ok');
+    if(showToast) toast('Đã làm mới Cài Đặt', 'ok');
   } catch(e) {
-    if(showToast) toast('ĐọcCài ĐặtThất bại: ' + e.message, 'bad');
+    if(showToast) toast('Đọc Cài Đặt thất bại: ' + e.message, 'bad');
   }
 }
 
 async function savePanelPassword(btn){
   const cur = (document.getElementById('setPwdCurrent') || {}).value || '';
   const nw = (document.getElementById('setPwdNew') || {}).value || '';
-  if(!cur || !nw){ toast('vui lòngnhậpMật khẩu hiện tạivàMật khẩu mới', 'warn'); return; }
+  if(!cur || !nw){ toast('Vui lòng nhập mật khẩu hiện tại và mật khẩu mới', 'warn'); return; }
   btn.disabled = true;
   try {
     const data = await postJSON('/panel/password', {current: cur, new: nw});
@@ -2440,7 +2440,7 @@ async function savePanelPassword(btn){
     toast('Mật khẩu bảng điều khiểnĐã cập nhật', 'ok');
     loadSettings();
   } catch(e) {
-    toast('sửađổiThất bại: ' + e.message, 'bad');
+    toast('Sửa đổi thất bại: ' + e.message, 'bad');
   } finally {
     btn.disabled = false;
   }
@@ -2460,8 +2460,8 @@ function randomKeyValue(){
 
 const REALM_CHOICES = [
   ['', 'Theo lựa chọn bảng điều khiển'],
-  ['intl', 'Cố địnhQuốc TếCổng xuất'],
-  ['cn', 'Cố địnhTrong NướcCổng xuất'],
+  ['intl', 'Cổng Proxy cố định Quốc Tế'],
+  ['cn', 'Cổng Proxy cố định Trong Nước'],
 ];
 
 function renderKeyRows(){
@@ -2479,7 +2479,7 @@ function renderKeyRows(){
       return '<div class="key-card" style="border-color:var(--accent);background:#ffffff;box-shadow:0 0 0 1px var(--accent), var(--shadow-md)">'
         + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">'
         +   '<div style="font-size:14px;font-weight:700;color:var(--fg)">' + (row.id ? 'Chỉnh sửa API Key' : 'Tạo mới API Key') + '</div>'
-        +   '<span class="badge s mini">Cài ĐặtCổng xuất</span>'
+        +   '<span class="badge s mini">Cài Đặt Cổng Proxy</span>'
         + '</div>'
         + '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:14px">'
         +   '<div>'
@@ -2488,7 +2488,7 @@ function renderKeyRows(){
         +       'style="width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:7px 10px;font:inherit;color:var(--fg)">'
         +   '</div>'
         +   '<div>'
-        +     '<div style="font-size:12px;color:var(--dim);margin-bottom:4px;font-weight:500">Cổng xuấtGắn</div>'
+        +     '<div style="font-size:12px;color:var(--dim);margin-bottom:4px;font-weight:500">Gắn Cổng Proxy</div>'
         +     '<select id="editKeyRealm_' + i + '" style="width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:7px 10px;font:inherit;color:var(--fg)">'
         +       options
         +     '</select>'
@@ -2514,9 +2514,9 @@ function renderKeyRows(){
       : '<span class="badge off" style="font-size:11px;font-weight:600;padding:2px 10px">Đã tắt</span>';
 
     const realmBadge = (row.realm === 'intl')
-      ? '<span class="realm-badge-intl" style="font-size:11px">Cố địnhQuốc TếCổng xuất</span>'
+      ? '<span class="realm-badge-intl" style="font-size:11px">Cổng Proxy cố định Quốc Tế</span>'
       : (row.realm === 'cn')
-      ? '<span class="realm-badge-cn" style="font-size:11px">Cố địnhTrong NướcCổng xuất</span>'
+      ? '<span class="realm-badge-cn" style="font-size:11px">Cổng Proxy cố định Trong Nước</span>'
       : '<span class="badge s" style="font-size:11px">Theo lựa chọn bảng điều khiển</span>';
 
     const displayKey = row.masked || (row.key ? (row.key.slice(0, 4) + '******' + row.key.slice(-4)) : 'chưaCài Đặt');
@@ -2595,7 +2595,7 @@ async function saveSingleKey(index, btn){
     await saveApiKeys();
     toast('API Key [' + row.name + '] Đã lưu', 'ok');
   } catch(e){
-    toast('LưuThất bại: ' + e.message, 'bad');
+    toast('Lưu thất bại: ' + e.message, 'bad');
   }
 }
 
@@ -2607,7 +2607,7 @@ async function toggleKeyRow(index){
     await saveApiKeys();
     toast(row.enabled ? 'Key [' + row.name + '] Đã bật' : 'Key [' + row.name + '] Đã tắt', 'ok');
   } catch(e){
-    toast('Thao tácThất bại: ' + e.message, 'bad');
+    toast('Thao tác thất bại: ' + e.message, 'bad');
   }
 }
 
@@ -2620,7 +2620,7 @@ async function removeKeyRow(index){
     await saveApiKeys();
     toast('Đã Xóa API Key', 'ok');
   } catch(e){
-    toast('XóaThất bại: ' + e.message, 'bad');
+    toast('Xóa thất bại: ' + e.message, 'bad');
   }
 }
 
@@ -2653,7 +2653,7 @@ async function copyKeyRow(index){
       value = data.key || '';
     }
     if(!value){
-      toast('Dòng này chưa có Key, nhấn「Tạo ngẫu nhiên」hoặcnhập trực tiếp', 'warn');
+      toast('Dòng này chưa có Key, nhấn「Tạo ngẫu nhiên」hoặc nhập trực tiếp', 'warn');
       return;
     }
     await writeClipboard(value);
@@ -2664,7 +2664,7 @@ async function copyKeyRow(index){
     }
     toast('Đã sao chépđếnbảng nhớ tạm', 'ok');
   } catch(e) {
-    toast('Sao ChépThất bại: ' + e.message, 'bad');
+    toast('Sao chép thất bại: ' + e.message, 'bad');
   }
 }
 
@@ -2709,7 +2709,7 @@ async function saveApiKeys(btn){
     toast('Đã lưu ' + payload.length + '  Key tài khoản', 'ok');
     loadSettings();
   } catch(e) {
-    toast('LưuThất bại: ' + e.message, 'bad');
+    toast('Lưu thất bại: ' + e.message, 'bad');
   } finally {
     if(btn) btn.disabled = false;
   }
@@ -2744,11 +2744,11 @@ async function setAccountSlot(uid, slotId, el){
   if(el) el.disabled = true;
   try{
     await postJSON('/accounts/set', {uid: uid, proxySlot: slotId});
-    toast('Cổng xuấtĐã cập nhật', 'ok');
+    toast('Cổng Proxy đã cập nhật', 'ok');
     await loadAccounts();
     await loadProxySlots();
   }catch(e){
-    toast('Cập nhật cổng xuấtThất bại: ' + e.message, 'bad');
+    toast('Cập nhật Cổng Proxy thất bại: ' + e.message, 'bad');
   }finally{
     if(el) el.disabled = false;
   }
@@ -2777,7 +2777,7 @@ function renderProxySlots(){
     + '<th style="width:150px">Tên</th>'
     + '<th>Địa chỉ proxy</th>'
     + '<th style="width:90px;text-align:center">Bật</th>'
-    + '<th style="width:90px;text-align:center">GắnTài Khoản</th>'
+    + '<th style="width:90px;text-align:center">Tài khoản đã gắn</th>'
     + '<th style="width:190px;text-align:center">Thao tác</th>'
     + '</tr></thead><tbody>'
     + PROXY_SLOTS.map((s, i) =>
@@ -2786,14 +2786,14 @@ function renderProxySlots(){
         + '<td data-label="Địa chỉ proxy"><input value="' + esc(s.url || '') + '" oninput="PROXY_SLOTS[' + i + '].url=this.value" class="slot-input mono"></td>'
         + '<td style="text-align:center" data-label="Bật"><input type="checkbox" ' + (s.enabled === false ? '' : 'checked')
         +   ' onchange="PROXY_SLOTS[' + i + '].enabled=this.checked"></td>'
-        + '<td style="text-align:center" data-label="GắnTài Khoản">' + (s.bound || 0) + '</td>'
+        + '<td style="text-align:center" data-label="Tài khoản đã gắn">' + (s.bound || 0) + '</td>'
         + '<td style="text-align:center;white-space:nowrap" data-label="">'
         +   '<button class="sec mini" onclick="testProxySlot(' + i + ', this)">Kiểm tra</button> '
         +   '<button class="danger mini" onclick="removeProxySlot(' + i + ')">Xóa</button>'
         + '</td></tr>'
       ).join('')
     + '</tbody></table></div>'
-    + '<div class="legend"><span>「GắnTài Khoản」chỉthống kêtínhĐã bậtTài Khoản；TắtTài Khoảnsẽtự động giải phóng slot，trọngmớiBậtsaucầngắn lại。trong trang cổngTài Khoảnbảngcủa「Cổng xuất」danh sách thả xuốngtrongđiều chỉnh liên kết。</span></div>';
+    + '<div class="legend"><span>「Tài khoản đã gắn」chỉ tính tài khoản đã bật; tài khoản tắt sẽ tự động giải phóng slot và cần gắn lại khi bật. Điều chỉnh trong danh sách Cổng Proxy ở bảng tài khoản.</span></div>';
 }
 
 function addProxySlotRow(){
@@ -2804,7 +2804,7 @@ function addProxySlotRow(){
 function removeProxySlot(index){
   const s = PROXY_SLOTS[index];
   if(!s) return;
-  if((s.bound || 0) > 0 && !confirm('Slot này đang được ' + s.bound + ' mụcTài KhoảnGắn，sau khi xóa sẽ chuyển về kết nối trực tiếp. Tiếp tục?')) return;
+  if((s.bound || 0) > 0 && !confirm('Slot này đang được ' + s.bound + ' tài khoản đã gắn，sau khi xóa sẽ chuyển về kết nối trực tiếp. Tiếp tục?')) return;
   PROXY_SLOTS.splice(index, 1);
   renderProxySlots();
 }
@@ -2817,9 +2817,9 @@ async function saveProxySlots(btn){
     PROXY_SLOTS = r.slots || [];
     renderProxySlots();
     await loadAccounts();
-    toast('Đã lưu ' + PROXY_SLOTS.length + ' mụcProxy Slot', 'ok');
+    toast('Đã lưu ' + PROXY_SLOTS.length + ' Proxy Slot', 'ok');
   }catch(e){
-    toast('LưuThất bại: ' + e.message, 'bad');
+    toast('Lưu thất bại: ' + e.message, 'bad');
   }finally{
     if(btn) btn.disabled = false;
   }
@@ -2827,8 +2827,8 @@ async function saveProxySlots(btn){
 
 async function testProxySlot(index, btn){
   const s = PROXY_SLOTS[index];
-  if(!s || !s.url){ toast('SlotChưa cónhậpĐịa chỉ proxy', 'warn'); return; }
-  if(btn){ btn.disabled = true; btn.textContent = 'Kiểm tratrong...'; }
+  if(!s || !s.url){ toast('Slot chưa có địa chỉ proxy', 'warn'); return; }
+  if(btn){ btn.disabled = true; btn.textContent = 'Đang kiểm tra...'; }
   try{
     let id = s.id;
     if(!id){
@@ -2839,10 +2839,10 @@ async function testProxySlot(index, btn){
       id = (PROXY_SLOTS[index] || {}).id;
     }
     const r = await postJSON('/proxy/slots/test', {id: id});
-    if(r.ok) toast('Cổng xuất IP: ' + r.exit_ip + '（' + r.latency_ms + 'ms）', 'ok');
-    else toast('Kiểm traThất bại: ' + (r.error || 'unknown'), 'bad');
+    if(r.ok) toast('Cổng Proxy IP: ' + r.exit_ip + '（' + r.latency_ms + 'ms）', 'ok');
+    else toast('Kiểm tra thất bại: ' + (r.error || 'unknown'), 'bad');
   }catch(e){
-    toast('Kiểm traThất bại: ' + e.message, 'bad');
+    toast('Kiểm tra thất bại: ' + e.message, 'bad');
   }finally{
     if(btn){ btn.disabled = false; btn.textContent = 'Kiểm tra'; }
   }
@@ -2855,9 +2855,9 @@ async function discoverProxySlots(btn){
     SLOT_DISCOVER = r.candidates || [];
     renderDiscover();
     const ok = SLOT_DISCOVER.filter(c => c.reachable).length;
-    toast('Đã tìm thấy ' + ok + ' mụccổng xuất khả dụng', ok ? 'ok' : 'warn');
+    toast('Đã tìm thấy ' + ok + ' cổng Proxy khả dụng', ok ? 'ok' : 'warn');
   }catch(e){
-    toast('Tự động tìmThất bại: ' + e.message, 'bad');
+    toast('Tự động tìm thất bại: ' + e.message, 'bad');
   }finally{
     if(btn){ btn.disabled = false; btn.textContent = 'Tự Động Tìm Cổng mihomo'; }
   }
@@ -2868,13 +2868,13 @@ function renderDiscover(){
   if(!box) return;
   if(!SLOT_DISCOVER.length){ box.innerHTML = ''; return; }
   box.innerHTML = '<div style="margin-top:14px"><div style="font-size:12px;color:var(--dim);margin-bottom:8px">'
-    + 'Chọn các cổng xuất muốn nhập thành slot：</div>'
+    + 'Chọn các cổng Proxy muốn nhập thành Slot:</div>'
     + SLOT_DISCOVER.map((c, i) =>
         '<label style="display:flex;align-items:center;gap:8px;padding:6px 0;font-size:13px">'
         + '<input type="checkbox" ' + (c.reachable ? 'checked' : 'disabled') + ' data-idx="' + i + '">'
         + '<span class="mono">' + esc(c.url) + '</span>'
         + '<span style="color:' + (c.reachable ? 'var(--accent2)' : 'var(--bad)') + '">'
-        + (c.reachable ? ('Cổng xuất ' + esc(c.exit_ip) + ' · ' + c.latency_ms + 'ms') : 'Không thể truy cập') + '</span>'
+        + (c.reachable ? ('Cổng Proxy ' + esc(c.exit_ip) + ' · ' + c.latency_ms + 'ms') : 'Không thể truy cập') + '</span>'
         + '</label>').join('')
     + '<button class="sec" onclick="importDiscovered()" style="margin-top:8px">Nhập các cổng xuất đã chọn</button></div>';
 }
@@ -2889,14 +2889,14 @@ function importDiscovered(){
     PROXY_SLOTS.push({id: '', name: 'slot ' + (PROXY_SLOTS.length + 1), url: c.url, enabled: true, bound: 0});
   });
   renderProxySlots();
-  toast('đã thêm vào ' + picked.length + ' mụcSlot，nhớ nhấn「Lưu Slot」', 'ok');
+  toast('Đã thêm ' + picked.length + ' Slot, nhớ nhấn「Lưu Slot」', 'ok');
 }
 
 async function autoAssignSlots(){
   const unbound = (window.ACCOUNTS || []).filter(a => a.enabled && !a.proxySlot);
-  if(!unbound.length){ toast('nơicóĐã bậtTài KhoảnđềuĐã GắnSlot', 'ok'); return; }
+  if(!unbound.length){ toast('Tất cả tài khoản đã bật đều đã gắn Slot', 'ok'); return; }
   const slots = PROXY_SLOTS.filter(s => s.enabled !== false);
-  if(!slots.length){ toast('khôngcóKhả dụngSlot，Vui lòng trước tiênthêmthêmvàLưu', 'warn'); return; }
+  if(!slots.length){ toast('Không có Slot khả dụng, vui lòng thêm và lưu trước', 'warn'); return; }
   let i = 0;
   for(const a of unbound){
     const slot = slots[i % slots.length];
@@ -2905,7 +2905,7 @@ async function autoAssignSlots(){
   }
   await loadAccounts();
   await loadProxySlots();
-  toast('Đã là ' + unbound.length + ' mụcĐã bậtTài Khoảnphân bổ cổng xuất', 'ok');
+  toast('Đã phân bổ cho ' + unbound.length + ' tài khoản đã bật', 'ok');
 }
 
 function switchMainTab(tab){
@@ -3166,7 +3166,7 @@ function copyFilteredLogs(){
   navigator.clipboard.writeText(text).then(() => {
     toast('Đã sao chép ' + filtered.length + ' dòngngàylog', 'ok');
   }).catch(e => {
-    toast('Sao ChépThất bại: ' + e.message, 'bad');
+    toast('Sao chép thất bại: ' + e.message, 'bad');
   });
 }
 
@@ -3186,9 +3186,9 @@ async function exportLogsFile(){
     a.download = 'wb-proxy-' + ts + '.log';
     a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-    toast('Đã Xuất ' + data.logs.length + ' dòngngàylog', 'ok');
+    toast('Đã xuất ' + data.logs.length + ' dòngngàylog', 'ok');
   } catch(e) {
-    toast('Xuất logThất bại: ' + e.message, 'bad');
+    toast('Xuất log thất bại: ' + e.message, 'bad');
   }
 }
 
@@ -3202,7 +3202,7 @@ async function clearServerLogs(){
     updateLogStats();
     toast('Đã xóa log cổng', 'ok');
   } catch(e) {
-    toast('Xóa sạchThất bại: ' + e.message, 'bad');
+    toast('Xóa log thất bại: ' + e.message, 'bad');
   }
 }
 
@@ -3456,7 +3456,7 @@ function renderPerfMatrix(usage, perf){
       + '<td data-label="Tốc độ sinh"><b style="color:var(--accent2)">' + totTps + '</b></td>'
         + '<td data-label="Thời gian xử lý toàn trình">' + totWall + '</td>'
         + '<td data-label="Cache">' + totCache + '</td>'
-      + '<td data-label="Tỷ trọng lượng dùng">100%</td>'
+      + '<td data-label="Tỷ Lệ Sử Dụng">100%</td>'
       + '</tr>';
 
     const rows = rowsData.map(m => {
@@ -3533,20 +3533,20 @@ function renderPerfMatrix(usage, perf){
         + '<td data-label="Thất bại">' + errCell + '</td>'
         + '<td data-label="Tổng Token"><b>' + fmt(m.total_tokens) + '</b></td>'
         + '<td class="triple" data-label="Input / Output / Thinking">' + tripleTokens(m.prompt_tokens, m.completion_tokens, m.reasoning_tokens) + '</td>'
-        + '<td data-label="Ký tự đầutrễtrễ">' + m_ttft + '</td>'
+      + '<td data-label="Độ trễ ký tự đầu (TTFT)">' + m_ttft + '</td>'
         + '<td data-label="Tốc độ sinh">' + m_tps + '</td>'
-        + '<td data-label="toàn trìnhThời gian xử lý">' + m_wall + '</td>'
-        + '<td data-label="Cachelệnhtrong">' + m_cache + '</td>'
-        + '<td style="min-width:90px" data-label="Tỷ trọng lượng dùng"><span class="bar-fill" style="width:' + Math.max(3, pctTok) + '%"></span> <span style="font-size:11px;color:var(--dim)">' + pctTok + '%</span></td>'
+      + '<td data-label="Thời gian xử lý">' + m_wall + '</td>'
+      + '<td data-label="Cache">' + m_cache + '</td>'
+        + '<td style="min-width:90px" data-label="Tỷ Lệ Sử Dụng"><span class="bar-fill" style="width:' + Math.max(3, pctTok) + '%"></span> <span style="font-size:11px;color:var(--dim)">' + pctTok + '%</span></td>'
         + '</tr>';
     }).join('');
 
     matrixEl.innerHTML = '<table class="data-cards"><thead><tr>'
-      + '<th style="text-align:left">Mô hìnhTên</th>'
+      + '<th style="text-align:left">Tên Mô Hình</th>'
       + '<th style="text-align:center;width:76px">Khu vực</th>'
       + '<th style="text-align:left">Tài Khoản</th>'
-      + '<th>Số yêu cầu</th><th>Thất bại</th><th>Tổng Token</th><th style="min-width:190px">Input / Output / Thinking</th>'
-      + '<th>Ký tự đầutrễtrễ (TTFT)</th><th>Tốc độ sinh</th><th>toàn trìnhThời gian xử lý</th><th>Cachetỷ lệ truy cập</th><th>Tỷ trọng lượng dùng</th>'
+      + '<th>Request</th><th>Thất Bại</th><th>Tổng Token</th><th style="min-width:190px">Input / Output / Thinking</th>'
+      + '<th>Độ trễ ký tự đầu (TTFT)</th><th>Tốc Độ Sinh</th><th>Thời Gian Xử Lý</th><th>Tỷ Lệ Cache</th><th>Tỷ Lệ Sử Dụng</th>'
       + '</tr></thead><tbody>' + summaryRow + rows + '</tbody></table>';
   }
 
@@ -3575,7 +3575,7 @@ function renderAnalytics(data){
   const elTodayTok = document.getElementById('kpiTodayTokens');
   const elTodayDetail = document.getElementById('kpiTodayTokensDetail');
   const elTodayTitle = document.getElementById('kpiRangeTokenTitle');
-  if(elTodayTitle) elTodayTitle.textContent = isToday ? 'Số token đã tiêu thụ hôm nay' : 'Toàn Bộ Lịch Sửtiêutiêu thụ Token';
+  if(elTodayTitle) elTodayTitle.textContent = isToday ? 'Số token đã tiêu thụ hôm nay' : 'Toàn Bộ Lịch Sử Tiêu Thụ Token';
   if(elTodayTok) elTodayTok.textContent = fmt(currentSum.total_tokens || 0);
   if(elTodayDetail) elTodayDetail.innerHTML =
     '<span style="color:var(--accent)">Input ' + fmt(currentSum.prompt_tokens || 0) + '</span>' +
@@ -3593,7 +3593,7 @@ function renderAnalytics(data){
     // Two cards showing the same number reads as a broken counter rather than
     // as "there is nothing older to show", so say which case it is.
     ((!isToday && (sumAll.total_tokens || 0) > 0)
-      ? '<br><span style="color:var(--dim);font-size:11px">Hiện tạilà「Toàn Bộ Lịch Sử」xemhình，hai thẻ có cùng phạm vi dữ liệu</span>'
+      ? '<br><span style="color:var(--dim);font-size:11px">Đang xem toàn bộ lịch sử; hai thẻ có cùng phạm vi dữ liệu</span>'
       : ((isToday && (sumAll.total_tokens || 0) === (sumToday.total_tokens || 0) && (sumAll.total_tokens || 0) > 0)
         ? '<br><span style="color:var(--dim);font-size:11px">Giống hôm nay: log chưa có dữ liệu cũ hơn</span>'
         : ''));
@@ -3604,39 +3604,39 @@ function renderAnalytics(data){
   if(elAvgSpeed) elAvgSpeed.innerHTML = (currentSum.speed_avg ? currentSum.speed_avg.toFixed(1) : '0.0') + ' <span style="font-size:12px;font-weight:400;color:var(--dim)">tok/s</span>';
   if(elAvgLatency) elAvgLatency.textContent = 'Độ trễ ký tự đầu TB ' + (currentSum.ttft_ms_avg ? fmt(currentSum.ttft_ms_avg) + ' ms' : '—') + ' · Thời gian xử lý ' + (currentSum.elapsed_ms_avg ? (currentSum.elapsed_ms_avg / 1000).toFixed(2) + ' s' : '—');
 
-  // KPI 4: Cachetỷ lệ truy cập
+  // KPI 4: Cache
   const elCacheRate = document.getElementById('kpiCacheRate');
   if(elCacheRate) elCacheRate.textContent = (currentSum.cache_hit_pct != null ? currentSum.cache_hit_pct.toFixed(1) : '0.0') + '%';
 
-  // KPI 5: Số yêu cầuvàTỷ lệ thành công
+  // KPI 5: Số Request và tỷ lệ thành công
   const elReqTitle = document.getElementById('kpiReqTitle');
   const elReqCount = document.getElementById('kpiReqCount');
   const elReqSuccess = document.getElementById('kpiReqSuccess');
-  if(elReqTitle) elReqTitle.textContent = (isToday ? 'hôm nayngày' : 'Tích lũy') + 'Số yêu cầu & Tỷ lệ thành công';
+  if(elReqTitle) elReqTitle.textContent = (isToday ? 'Hôm nay' : 'Tích lũy') + ' · Số Request & Tỷ lệ thành công';
   const totalReq = (currentSum.requests || 0) + (currentSum.errors || 0);
   const successPct = totalReq > 0 ? ((currentSum.requests / totalReq) * 100).toFixed(1) : '100.0';
   if(elReqCount) elReqCount.textContent = fmt(currentSum.requests || 0) + ' lượt';
   if(elReqSuccess) elReqSuccess.textContent = 'Tỷ lệ thành công ' + successPct + '% · Thất bại ' + (currentSum.errors || 0);
 
-  // Table 1: Tài Khoảnbảng phân tích
+  // Table 1: Bảng phân tích tài khoản
   const acctTbody = document.getElementById('analyticsAccountTbody');
   const acctCountEm = document.getElementById('analyticsAcctCount');
   let accts = (data.accounts || []).filter(a => {
     if(a.uid === '(unattributed)' && !(a.today.requests || a.all_time.requests)) return false;
     return true;
   });
-  if(acctCountEm) acctCountEm.textContent = accts.length ? '(' + accts.length + ' mụcTài Khoản)' : '';
+  if(acctCountEm) acctCountEm.textContent = accts.length ? '(' + accts.length + ' tài khoản)' : '';
 
   if(acctTbody){
     if(!accts.length){
-      acctTbody.innerHTML = '<tr><td colspan="6" class="empty">tạmkhôngTài Khoảndùnglượngsốdữ liệu</td></tr>';
+      acctTbody.innerHTML = '<tr><td colspan="6" class="empty">Chưa có hoạt động</td></tr>';
     } else {
       acctTbody.innerHTML = accts.map(a => {
         const st = isToday ? a.today : a.all_time;
         const modelsMap = isToday ? a.today_models : a.all_models;
         const entries = Object.entries(modelsMap || {}).sort((x, y) => (y[1].tokens || 0) - (x[1].tokens || 0));
         
-        let pills = '<span style="color:var(--dim)">khôngđiều chỉnhdùng</span>';
+        let pills = '<span style="color:var(--dim)">Chưa có hoạt động</span>';
         if(entries.length){
           pills = entries.map(([mid, ms]) => {
             return '<span class="model-pill">'
