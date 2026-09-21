@@ -22,9 +22,12 @@
 body{margin:0;background:var(--bg);color:var(--fg);
   font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue","PingFang SC","Microsoft YaHei",sans-serif;
   -webkit-font-smoothing:antialiased}
-header{padding:16px 24px;border-bottom:1px solid var(--line);display:flex;
-  align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
+header{border-bottom:1px solid var(--line);
   position:sticky;top:0;background:rgba(255,255,255,.94);backdrop-filter:blur(10px);z-index:10;box-shadow:var(--shadow-sm)}
+header .header-inner{max-width:1280px;margin:0 auto;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+header .header-left{display:flex;align-items:center;gap:8px}
+header .header-center{display:flex;justify-content:center;flex:1}
+header .header-right{display:flex;align-items:center;gap:12px}
 h1{margin:0;font-size:17px;font-weight:700;letter-spacing:-.2px;color:var(--fg)}
 h1 span{color:var(--dim);font-weight:400;font-size:13px;margin-left:8px}
 .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent2);
@@ -69,7 +72,7 @@ tbody tr:hover{background:rgba(241,245,249,.6)}
 .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;width:100%;border-radius:8px}
 .table-wrap table{min-width:720px}
 @media (max-width: 860px){
-  header{padding:12px 16px}
+  header .header-inner{padding:12px 16px}
   main{padding:16px 12px 60px}
   section{padding:14px 14px;border-radius:12px}
   #cards{grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}
@@ -236,12 +239,15 @@ a:hover{text-decoration:underline}
 .log-empty{padding:48px 24px;text-align:center;color:#64748b;font-size:13px;font-family:inherit}
 /* ===== Phone: ≤640px ===== */
 @media (max-width: 640px){
-  header{padding:10px 12px;gap:8px}
-  header > div:first-child{width:100%;gap:8px}
-  h1{font-size:15px;flex:1;min-width:0}
+  header .header-inner{padding:10px 12px;gap:8px}
+  header .header-left{order:1;flex:1 1 auto;min-width:0}
+  header .header-right{order:2;flex:0 0 auto;gap:8px}
+  header .header-center{order:3;flex:1 1 100%}
+  h1{font-size:15px;min-width:0}
   h1 span{font-size:11px;margin-left:6px}
-  .gh-link{width:40px;height:40px;flex-shrink:0;order:2}
-  .main-nav{display:flex;width:100%;gap:2px;padding:3px;order:3}
+  .gh-link{width:40px;height:40px;flex-shrink:0}
+  header .header-logout{min-height:40px;padding:0 6px}
+  .main-nav{display:flex;width:100%;gap:2px;padding:3px}
   .main-nav-btn{flex:1;justify-content:center;padding:8px 4px;font-size:12px;min-height:40px;white-space:nowrap}
   .meta{width:100%;text-align:left;font-size:11px;line-height:1.5}
   .meta .meta-secondary{display:none}
@@ -351,30 +357,37 @@ a:hover{text-decoration:underline}
 </head>
 <body>
 <header>
-  <div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap">
-    <h1><span class="dot" id="statusDot"></span>WorkBuddy Bảng Điều Khiển</h1>
-    <nav class="main-nav">
-      <button class="main-nav-btn active" id="btnNavGateway" onclick="switchMainTab('gateway')">
-        Cổng & Vận Hành
-      </button>
-      <button class="main-nav-btn" id="btnNavAnalytics" onclick="switchMainTab('analytics')">
-        Bảng Chỉ Số Dữ Liệu
-      </button>
-      <button class="main-nav-btn" id="btnNavLogs" onclick="switchMainTab('logs')">
-        Nhật Ký Vận Hành
-      </button>
-      <button class="main-nav-btn" id="btnNavSettings" onclick="switchMainTab('settings')">
-        Cài Đặt
-      </button>
-    </nav>
-<a class="gh-link" href="https://github.com/ardeyouxipianyi/workbuddy2api-hub" target="_blank" rel="noopener noreferrer"
-       title="Xem kho dự án GitHub" aria-label="Kho dự án GitHub">
-      <svg viewBox="0 0 16 16" aria-hidden="true">
-        <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z"/>
-      </svg>
-    </a>
+  <div class="header-inner">
+    <div class="header-left">
+      <h1><span class="dot" id="statusDot"></span>WorkBuddy Bảng Điều Khiển</h1>
+    </div>
+    <div class="header-center">
+      <nav class="main-nav">
+        <button class="main-nav-btn active" id="btnNavGateway" onclick="switchMainTab('gateway')">
+          Cổng & Vận Hành
+        </button>
+        <button class="main-nav-btn" id="btnNavAnalytics" onclick="switchMainTab('analytics')">
+          Bảng Chỉ Số Dữ Liệu
+        </button>
+        <button class="main-nav-btn" id="btnNavLogs" onclick="switchMainTab('logs')">
+          Nhật Ký Vận Hành
+        </button>
+        <button class="main-nav-btn" id="btnNavSettings" onclick="switchMainTab('settings')">
+          Cài Đặt
+        </button>
+      </nav>
+    </div>
+    <div class="header-right">
+      <a class="gh-link" href="https://github.com/ardeyouxipianyi/workbuddy2api-hub" target="_blank" rel="noopener noreferrer"
+         title="Xem kho dự án GitHub" aria-label="Kho dự án GitHub">
+        <svg viewBox="0 0 16 16" aria-hidden="true">
+          <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z"/>
+        </svg>
+      </a>
+      <button class="sec mini header-logout" onclick="panelLogout()" style="border:none;background:transparent;color:var(--dim);font-size:12px;cursor:pointer">Đăng xuất</button>
+      <div class="meta" id="meta"></div>
+    </div>
   </div>
-  <div class="meta" id="meta"></div>
 </header>
 <div id="panelGate" style="position:fixed;inset:0;z-index:600;display:none;
      align-items:center;justify-content:center;padding:20px;background:var(--bg)">
@@ -389,7 +402,7 @@ a:hover{text-decoration:underline}
     <div id="panelLoginMsg" style="font-size:12px;color:var(--bad);min-height:17px;margin:8px 0 12px"></div>
     <button onclick="submitPanelLogin()" style="width:100%;padding:9px 12px;font-size:13px">Vào Bảng Điều Khiển</button>
     <div id="panelDefaultHint" style="display:none;font-size:11px;color:var(--warn);margin-top:12px">
-      Hiện đang sử dụng mật khẩu mặc định <b>admin</b>; sau khi đăng nhập hãy đổi trong 「Cài Đặt」.
+      Hiện đang sử dụng mật khẩu mặc định <b>admin</b>; sau khi đăng nhập hãy đổi trong「Cài Đặt」.
     </div>
   </div>
 </div>
@@ -491,7 +504,7 @@ a:hover{text-decoration:underline}
 
   <section>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
-      <h2 style="margin:0">Yêu Cầu Gần Đây <em id="recentCount"></em></h2>
+      <h2 style="margin:0">Hoạt Động Gần Đây <em id="recentCount"></em></h2>
       <div style="display:inline-flex;align-items:center;gap:8px">
         <span style="font-size:12px;color:var(--dim)">Hiển thị số dòng:</span>
         <div style="display:inline-flex;gap:3px;background:var(--panel2);padding:3px;border-radius:8px;border:1px solid var(--line)">
@@ -632,10 +645,10 @@ a:hover{text-decoration:underline}
           <thead>
             <tr>
               <th style="text-align:left">Tài Khoản (Nickname / UID)</th>
-              <th>Khu Vực</th>
-              <th>Điểm / Hạn mức</th>
-              <th>Số Yêu Cầu</th>
-              <th>Tổng Token Tiêu Thụ</th>
+              <th style="text-align:center">Khu Vực</th>
+              <th style="text-align:center">Điểm / Hạn mức</th>
+              <th style="text-align:center">Số Yêu Cầu</th>
+              <th style="text-align:center">Tổng Token Tiêu Thụ</th>
               <th style="text-align:left">Chi Tiết Phân Bổ Mô Hình (Yêu Cầu · Tiêu Thụ)</th>
             </tr>
           </thead>
@@ -684,7 +697,7 @@ a:hover{text-decoration:underline}
 
     <section>
       <h2>Mật Khẩu Truy Cập Bảng Điều Khiển <em id="setPwdState"></em></h2>
-      <div style="font-size:12px;color:var(--dim);margin-bottom:12px">Dùng để mở bảng điều khiển này. Mật khẩu mặc định là <b>admin</b>，nên đổi ngay。</div>
+      <div style="font-size:12px;color:var(--dim);margin-bottom:12px">Dùng để mở bảng điều khiển này. Mật khẩu mặc định là <b>admin</b>, nên đổi ngay.</div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
         <div style="flex:1;min-width:180px">
           <div style="font-size:12px;color:var(--dim);margin-bottom:4px">Mật khẩu hiện tại</div>
@@ -1565,10 +1578,10 @@ function accountRow(a){
     + err + '</td>'
     + '<td style="text-align:center" data-label="Trạng Thái">' + state + '</td>'
     + '<td style="text-align:center" data-label="Cổng Proxy">' + slotSelectHtml(a) + '</td>'
-    + '<td style="text-align:left;white-space:nowrap" data-label="Điểm">' + credText + '</td>'
-    + '<td style="text-align:right" data-label="Request">' + fmt(usage.requests) + '</td>'
-    + '<td style="text-align:right" data-label="Tổng token">' + fmt(usage.total_tokens) + '</td>'
-    + '<td style="text-align:right" data-label="Cache">' + fmt(usage.cached_tokens) + '</td>'
+    + '<td style="text-align:center;white-space:nowrap" data-label="Điểm">' + credText + '</td>'
+    + '<td style="text-align:center" data-label="Request">' + fmt(usage.requests) + '</td>'
+    + '<td style="text-align:center" data-label="Tổng token">' + fmt(usage.total_tokens) + '</td>'
+    + '<td style="text-align:center" data-label="Cache">' + fmt(usage.cached_tokens) + '</td>'
     + '<td class="acct-actions" style="text-align:center;white-space:nowrap;vertical-align:middle">'
     + '<div class="acct-actions-col">'
     +   '<div class="acct-actions-row">'
@@ -1616,10 +1629,10 @@ function renderAccounts(){
     + '<th style="text-align:left">Tài Khoản</th>'
     + '<th style="text-align:center;width:84px">Trạng Thái</th>'
     + '<th style="text-align:center;width:150px">Cổng Proxy</th>'
-    + '<th style="text-align:left;width:120px">Điểm</th>'
-    + '<th style="text-align:right;width:70px">Request</th>'
-    + '<th style="text-align:right;width:88px">Tổng token</th>'
-    + '<th style="text-align:right;width:80px">Cache</th>'
+    + '<th style="text-align:center;width:120px">Điểm</th>'
+    + '<th style="text-align:center;width:70px">Request</th>'
+    + '<th style="text-align:center;width:88px">Tổng token</th>'
+    + '<th style="text-align:center;width:80px">Cache</th>'
     + '<th style="text-align:center;width:150px">Thao tác</th>'
     + '</tr></thead><tbody>' + list.map(accountRow).join('') + '</tbody></table></div>'
     + '<div class="legend"><span>Nhiều tài khoản dùng theo độ dính phiên + luân phiên; khi một tài khoản bị upstream từ chối sẽ tự chuyển sang tài khoản kế tiếp</span></div>';
@@ -2158,20 +2171,20 @@ async function refreshInner(){
   const countEl = document.getElementById('recentCount');
   if(countEl) countEl.textContent = '(Trang ' + RECENT_PAGE + ' / Tổng ' + fmt(total) + ' dòng)';
   document.getElementById('recent').innerHTML = rows.length ?
-    '<table class="data-cards"><thead><tr><th>Thời gian</th><th>Mô hình</th><th>Tài Khoản</th><th>Kiểu mô hình</th><th>Kết quả</th><th>Thời gian xử lý</th><th>Ký tự đầu</th><th>Tốc độ</th><th>Input</th><th>Output</th><th>Thinking</th><th>Cache</th><th>Tổng token</th></tr></thead><tbody>'
+    '<table class="data-cards"><thead><tr><th>Thời gian</th><th>Mô hình</th><th>Tài Khoản</th><th style="text-align:center">Kiểu mô hình</th><th style="text-align:center">Kết quả</th><th style="text-align:center">Thời gian xử lý</th><th style="text-align:center">Ký tự đầu</th><th style="text-align:center">Tốc độ</th><th style="text-align:center">Input</th><th style="text-align:center">Output</th><th style="text-align:center">Thinking</th><th style="text-align:center">Cache</th><th>Tổng token</th></tr></thead><tbody>'
     + rows.map(r => '<tr>'
         + '<td class="mono" data-label="Thời gian">' + esc((r.iso||'').replace('T',' ').slice(5)) + '</td>'
         + '<td class="mono" data-label="Mô hình">' + esc(r.model) + '</td>'
         + '<td class="mono" style="font-size:11px;color:var(--dim)" data-label="Tài Khoản">' + esc((r.account||'—').slice(0,8)) + '</td>'
-        + '<td data-label="Kiểu mô hình"><span class="badge ' + (r.stream?'s':'') + '">' + (r.stream?'Có luồng':'Không luồng') + '</span></td>'
-        + '<td data-label="Kết quả">' + outcomeBadge(r) + '</td>'
-        + '<td data-label="Thời gian xử lý">' + (r.elapsed_ms!=null ? fmt(r.elapsed_ms)+' ms' : '—') + '</td>'
-        + '<td data-label="Ký tự đầu">' + (r.ttft_ms!=null ? fmt(r.ttft_ms)+' ms' : '—') + '</td>'
-        + '<td data-label="Tốc độ">' + (r.tokens_per_sec ? r.tokens_per_sec.toFixed(1) : '—') + '</td>'
-        + '<td data-label="Input">' + fmt(r.prompt_tokens) + '</td>'
-        + '<td data-label="Output">' + fmt(r.completion_tokens) + '</td>'
-        + '<td style="color:var(--think)" data-label="Thinking">' + fmt(r.reasoning_tokens) + '</td>'
-        + '<td data-label="Cache">' + (r.cache_hit_pct!=null ? r.cache_hit_pct+'%' : '—') + '</td>'
+        + '<td style="text-align:center" data-label="Kiểu mô hình"><span class="badge ' + (r.stream?'s':'') + '">' + (r.stream?'Có luồng':'Không luồng') + '</span></td>'
+        + '<td style="text-align:center" data-label="Kết quả">' + outcomeBadge(r) + '</td>'
+        + '<td style="text-align:center" data-label="Thời gian xử lý">' + (r.elapsed_ms!=null ? fmt(r.elapsed_ms)+' ms' : '—') + '</td>'
+        + '<td style="text-align:center" data-label="Ký tự đầu">' + (r.ttft_ms!=null ? fmt(r.ttft_ms)+' ms' : '—') + '</td>'
+        + '<td style="text-align:center" data-label="Tốc độ">' + (r.tokens_per_sec ? r.tokens_per_sec.toFixed(1) : '—') + '</td>'
+        + '<td style="text-align:center" data-label="Input">' + fmt(r.prompt_tokens) + '</td>'
+        + '<td style="text-align:center" data-label="Output">' + fmt(r.completion_tokens) + '</td>'
+        + '<td style="color:var(--think);text-align:center" data-label="Thinking">' + fmt(r.reasoning_tokens) + '</td>'
+        + '<td style="text-align:center" data-label="Cache">' + (r.cache_hit_pct!=null ? r.cache_hit_pct+'%' : '—') + '</td>'
         + '<td data-label="Tổng token"><b>' + fmt(r.total_tokens) + '</b></td>'
       + '</tr>').join('') + '</tbody></table>'
     : '<div class="empty">Chưa có bản ghi yêu cầu</div>';
@@ -2309,7 +2322,7 @@ async function submitPanelLogin(){
     panelHideGate();
     toast('Đã Vào Bảng Điều Khiển', 'ok');
     if(data.using_default_password){
-      toast('Hiện tạilàmật khẩu mặc định admin，nên vào「Cài Đặt」trongsửađổi', 'warn');
+      toast('Hiện tại mật khẩu mặc định là admin, bạn nên vào trang「Cài Đặt」để thay đổi.', 'warn');
     }
     await startDashboard();
   } catch(e) {
@@ -2385,7 +2398,7 @@ async function loadSettings(showToast){
     const data = await getJSON('/settings');
     const pwdState = document.getElementById('setPwdState');
     if(pwdState){
-      pwdState.textContent = data.panel_password_is_default ? '(Hiện tạilàmật khẩu mặc định)' : '(Đã tùy chỉnh)';
+      pwdState.textContent = data.panel_password_is_default ? '(Đang dùng mật khẩu mặc định)' : '(Đã tùy chỉnh)';
       pwdState.style.color = data.panel_password_is_default ? 'var(--warn)' : 'var(--accent2)';
     }
     const keyState = document.getElementById('setKeyState');
@@ -3446,16 +3459,16 @@ function renderPerfMatrix(usage, perf){
         + '<td style="text-align:left" data-label="Mô hình"><b>' + (filtering ? 'Kết quả đã lọc (Filtered)' : 'Tất Cả Mô Hình (Total)') + '</b></td>'
       + '<td style="text-align:center" data-label="Khu vực"><span style="color:var(--dim)">—</span></td>'
       + '<td style="text-align:left" data-label="Tài Khoản"><span style="color:var(--dim)">' + (filtering ? 'Đã lọc' : 'Tất Cả Tài Khoản') + '</span></td>'
-      + '<td data-label="Số yêu cầu">' + fmt(sumReq) + '</td>'
-      + '<td data-label="Thất bại">' + (sumErr
+      + '<td style="text-align:center" data-label="Số yêu cầu">' + fmt(sumReq) + '</td>'
+      + '<td style="text-align:center" data-label="Thất bại">' + (sumErr
           ? ('<span style="color:var(--bad)">' + fmt(sumErr) + '</span>')
           : '<span style="color:var(--dim)">0</span>') + '</td>'
-      + '<td data-label="Tổng Token"><b style="color:var(--accent)">' + fmt(sumTok) + '</b></td>'
+      + '<td style="text-align:center" data-label="Tổng Token"><b style="color:var(--accent)">' + fmt(sumTok) + '</b></td>'
       + '<td class="triple" data-label="Input / Output / Thinking">' + tripleTokens(sumP, sumC, sumR) + '</td>'
-        + '<td data-label="Độ trễ ký tự đầu">' + totTtft + '</td>'
-      + '<td data-label="Tốc độ sinh"><b style="color:var(--accent2)">' + totTps + '</b></td>'
-        + '<td data-label="Thời gian xử lý toàn trình">' + totWall + '</td>'
-        + '<td data-label="Cache">' + totCache + '</td>'
+        + '<td style="text-align:center" data-label="Độ trễ ký tự đầu">' + totTtft + '</td>'
+      + '<td style="text-align:center" data-label="Tốc độ sinh"><b style="color:var(--accent2)">' + totTps + '</b></td>'
+        + '<td style="text-align:center" data-label="Thời gian xử lý toàn trình">' + totWall + '</td>'
+        + '<td style="text-align:center" data-label="Cache">' + totCache + '</td>'
       + '<td data-label="Tỷ Lệ Sử Dụng">100%</td>'
       + '</tr>';
 
@@ -3529,14 +3542,14 @@ function renderPerfMatrix(usage, perf){
         + '<td style="text-align:left" class="mono" data-label="Mô hình"><b>' + esc(m.id) + '</b></td>'
         + '<td style="text-align:center;white-space:nowrap" data-label="Khu vực">' + realmCell + '</td>'
         + '<td style="text-align:left" data-label="Tài Khoản">' + acctCell + '</td>'
-        + '<td data-label="Số yêu cầu">' + fmt(m.requests) + '</td>'
-        + '<td data-label="Thất bại">' + errCell + '</td>'
-        + '<td data-label="Tổng Token"><b>' + fmt(m.total_tokens) + '</b></td>'
+        + '<td style="text-align:center" data-label="Số yêu cầu">' + fmt(m.requests) + '</td>'
+        + '<td style="text-align:center" data-label="Thất bại">' + errCell + '</td>'
+        + '<td style="text-align:center" data-label="Tổng Token"><b>' + fmt(m.total_tokens) + '</b></td>'
         + '<td class="triple" data-label="Input / Output / Thinking">' + tripleTokens(m.prompt_tokens, m.completion_tokens, m.reasoning_tokens) + '</td>'
-      + '<td data-label="Độ trễ ký tự đầu (TTFT)">' + m_ttft + '</td>'
-        + '<td data-label="Tốc độ sinh">' + m_tps + '</td>'
-      + '<td data-label="Thời gian xử lý">' + m_wall + '</td>'
-      + '<td data-label="Cache">' + m_cache + '</td>'
+      + '<td style="text-align:center" data-label="Độ trễ ký tự đầu (TTFT)">' + m_ttft + '</td>'
+        + '<td style="text-align:center" data-label="Tốc độ sinh">' + m_tps + '</td>'
+      + '<td style="text-align:center" data-label="Thời gian xử lý">' + m_wall + '</td>'
+      + '<td style="text-align:center" data-label="Cache">' + m_cache + '</td>'
         + '<td style="min-width:90px" data-label="Tỷ Lệ Sử Dụng"><span class="bar-fill" style="width:' + Math.max(3, pctTok) + '%"></span> <span style="font-size:11px;color:var(--dim)">' + pctTok + '%</span></td>'
         + '</tr>';
     }).join('');
@@ -3545,8 +3558,8 @@ function renderPerfMatrix(usage, perf){
       + '<th style="text-align:left">Tên Mô Hình</th>'
       + '<th style="text-align:center;width:76px">Khu vực</th>'
       + '<th style="text-align:left">Tài Khoản</th>'
-      + '<th>Request</th><th>Thất Bại</th><th>Tổng Token</th><th style="min-width:190px">Input / Output / Thinking</th>'
-      + '<th>Độ trễ ký tự đầu (TTFT)</th><th>Tốc Độ Sinh</th><th>Thời Gian Xử Lý</th><th>Tỷ Lệ Cache</th><th>Tỷ Lệ Sử Dụng</th>'
+      + '<th style="text-align:center">Request</th><th style="text-align:center">Thất Bại</th><th style="text-align:center">Tổng Token</th><th style="min-width:190px">Input / Output / Thinking</th>'
+      + '<th style="text-align:center">Độ trễ ký tự đầu (TTFT)</th><th style="text-align:center">Tốc Độ Sinh</th><th style="text-align:center">Thời Gian Xử Lý</th><th style="text-align:center">Tỷ Lệ Cache</th><th>Tỷ Lệ Sử Dụng</th>'
       + '</tr></thead><tbody>' + summaryRow + rows + '</tbody></table>';
   }
 
@@ -3664,10 +3677,10 @@ function renderAnalytics(data){
           +   '<b>' + esc(a.nickname || a.uid) + '</b>'
           +   '<div style="color:var(--dim);font-size:11px;font-family:monospace">' + esc((a.uid || '').slice(0, 10)) + '...</div>'
           + '</td>'
-          + '<td>' + realmBadge + '</td>'
-          + '<td>' + creditStr + '</td>'
-          + '<td>' + fmt(st.requests || 0) + '</td>'
-          + '<td><b style="color:var(--accent)">' + fmt(st.total_tokens || 0) + '</b></td>'
+          + '<td style="text-align:center">' + realmBadge + '</td>'
+          + '<td style="text-align:center">' + creditStr + '</td>'
+          + '<td style="text-align:center">' + fmt(st.requests || 0) + '</td>'
+          + '<td style="text-align:center"><b style="color:var(--accent)">' + fmt(st.total_tokens || 0) + '</b></td>'
           + '<td style="text-align:left;max-width:440px">' + pills + '</td>'
           + '</tr>';
       }).join('');
