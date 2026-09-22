@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>WorkBuddy 用量看板</title>
+<title>WorkBuddy Bảng Theo Dõi Sử Dụng</title>
 <style>
 :root{
   --bg:#f8fafc; --panel:#ffffff; --panel2:#f1f5f9; --panel3:#e2e8f0;
@@ -22,9 +22,12 @@
 body{margin:0;background:var(--bg);color:var(--fg);
   font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue","PingFang SC","Microsoft YaHei",sans-serif;
   -webkit-font-smoothing:antialiased}
-header{padding:16px 24px;border-bottom:1px solid var(--line);display:flex;
-  align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
+header{border-bottom:1px solid var(--line);
   position:sticky;top:0;background:rgba(255,255,255,.94);backdrop-filter:blur(10px);z-index:10;box-shadow:var(--shadow-sm)}
+header .header-inner{max-width:1280px;margin:0 auto;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+header .header-left{display:flex;align-items:center;gap:8px}
+header .header-center{display:flex;justify-content:center;flex:1}
+header .header-right{display:flex;align-items:center;gap:12px}
 h1{margin:0;font-size:17px;font-weight:700;letter-spacing:-.2px;color:var(--fg)}
 h1 span{color:var(--dim);font-weight:400;font-size:13px;margin-left:8px}
 .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent2);
@@ -62,14 +65,14 @@ th:first-child,td:first-child{text-align:left}
 tbody tr:last-child td{border-bottom:none}
 tbody tr:hover{background:rgba(241,245,249,.6)}
 .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px}
-/* 输入 / 输出 / 思考：三个数字应该在一行内读完，不拆行 */
+/* Input / Output / Thinking：ba số nên đọc gọn trên một dòng, không ngắt dòng */
 .triple{white-space:nowrap}
 .bar-fill{height:6px;border-radius:3px;background:var(--accent);min-width:2px;display:inline-block;vertical-align:middle}
 .bar-fill.think{background:var(--think)}
 .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;width:100%;border-radius:8px}
 .table-wrap table{min-width:720px}
 @media (max-width: 860px){
-  header{padding:12px 16px}
+  header .header-inner{padding:12px 16px}
   main{padding:16px 12px 60px}
   section{padding:14px 14px;border-radius:12px}
   #cards{grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}
@@ -195,7 +198,7 @@ a:hover{text-decoration:underline}
 .main-nav-btn{background:transparent;border:1px solid transparent;color:var(--dim);padding:6px 14px;border-radius:7px;font-size:13px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .15s ease}
 .main-nav-btn:hover{color:var(--fg);background:#fff}
 .main-nav-btn.active{background:#fff;color:var(--fg);border-color:var(--line);box-shadow:var(--shadow-sm);font-weight:600}
-/* 项目仓库入口：与顶部导航同行，但不作为一个 Tab 标签。 */
+/* Lối vào kho dự án：cùng thanh điều hướng trên cùng, không phải tab。 */
 .gh-link{display:inline-flex;align-items:center;justify-content:center;
   width:34px;height:32px;border-radius:8px;border:1px solid var(--line);
   background:#fff;color:var(--dim);box-shadow:var(--shadow-sm);
@@ -236,12 +239,15 @@ a:hover{text-decoration:underline}
 .log-empty{padding:48px 24px;text-align:center;color:#64748b;font-size:13px;font-family:inherit}
 /* ===== Phone: ≤640px ===== */
 @media (max-width: 640px){
-  header{padding:10px 12px;gap:8px}
-  header > div:first-child{width:100%;gap:8px}
-  h1{font-size:15px;flex:1;min-width:0}
+  header .header-inner{padding:10px 12px;gap:8px}
+  header .header-left{order:1;flex:1 1 auto;min-width:0}
+  header .header-right{order:2;flex:0 0 auto;gap:8px}
+  header .header-center{order:3;flex:1 1 100%}
+  h1{font-size:15px;min-width:0}
   h1 span{font-size:11px;margin-left:6px}
-  .gh-link{width:40px;height:40px;flex-shrink:0;order:2}
-  .main-nav{display:flex;width:100%;gap:2px;padding:3px;order:3}
+  .gh-link{width:40px;height:40px;flex-shrink:0}
+  header .header-logout{min-height:40px;padding:0 6px}
+  .main-nav{display:flex;width:100%;gap:2px;padding:3px}
   .main-nav-btn{flex:1;justify-content:center;padding:8px 4px;font-size:12px;min-height:40px;white-space:nowrap}
   .meta{width:100%;text-align:left;font-size:11px;line-height:1.5}
   .meta .meta-secondary{display:none}
@@ -290,8 +296,8 @@ a:hover{text-decoration:underline}
   #pageSettings section > div[style*="display:flex"]{flex-wrap:wrap}
   #pageSettings input:not([type=checkbox]), #pageSettings select{min-height:40px;font-size:13px}
   #pageSettings .slot-input{font-size:13px}
-  table.data-cards td[data-label="启用"]{justify-content:space-between}
-  table.data-cards td[data-label="启用"] input[type=checkbox]{width:20px;height:20px}
+  table.data-cards td[data-label="Bật"]{justify-content:space-between}
+  table.data-cards td[data-label="Bật"] input[type=checkbox]{width:20px;height:20px}
   /* Logs */
   #logTerminalBody{height:60vh!important}
   #pageLogs .toolbar{display:grid;grid-template-columns:1fr 1fr;gap:6px}
@@ -351,149 +357,156 @@ a:hover{text-decoration:underline}
 </head>
 <body>
 <header>
-  <div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap">
-    <h1><span class="dot" id="statusDot"></span>WorkBuddy 网关看板</h1>
-    <nav class="main-nav">
-      <button class="main-nav-btn active" id="btnNavGateway" onclick="switchMainTab('gateway')">
-        网关与运维
-      </button>
-      <button class="main-nav-btn" id="btnNavAnalytics" onclick="switchMainTab('analytics')">
-        数据指标看板
-      </button>
-      <button class="main-nav-btn" id="btnNavLogs" onclick="switchMainTab('logs')">
-        运行日志
-      </button>
-      <button class="main-nav-btn" id="btnNavSettings" onclick="switchMainTab('settings')">
-        设置
-      </button>
-    </nav>
-<a class="gh-link" href="https://github.com/ardeyouxipianyi/workbuddy2api-hub" target="_blank" rel="noopener noreferrer"
-       title="查看 GitHub 项目仓库" aria-label="GitHub 项目仓库">
-      <svg viewBox="0 0 16 16" aria-hidden="true">
-        <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z"/>
-      </svg>
-    </a>
+  <div class="header-inner">
+    <div class="header-left">
+      <h1><span class="dot" id="statusDot"></span>WorkBuddy Bảng Điều Khiển</h1>
+    </div>
+    <div class="header-center">
+      <nav class="main-nav">
+        <button class="main-nav-btn active" id="btnNavGateway" onclick="switchMainTab('gateway')">
+          Cổng & Vận Hành
+        </button>
+        <button class="main-nav-btn" id="btnNavAnalytics" onclick="switchMainTab('analytics')">
+          Bảng Chỉ Số Dữ Liệu
+        </button>
+        <button class="main-nav-btn" id="btnNavLogs" onclick="switchMainTab('logs')">
+          Nhật Ký Vận Hành
+        </button>
+        <button class="main-nav-btn" id="btnNavSettings" onclick="switchMainTab('settings')">
+          Cài Đặt
+        </button>
+      </nav>
+    </div>
+    <div class="header-right">
+      <a class="gh-link" href="https://github.com/ardeyouxipianyi/workbuddy2api-hub" target="_blank" rel="noopener noreferrer"
+         title="Xem kho dự án GitHub" aria-label="Kho dự án GitHub">
+        <svg viewBox="0 0 16 16" aria-hidden="true">
+          <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z"/>
+        </svg>
+      </a>
+      <button class="sec mini header-logout" onclick="panelLogout()" style="border:none;background:transparent;color:var(--dim);font-size:12px;cursor:pointer">Đăng xuất</button>
+      <div class="meta" id="meta"></div>
+    </div>
   </div>
-  <div class="meta" id="meta"></div>
 </header>
 <div id="panelGate" style="position:fixed;inset:0;z-index:600;display:none;
      align-items:center;justify-content:center;padding:20px;background:var(--bg)">
   <div style="width:min(380px,100%);background:var(--panel);border:1px solid var(--line);
               border-radius:14px;padding:26px 24px;box-shadow:0 10px 30px rgba(15,23,42,.12)">
-    <div style="font-size:16px;font-weight:700;margin-bottom:6px">WorkBuddy 网关看板</div>
-    <div style="font-size:12px;color:var(--dim);margin-bottom:18px">请输入面板访问密码</div>
-    <input id="panelPwdInput" type="password" placeholder="面板密码" autocomplete="current-password"
+    <div style="font-size:16px;font-weight:700;margin-bottom:6px">WorkBuddy Bảng Điều Khiển</div>
+    <div style="font-size:12px;color:var(--dim);margin-bottom:18px">Vui lòng nhập mật khẩu truy cập bảng điều khiển</div>
+    <input id="panelPwdInput" type="password" placeholder="Mật khẩu bảng điều khiển" autocomplete="current-password"
            onkeydown="if(event.key==='Enter') submitPanelLogin()"
            style="width:100%;background:var(--panel2);border:1px solid var(--line);
                   border-radius:8px;padding:9px 12px;color:var(--fg);font:inherit">
     <div id="panelLoginMsg" style="font-size:12px;color:var(--bad);min-height:17px;margin:8px 0 12px"></div>
-    <button onclick="submitPanelLogin()" style="width:100%;padding:9px 12px;font-size:13px">进入面板</button>
+    <button onclick="submitPanelLogin()" style="width:100%;padding:9px 12px;font-size:13px">Vào Bảng Điều Khiển</button>
     <div id="panelDefaultHint" style="display:none;font-size:11px;color:var(--warn);margin-top:12px">
-      当前仍在使用默认密码 <b>admin</b>，登录后请在「设置」中修改。
+      Hiện đang sử dụng mật khẩu mặc định <b>admin</b>; sau khi đăng nhập hãy đổi trong「Cài Đặt」.
     </div>
   </div>
 </div>
 <main>
   <div id="pageGateway" class="main-page">
-  <!-- 版本中枢控制栏 (三列等高对齐网格) -->
+  <!-- Thanh điều khiển phiên bản (lưới ba cột cao bằng nhau) -->
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-bottom:18px">
     
-    <!-- 卡片 1: 国际版 (Global) -->
+    <!-- Thẻ 1: Quốc Tế (Global) -->
     <div id="tabIntl" class="realm-card active" onclick="switchViewRealm('intl')">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
         <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-          <span class="realm-badge-intl">国际版 (Global)</span>
-          <span id="tabIntlDefaultBadge" class="badge ok mini" style="font-weight:600;display:none">默认出口</span>
-          <span id="tabIntlViewBadge" class="badge s mini" style="display:inline-block">当前视图</span>
+          <span class="realm-badge-intl">Quốc Tế (Global)</span>
+          <span id="tabIntlDefaultBadge" class="badge ok mini" style="font-weight:600;display:none">Cổng Mặc Định</span>
+          <span id="tabIntlViewBadge" class="badge s mini" style="display:inline-block">Lựa Chọn Hiện Tại</span>
         </div>
       </div>
       <div class="mono" style="font-size:11px;color:var(--dim);margin-bottom:8px">www.workbuddy.ai</div>
       <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:8px">
         <div style="display:flex;align-items:baseline;gap:6px">
           <span id="tabIntlCredits" style="font-size:22px;font-weight:700;color:var(--accent2);letter-spacing:-.5px">0</span>
-          <span style="font-size:12px;color:var(--dim)">剩余积分 · <b id="tabIntlAccts" style="color:var(--fg)">0</b> 账号</span>
+          <span style="font-size:12px;color:var(--dim)">Điểm · <b id="tabIntlAccts" style="color:var(--fg)">0</b> Tài Khoản</span>
         </div>
-        <span id="tabIntlKeyBadge" class="badge s mini" style="font-weight:600">0 个 Key</span>
+        <span id="tabIntlKeyBadge" class="badge s mini" style="font-weight:600">0  Key tài khoản</span>
       </div>
     </div>
 
-    <!-- 卡片 2: 国内版 (China) -->
+    <!-- Thẻ 2: Trong Nước (China) -->
     <div id="tabCn" class="realm-card" onclick="switchViewRealm('cn')">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
         <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-          <span class="realm-badge-cn">国内版 (China)</span>
-          <span id="tabCnDefaultBadge" class="badge ok mini" style="font-weight:600;display:none">默认出口</span>
-          <span id="tabCnViewBadge" class="badge warn mini" style="display:none">当前视图</span>
+          <span class="realm-badge-cn">Trong Nước (China)</span>
+          <span id="tabCnDefaultBadge" class="badge ok mini" style="font-weight:600;display:none">Cổng Mặc Định</span>
+          <span id="tabCnViewBadge" class="badge warn mini" style="display:none">Lựa Chọn Hiện Tại</span>
         </div>
       </div>
       <div class="mono" style="font-size:11px;color:var(--dim);margin-bottom:8px">copilot.tencent.com</div>
       <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:8px">
         <div style="display:flex;align-items:baseline;gap:6px">
           <span id="tabCnCredits" style="font-size:22px;font-weight:700;color:var(--accent2);letter-spacing:-.5px">0</span>
-          <span style="font-size:12px;color:var(--dim)">剩余积分 · <b id="tabCnAccts" style="color:var(--fg)">0</b> 账号</span>
+          <span style="font-size:12px;color:var(--dim)">Điểm · <b id="tabCnAccts" style="color:var(--fg)">0</b> Tài Khoản</span>
         </div>
-        <span id="tabCnKeyBadge" class="badge warn mini" style="font-weight:600">0 个 Key</span>
+        <span id="tabCnKeyBadge" class="badge warn mini" style="font-weight:600">0  Key tài khoản</span>
       </div>
     </div>
 
-    <!-- 卡片 3: 网关出口控制 -->
+    <!-- Thẻ 3: Điều Khiển Cổng Xuất -->
     <div id="cardGatewayCtrl" class="realm-card gateway-ctrl" style="cursor:default">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-        <span style="font-size:11px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:.5px">网关默认出口</span>
-        <span id="activeGatewayKeyCount" class="badge ok mini" style="font-weight:600">0 个 Key 生效</span>
+        <span style="font-size:11px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:.5px">Cổng Proxy mặc định</span>
+        <span id="activeGatewayKeyCount" class="badge ok mini" style="font-weight:600">0 Key có hiệu lực</span>
       </div>
       <div style="display:flex;align-items:center;gap:8px;margin:2px 0 8px">
         <span id="gatewayDot" class="dot" style="width:9px;height:9px"></span>
-        <span id="activeGatewayName" style="font-size:20px;font-weight:700;color:var(--accent);letter-spacing:-.4px">国际版 (Global)</span>
+        <span id="activeGatewayName" style="font-size:20px;font-weight:700;color:var(--accent);letter-spacing:-.4px">Quốc Tế (Global)</span>
       </div>
       <div style="margin-top:auto">
         <button class="toggle-realm-btn" id="btnToggleRealm" onclick="toggleActiveGatewayRealm()" style="cursor:pointer;width:100%;padding:7px 12px;font-size:12px">
-          ⇄ 切换默认出口为【国内版】
+          ⇄ Chuyển cổng mặc định thành【Trong Nước】
         </button>
       </div>
     </div>
 
   </div>
-  <!-- 后台定时调度器状态栏 -->
+  <!-- Thanh trạng thái bộ lên lịch nền -->
   <div id="schedulerBar" style="background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 14px;margin-bottom:16px;font-size:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
     <div style="display:flex;align-items:center;gap:8px">
       <span class="dot" id="schedDot"></span>
-      <span>后台定时调度器: <b id="schedStatusText">运行中</b></span>
+      <span>Lịch Chạy Định Kỳ: <b id="schedStatusText">Đang chạy</b></span>
       <span style="color:var(--dim);font-size:11px" id="schedTimes"></span>
     </div>
     <div style="display:flex;gap:8px">
-      <button class="sec mini" id="btnTriggerSched" onclick="triggerSchedulerNow(this)">立即巡检保活</button>
-      <button class="sec mini" id="btnToggleSched" onclick="toggleScheduler(this)">暂停调度</button>
+      <button class="sec mini" id="btnTriggerSched" onclick="triggerSchedulerNow(this)">Kiểm Tra & Duy Trì Ngay</button>
+      <button class="sec mini" id="btnToggleSched" onclick="toggleScheduler(this)">Tạm Dừng Lịch</button>
     </div>
   </div>
 
   <div class="cards" id="cards"></div>
 
   <section>
-    <h2>账号<em id="acctCount"></em></h2>
+    <h2>Tài Khoản<em id="acctCount"></em></h2>
     <div class="toolbar">
-    <button onclick="openLoginModal()">+ 添加账号 (OAuth)</button>
-    <button class="sec" id="btnCheckin" onclick="doCheckin(this)" style="display:none">每日签到 (国内版)</button>
-    <button class="sec" id="btnScanDesktop" onclick="scanDesktop(this)">扫描桌面客户端账号</button>
-    <button class="sec" onclick="exportAccounts(this)">导出账号</button>
-    <button class="sec" onclick="openImport()">导入账号</button>
-    <button class="sec" onclick="fetchCredits(this)">刷新积分</button>
-    <button class="sec" onclick="autoAssignSlots()">一键自动分配出口</button>
-    <button class="sec" onclick="setAll(true, this)">全部启用</button>
-    <button class="sec" onclick="setAll(false, this)">全部停用</button>
+    <button onclick="openLoginModal()">+ Thêm Tài Khoản (OAuth)</button>
+    <button class="sec" id="btnCheckin" onclick="doCheckin(this)" style="display:none">Điểm Danh Hàng Ngày (Trong Nước)</button>
+    <button class="sec" id="btnScanDesktop" onclick="scanDesktop(this)">Quét Tài Khoản Ở Máy Tính</button>
+    <button class="sec" onclick="exportAccounts(this)">Xuất Tài Khoản</button>
+    <button class="sec" onclick="openImport()">Nhập Tài Khoản</button>
+    <button class="sec" onclick="fetchCredits(this)">Làm Mới Credit</button>
+    <button class="sec" onclick="autoAssignSlots()">Tự Động Gán Proxy</button>
+    <button class="sec" onclick="setAll(true, this)">Bật Tất Cả</button>
+    <button class="sec" onclick="setAll(false, this)">Tắt Tất Cả</button>
     
   </div>
     <div id="accounts"></div>
   </section>
 
-  <!-- 融合后的：模型性能与用量矩阵 -->
+  <!-- Đã hợp nhất: Ma trận hiệu năng & lượng dùng mô hình -->
   
 
   <section>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
-      <h2 style="margin:0">最近请求 <em id="recentCount"></em></h2>
+      <h2 style="margin:0">Hoạt Động Gần Đây <em id="recentCount"></em></h2>
       <div style="display:inline-flex;align-items:center;gap:8px">
-        <span style="font-size:12px;color:var(--dim)">显示条数:</span>
+        <span style="font-size:12px;color:var(--dim)">Hiển thị số dòng:</span>
         <div style="display:inline-flex;gap:3px;background:var(--panel2);padding:3px;border-radius:8px;border:1px solid var(--line)">
           <button class="range-btn" id="btnRecentLimit10" onclick="setRecentLimit(10)">10</button>
           <button class="range-btn" id="btnRecentLimit20" onclick="setRecentLimit(20)">20</button>
@@ -504,31 +517,31 @@ a:hover{text-decoration:underline}
     </div>
     <div id="recent" class="table-wrap"></div>
     <div id="recentPagination" style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;padding-top:12px;border-top:1px solid var(--line);font-size:12px;color:var(--dim);flex-wrap:wrap;gap:8px">
-      <div id="recentPageInfo">第 1 / 1 页 · 共 0 条记录</div>
+      <div id="recentPageInfo">Trang 1 / 1 · Tổng 0 dòng bản ghi</div>
       <div style="display:inline-flex;gap:5px;align-items:center">
-        <button class="sec mini" id="btnRecentPrev" onclick="changeRecentPage(-1)">上一页</button>
+        <button class="sec mini" id="btnRecentPrev" onclick="changeRecentPage(-1)">Trang trước</button>
         <div id="recentPageButtons" style="display:inline-flex;gap:3px;align-items:center"></div>
-        <button class="sec mini" id="btnRecentNext" onclick="changeRecentPage(1)">下一页</button>
+        <button class="sec mini" id="btnRecentNext" onclick="changeRecentPage(1)">Trang sau</button>
       </div>
     </div>
   </section>
 
-  <!-- 版本模型库与能力清单 -->
+  <!-- Danh mục mô hình & năng lực theo phiên bản -->
   <section>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-      <h2 style="margin:0">当前版本模型库与能力清单 <em id="availModelCount"></em></h2>
-      <div style="font-size:12px;color:var(--dim)">展示当前视图下官方对话大模型、上下文容量、推理/视觉能力及在售倍率</div>
+      <h2 style="margin:0">Danh mục mô hình & năng lực phiên bản <em id="availModelCount"></em></h2>
+      <div style="font-size:12px;color:var(--dim)">Hiển thị mô hình hội thoại chính thức, dung lượng context, năng lực suy luận/vision và tỷ lệ giá hiện tại</div>
     </div>
     <div style="overflow-x:auto">
       <table id="modelsTable" class="data-cards">
         <thead>
           <tr>
-            <th style="text-align:left;width:220px">模型 ID</th>
-            <th style="text-align:center;width:140px">消费倍率 / 优惠</th>
-            <th style="text-align:center;width:160px">模型能力</th>
-            <th style="text-align:center;width:110px">上下文窗口</th>
-            <th style="text-align:center;width:100px">最大输出</th>
-            <th style="text-align:left">思考档位</th>
+            <th style="text-align:left;width:220px">ID Mô Hình</th>
+            <th style="text-align:center;width:140px">Tỷ lệ giá / Ưu đãi</th>
+            <th style="text-align:center;width:160px">Năng Lực Mô Hình</th>
+            <th style="text-align:center;width:110px">Context</th>
+            <th style="text-align:center;width:100px">Max Output</th>
+            <th style="text-align:left">Cấp Độ Thinking</th>
           </tr>
         </thead>
         <tbody></tbody>
@@ -536,37 +549,37 @@ a:hover{text-decoration:underline}
     </div>
   </section>
 
-  <!-- 国内版专属成长任务与日常福利 -->
+  <!-- Nhiệm vụ phát triển & ưu đãi hàng ngày riêng cho Trong Nước -->
   <section id="sectionGrowthTasks" style="display:none">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
       <div>
-        <h2 style="margin:0">国内版成长任务与日常福利</h2>
-        <div style="font-size:12px;color:var(--dim)">全自动批量接取、事件上报点亮并领取官方成长积分 (+1450分)，以及猫猫日常与打卡</div>
+        <h2 style="margin:0">Trong NướcNhiệm Vụ Phát Triển & Ưu Đãi Hàng Ngày</h2>
+        <div style="font-size:12px;color:var(--dim)">Tự động nhận hàng loạt, báo cáo sự kiện, thắp sáng và nhận điểm phát triển chính thức (+1450 điểm), cùng việc Mèo Du Lịch & điểm danh hàng ngày</div>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
         <select id="growthAcctSelect" onchange="switchGrowthAccount(this.value)" style="background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:12px;color:var(--fg);font-family:inherit">
-          <option value="all">全部国内账号 (批量)</option>
+          <option value="all">Tất cả tài khoản Trong Nước (hàng loạt)</option>
         </select>
-        <button class="primary" id="btnRunTasks" onclick="runGrowthTasks(this)">一键做任务领积分</button>
-        <button id="btnCatTravel" onclick="triggerCatTravel(this)">猫猫旅行</button>
+        <button class="primary" id="btnRunTasks" onclick="runGrowthTasks(this)">Làm Nhiệm Vụ Nhận Điểm Một Chạm</button>
+        <button id="btnCatTravel" onclick="triggerCatTravel(this)">Mèo Du Lịch</button>
       </div>
     </div>
 
     <div class="cards" style="margin-bottom:14px;grid-template-columns:repeat(auto-fit,minmax(180px,1fr))">
-      <div class="card"><div class="val" id="stkDays">-</div><div class="lbl">连续打卡天数</div></div>
-      <div class="card accent"><div class="val" id="nrgBalance">-</div><div class="lbl">成长能量余额</div></div>
-      <div class="card accent2"><div class="val" id="catState">-</div><div class="lbl" id="catDesc">猫猫日常状态</div></div>
+      <div class="card"><div class="val" id="stkDays">-</div><div class="lbl">Số Ngày Điểm Danh Liên Tiếp</div></div>
+      <div class="card accent"><div class="val" id="nrgBalance">-</div><div class="lbl">Số Dư Năng Lượng Phát Triển</div></div>
+      <div class="card accent2"><div class="val" id="catState">-</div><div class="lbl" id="catDesc">Trạng Thái Mèo Hàng Ngày</div></div>
     </div>
 
     <div style="overflow-x:auto">
       <table id="growthTable" class="data-cards">
         <thead>
           <tr>
-            <th>任务名称 / 代码</th>
-            <th>任务说明</th>
-            <th>进度</th>
-            <th>奖励</th>
-            <th>状态</th>
+            <th>Tên Nhiệm Vụ / Mã</th>
+            <th>Mô Tả Nhiệm Vụ</th>
+            <th>Tiến Độ</th>
+            <th>Phần Thưởng</th>
+            <th>Trạng Thái</th>
           </tr>
         </thead>
         <tbody></tbody>
@@ -582,62 +595,62 @@ a:hover{text-decoration:underline}
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:12px">
       <div>
         <h2 style="margin:0;font-size:16px;color:var(--fg);display:flex;align-items:center;gap:8px">
-          Token 消耗与推理指标透视
+          Phân Tích Tiêu Thụ Token & Chỉ Số Suy Luận
         </h2>
-        <div style="font-size:12px;color:var(--dim);margin-top:4px">全维度统计输入/输出/推理 Token、缓存节省效益与各账号各模型用量</div>
+        <div style="font-size:12px;color:var(--dim);margin-top:4px">Thống kê toàn diện Token Input/Output/Thinking, hiệu quả tiết kiệm cache và lượng dùng từng tài khoản/mô hình</div>
       </div>
       <div style="display:flex;gap:4px;background:var(--panel2);padding:3px;border-radius:8px;border:1px solid var(--line)">
-        <button id="btnRangeToday" class="range-btn active" onclick="setAnalyticsRange('today')">今日数据 (Today)</button>
-        <button id="btnRangeAll" class="range-btn" onclick="setAnalyticsRange('all')">全部历史 (All Time)</button>
+        <button id="btnRangeToday" class="range-btn active" onclick="setAnalyticsRange('today')">Dữ Liệu Hôm Nay (Today)</button>
+        <button id="btnRangeAll" class="range-btn" onclick="setAnalyticsRange('all')">Toàn Bộ Lịch Sử (All Time)</button>
       </div>
     </div>
 
-    <!-- 顶层核心 KPI 弹性看板 -->
+    <!-- Bảng KPI linh hoạt cốt lõi cấp cao nhất -->
     <div id="analyticsKpiCards" style="margin-bottom:20px">
       <div class="card think">
-        <div class="k" id="kpiRangeTokenTitle">今日消耗 Token</div>
+        <div class="k" id="kpiRangeTokenTitle">Số token đã tiêu thụ hôm nay</div>
         <div class="v" id="kpiTodayTokens">0</div>
-        <div class="s" id="kpiTodayTokensDetail">输入 0 / 输出 0 / 思考 0</div>
+        <div class="s" id="kpiTodayTokensDetail">Input 0 / Output 0 / Thinking 0</div>
       </div>
       <div class="card accent">
-        <div class="k">累计消耗 Token</div>
+        <div class="k">Tổng lượng tiêu thụ token</div>
         <div class="v" id="kpiTotalTokens">0</div>
-        <div class="s" id="kpiTotalTokensDetail">输入 0 / 输出 0 / 思考 0</div>
+        <div class="s" id="kpiTotalTokensDetail">Input 0 / Output 0 / Thinking 0</div>
       </div>
       <div class="card accent2">
-        <div class="k">网关平均生成速度</div>
+        <div class="k">Tốc độ sinh trung bình</div>
         <div class="v" id="kpiAvgSpeed">0.0 <span style="font-size:12px;font-weight:400;color:var(--dim)">tok/s</span></div>
-        <div class="s" id="kpiAvgLatency">平均首字延迟 0 ms · 耗时 0 s</div>
+        <div class="s" id="kpiAvgLatency">Độ trễ ký tự đầu TB 0 ms · Thời gian xử lý 0 s</div>
       </div>
       <div class="card">
-        <div class="k">上下文缓存命中率</div>
+        <div class="k">Tỷ lệ truy cập bộ nhớ đệm ngữ cảnh</div>
         <div class="v" id="kpiCacheRate">0.0%</div>
-        <div class="s">提示词前缀命中复用比</div>
+        <div class="s">Tỷ lệ tái sử dụng tiền tố prompt trùng khớp</div>
       </div>
       <div class="card">
-        <div class="k" id="kpiReqTitle">今日请求数 & 成功率</div>
-        <div class="v" id="kpiReqCount">0 次</div>
-        <div class="s" id="kpiReqSuccess">成功率 100% · 失败 0</div>
+        <div class="k" id="kpiReqTitle">Số yêu cầu hôm nay & Tỷ lệ thành công</div>
+        <div class="v" id="kpiReqCount">0 lượt</div>
+        <div class="s" id="kpiReqSuccess">Tỷ lệ thành công 100% · Thất bại 0</div>
       </div>
     </div>
 
-    <!-- 表格 1：各账号用量透视与各模型消耗明细 -->
+    <!-- Bảng 1: Phân tích lượng dùng từng tài khoản & chi tiết tiêu thụ từng mô hình -->
     <section>
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-        <h2 style="margin:0">各账号用量透视与模型消耗分布 <em id="analyticsAcctCount"></em></h2>
-        <div style="font-size:12px;color:var(--dim)">支持查看各账号的总消耗及调用的每个具体模型细分占比</div>
+        <h2 style="margin:0">Phân tích lượng dùng từng tài khoản & phân bổ tiêu thụ theo mô hình <em id="analyticsAcctCount"></em></h2>
+        <div style="font-size:12px;color:var(--dim)">Xem tổng tiêu thụ từng tài khoản và tỷ trọng chi tiết theo từng mô hình</div>
       </div>
       <div style="overflow-x:auto">
         <table id="analyticsAccountTable" class="data-cards">
           <thead>
             <tr>
-              <th style="text-align:left">账号 (昵称 / UID)</th>
-              <th>所属区域</th>
-              <th>剩余积分 / 额度</th>
-              <th>请求次数</th>
-              <th>消耗总 Token</th>
-              <th>消耗积分 (全出口)</th>
-              <th style="text-align:left">调用的模型分布明细 (请求数 · 消耗)</th>
+              <th style="text-align:left">Tài Khoản (Nickname / UID)</th>
+              <th style="text-align:center">Khu Vực</th>
+              <th style="text-align:center">Điểm / Hạn mức</th>
+              <th style="text-align:center">Số Yêu Cầu</th>
+              <th style="text-align:center">Tổng Token Tiêu Thụ</th>
+              <th style="text-align:center">Điểm Tiêu Thụ (Toàn Bộ)</th>
+              <th style="text-align:left">Chi Tiết Phân Bổ Mô Hình (Yêu Cầu · Tiêu Thụ)</th>
             </tr>
           </thead>
           <tbody id="analyticsAccountTbody"></tbody>
@@ -645,33 +658,33 @@ a:hover{text-decoration:underline}
       </div>
     </section>
 
-    <!-- 表格 2：模型用量透视与响应指标 -->
+    <!-- Bảng 2: Phân tích lượng dùng mô hình & chỉ số phản hồi -->
     <section>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-      <h2 style="margin:0">模型性能指标与用量一览 <em id="matrixModelCount"></em></h2>
+      <h2 style="margin:0">Bảng chỉ số hiệu năng & lượng dùng mô hình <em id="matrixModelCount"></em></h2>
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
         <label style="font-size:12px;color:var(--dim);display:flex;align-items:center;gap:5px">
-          账号
+          Tài Khoản
           <select id="matrixAcctFilter" class="slot-select" style="min-width:150px"
                   onchange="matrixAcctFilter = this.value; if(cachedMatrixData) renderPerfMatrix(cachedMatrixData.usage, cachedMatrixData.perf);">
-            <option value="">全部账号</option>
+            <option value="">Tất Cả Tài Khoản</option>
           </select>
         </label>
         <label style="font-size:12px;color:var(--dim);display:flex;align-items:center;gap:5px">
-          模型
+          Mô hình
           <select id="matrixModelFilter" class="slot-select" style="min-width:170px"
                   onchange="matrixModelFilter = this.value; if(cachedMatrixData) renderPerfMatrix(cachedMatrixData.usage, cachedMatrixData.perf);">
-            <option value="">全部模型</option>
+            <option value="">Tất Cả Mô Hình</option>
           </select>
         </label>
-        <span style="font-size:12px;color:var(--dim)">融合首字延迟 (TTFT)、生成速度、耗时与 Token 统计　·　含国际版与国内版全部渠道</span>
+        <span style="font-size:12px;color:var(--dim)">Kết hợp độ trễ ký tự đầu (TTFT), tốc độ sinh, thời gian xử lý và thống kê Token · gồm toàn bộ kênh Quốc Tế và Trong Nước</span>
       </div>
     </div>
     <div id="perfMatrix" style="overflow-x:auto"></div>
     <div class="legend" style="margin-top:12px">
-      <span><i style="background:var(--accent2)"></i>生成速度：平均每秒吐字数 (tok/s)</span>
-      <span><i style="background:var(--think)"></i>思考 Token：DeepSeek/R1 等推理模型的思考量</span>
-      <span><i style="background:var(--accent)"></i>总 Token 占比进度条</span>
+      <span><i style="background:var(--accent2)"></i>Tốc Độ Sinh: số ký tự sinh mỗi giây (tok/s)</span>
+      <span><i style="background:var(--think)"></i>Token Thinking: lượng suy nghĩ của các mô hình DeepSeek/R1</span>
+      <span><i style="background:var(--accent)"></i>Thanh tỷ lệ tổng Token</span>
     </div>
   </section>
   </div>
@@ -680,36 +693,36 @@ a:hover{text-decoration:underline}
 
   <div id="pageSettings" class="main-page">
     <div style="margin-bottom:16px">
-      <h2 style="margin:0;font-size:16px;color:var(--fg)">网关设置</h2>
+      <h2 style="margin:0;font-size:16px;color:var(--fg)">Cài Đặt Cổng</h2>
     </div>
 
     <section>
-      <h2>面板访问密码 <em id="setPwdState"></em></h2>
-      <div style="font-size:12px;color:var(--dim);margin-bottom:12px">用于打开本看板。默认密码为 <b>admin</b>，建议立即修改。</div>
+      <h2>Mật Khẩu Truy Cập Bảng Điều Khiển <em id="setPwdState"></em></h2>
+      <div style="font-size:12px;color:var(--dim);margin-bottom:12px">Dùng để mở bảng điều khiển này. Mật khẩu mặc định là <b>admin</b>, nên đổi ngay.</div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
         <div style="flex:1;min-width:180px">
-          <div style="font-size:12px;color:var(--dim);margin-bottom:4px">当前密码</div>
-          <input id="setPwdCurrent" type="password" placeholder="当前密码"
+          <div style="font-size:12px;color:var(--dim);margin-bottom:4px">Mật khẩu hiện tại</div>
+          <input id="setPwdCurrent" type="password" placeholder="Mật khẩu hiện tại"
                  style="width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 12px;color:var(--fg);font:inherit">
         </div>
         <div style="flex:1;min-width:180px">
-          <div style="font-size:12px;color:var(--dim);margin-bottom:4px">新密码</div>
-          <input id="setPwdNew" type="password" placeholder="至少 4 位"
+          <div style="font-size:12px;color:var(--dim);margin-bottom:4px">Mật khẩu mới</div>
+          <input id="setPwdNew" type="password" placeholder="ít nhất 4 ký tự"
                  style="width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 12px;color:var(--fg);font:inherit">
         </div>
-        <button onclick="savePanelPassword(this)">修改密码</button>
+        <button onclick="savePanelPassword(this)">Đổi Mật Khẩu</button>
       </div>
     </section>
 
     <section>
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
         <div>
-          <h2 style="margin:0">API Key 与出口绑定 <em id="setKeyState"></em></h2>
+          <h2 style="margin:0">API Key & Gán Cổng Xuất <em id="setKeyState"></em></h2>
           <div style="font-size:12px;color:var(--dim);margin-top:4px">
-            为每个 Key 绑定专属出口。客户端使用该 Key 请求将固定走对应区域，实现双出口并发。
+            Gán cổng xuất riêng cho từng Key tài khoản. Yêu cầu dùng Key sẽ cố định đi qua khu vực tương ứng, hỗ trợ song song hai cổng xuất.
           </div>
         </div>
-        <button onclick="addApiKeyRow()">+ 添加 API Key</button>
+        <button onclick="addApiKeyRow()">+ Thêm API Key</button>
       </div>
       <div id="keyList"></div>
     </section>
@@ -717,15 +730,15 @@ a:hover{text-decoration:underline}
     <section>
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
         <div>
-          <h2 style="margin:0">代理槽 <em id="slotState"></em></h2>
+          <h2 style="margin:0">Proxy Slot <em id="slotState"></em></h2>
           <div style="font-size:12px;color:var(--dim);margin-top:4px">
-            每个账号固定绑定一个出口代理槽。槽位地址变化时绑定账号自动跟随；禁用或删除后回退直连。
+            Mỗi tài khoản gắn cố định một proxy slot. Khi địa chỉ slot thay đổi, tài khoản đã gắn sẽ tự động đi theo; khi slot bị tắt hoặc xóa thì quay về kết nối trực tiếp.
           </div>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button class="sec" onclick="discoverProxySlots(this)">自动发现 mihomo 端口</button>
-          <button class="sec" onclick="addProxySlotRow()">+ 添加槽位</button>
-          <button onclick="saveProxySlots(this)">保存槽位</button>
+          <button class="sec" onclick="discoverProxySlots(this)">Tự Động Tìm Cổng mihomo</button>
+          <button class="sec" onclick="addProxySlotRow()">+ Thêm Slot</button>
+          <button onclick="saveProxySlots(this)">Lưu Slot</button>
         </div>
       </div>
       <div id="slotList"></div>
@@ -733,18 +746,18 @@ a:hover{text-decoration:underline}
     </section>
 
     <section>
-      <h2>运行信息</h2>
+      <h2>Thông Tin Vận Hành</h2>
       <table>
         <tbody>
-          <tr><td>当前版本</td><td class="mono" id="setVersion">-</td></tr>
-          <tr><td>账号存储目录</td><td class="mono" id="setAccountsDir">-</td></tr>
-          <tr><td>用量日志目录</td><td class="mono" id="setUsageDir">-</td></tr>
-          <tr><td>设置文件</td><td class="mono" id="setFile">-</td></tr>
+          <tr><td>Phiên Bản Hiện Tại</td><td class="mono" id="setVersion">-</td></tr>
+          <tr><td>Thư Mục Lưu Tài Khoản</td><td class="mono" id="setAccountsDir">-</td></tr>
+          <tr><td>Thư Mục Nhật Ký Sử Dụng</td><td class="mono" id="setUsageDir">-</td></tr>
+          <tr><td>Tệp Cài Đặt</td><td class="mono" id="setFile">-</td></tr>
         </tbody>
       </table>
       <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
-        <button class="sec" onclick="loadSettings(true)">刷新</button>
-        <button class="sec" onclick="panelLogout()">退出面板登录</button>
+        <button class="sec" onclick="loadSettings(true)">Làm Mới</button>
+        <button class="sec" onclick="panelLogout()">Đăng Xuất</button>
       </div>
     </section>
   </div>
@@ -752,46 +765,46 @@ a:hover{text-decoration:underline}
   <div id="pageLogs" class="main-page">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:12px">
       <div>
-        <h2 style="margin:0;font-size:16px;color:var(--fg)">网关运行日志</h2>
-        <div style="font-size:12px;color:var(--dim);margin-top:4px">实时捕获反向代理请求、流式转发、调度巡检、任务打卡与异常告警 (内存保留最新 2000 条)</div>
+        <h2 style="margin:0;font-size:16px;color:var(--fg)">Nhật Ký Vận Hành Cổng</h2>
+        <div style="font-size:12px;color:var(--dim);margin-top:4px">Ghi lại theo thời gian thực các yêu cầu reverse proxy, chuyển tiếp stream, kiểm tra lịch, điểm danh nhiệm vụ và cảnh báo lỗi (lưu 2000 dòng mới nhất trong bộ nhớ)</div>
       </div>
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-        <span id="logStatsBadge" style="font-size:12px;color:var(--dim);margin-right:6px">加载中...</span>
-        <button class="sec mini" onclick="fetchNewLogs(true)" title="立即拉取最新日志">刷新</button>
-        <button class="sec mini" id="btnToggleLogAuto" onclick="toggleLogAuto()" style="color:var(--accent2);font-weight:600">实时监听中</button>
-        <button class="sec mini" id="btnToggleLogScroll" onclick="toggleLogScroll()">自动滚屏: 开</button>
-        <button class="sec mini" onclick="copyFilteredLogs()" title="复制当前视图显示的日志">复制</button>
-        <button class="sec mini" onclick="exportLogsFile()" title="下载为 .log 文件">导出</button>
-        <button class="danger mini" onclick="clearServerLogs()" title="清空所有日志">清空</button>
+        <span id="logStatsBadge" style="font-size:12px;color:var(--dim);margin-right:6px">Đang tải...</span>
+        <button class="sec mini" onclick="fetchNewLogs(true)" title="Lấy nhật ký mới nhất ngay">Làm Mới</button>
+        <button class="sec mini" id="btnToggleLogAuto" onclick="toggleLogAuto()" style="color:var(--accent2);font-weight:600">Giám sát thời gian thực</button>
+        <button class="sec mini" id="btnToggleLogScroll" onclick="toggleLogScroll()">Tự động cuộn: Bật</button>
+        <button class="sec mini" onclick="copyFilteredLogs()" title="Sao Chép nhật ký đang hiển thị">Sao Chép</button>
+        <button class="sec mini" onclick="exportLogsFile()" title="Tải xuống tệp .log">Xuất</button>
+        <button class="danger mini" onclick="clearServerLogs()" title="Xóa sạch tất cả nhật ký">Xóa sạch</button>
       </div>
     </div>
 
-    <!-- 筛选控制工具栏 -->
+    <!-- Thanh công cụ lọc -->
     <div style="background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;box-shadow:var(--shadow)">
       <div style="display:inline-flex;gap:3px;background:var(--panel2);padding:3px;border-radius:8px;border:1px solid var(--line)">
-        <button class="range-btn active" id="btnLogLvlAll" onclick="setLogFilterLevel('')">全部级别</button>
+        <button class="range-btn active" id="btnLogLvlAll" onclick="setLogFilterLevel('')">Tất Cả Cấp Độ</button>
         <button class="range-btn" id="btnLogLvlInfo" onclick="setLogFilterLevel('INFO')">INFO</button>
         <button class="range-btn" id="btnLogLvlWarn" onclick="setLogFilterLevel('WARN')">WARN</button>
         <button class="range-btn" id="btnLogLvlError" onclick="setLogFilterLevel('ERROR')">ERROR</button>
       </div>
 
       <div style="display:inline-flex;gap:3px;background:var(--panel2);padding:3px;border-radius:8px;border:1px solid var(--line)">
-        <button class="range-btn active" id="btnLogTagAll" onclick="setLogFilterTag('')">全部模块</button>
-        <button class="range-btn" id="btnLogTagChat" onclick="setLogFilterTag('chat')">对话</button>
-        <button class="range-btn" id="btnLogTagTasks" onclick="setLogFilterTag('tasks')">任务福利</button>
-        <button class="range-btn" id="btnLogTagSched" onclick="setLogFilterTag('scheduler')">调度器</button>
-        <button class="range-btn" id="btnLogTagAcct" onclick="setLogFilterTag('accounts')">账号</button>
-        <button class="range-btn" id="btnLogTagSys" onclick="setLogFilterTag('system')">系统</button>
+        <button class="range-btn active" id="btnLogTagAll" onclick="setLogFilterTag('')">Tất Cả Module</button>
+        <button class="range-btn" id="btnLogTagChat" onclick="setLogFilterTag('chat')">Hội Thoại</button>
+        <button class="range-btn" id="btnLogTagTasks" onclick="setLogFilterTag('tasks')">Nhiệm Vụ & Ưu Đãi</button>
+        <button class="range-btn" id="btnLogTagSched" onclick="setLogFilterTag('scheduler')">Lịch</button>
+        <button class="range-btn" id="btnLogTagAcct" onclick="setLogFilterTag('accounts')">Tài Khoản</button>
+        <button class="range-btn" id="btnLogTagSys" onclick="setLogFilterTag('system')">Hệ Thống</button>
       </div>
 
       <div style="flex:1;min-width:180px;position:relative">
-        <input id="logSearchInput" type="text" placeholder="过滤关键字 (如 deepseek, 11128, 401, error)..."
+        <input id="logSearchInput" type="text" placeholder="Lọc từ khóa (vd deepseek, 11128, 401, error)..."
                oninput="onLogSearchInput()"
                style="width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:7px;padding:5px 10px;font-size:12px;color:var(--fg);outline:none">
       </div>
     </div>
 
-    <!-- 终端视窗 -->
+    <!-- Cửa sổ terminal -->
     <div style="background:#090d16;border:1px solid #1e293b;border-radius:12px;overflow:hidden;box-shadow:0 4px 14px rgba(0,0,0,.15)">
       <div style="background:#0f172a;border-bottom:1px solid #1e293b;padding:8px 14px;display:flex;align-items:center;justify-content:space-between">
         <div style="display:flex;align-items:center;gap:7px">
@@ -800,46 +813,46 @@ a:hover{text-decoration:underline}
           <span style="width:10px;height:10px;border-radius:50%;background:#10b981;display:inline-block"></span>
           <span style="font-size:11px;color:#94a3b8;font-family:monospace;margin-left:8px">wb-proxy-console.log</span>
         </div>
-        <div id="logTerminalStatus" style="font-size:11px;color:#64748b;font-family:monospace">就绪</div>
+        <div id="logTerminalStatus" style="font-size:11px;color:#64748b;font-family:monospace">Sẵn Sàng</div>
       </div>
       <div id="logTerminalBody" style="height:620px;overflow-y:auto;padding:10px 12px;background:#090d16;color:#cbd5e1" onscroll="handleLogTerminalScroll()">
-        <div class="log-empty">正在拉取网关日志...</div>
+        <div class="log-empty">Đang lấy nhật ký cổng...</div>
       </div>
     </div>
   </div>
 
-  <footer>每 5 秒自动刷新 · 数据来自本机反代 <span class="mono" id="logfile"></span></footer>
+  <footer>Tự động làm mới mỗi 5 giây · dữ liệu từ reverse proxy trên máy <span class="mono" id="logfile"></span></footer>
 </main>
 
 <div class="modal-mask" id="loginModal">
   <div class="modal" role="dialog" aria-modal="true">
     <div class="modal-hd">
-      <h2>添加 WorkBuddy 账号 (OAuth 授权)</h2>
-      <button class="modal-x" onclick="closeLogin()" aria-label="关闭">×</button>
+      <h2>Thêm Tài Khoản WorkBuddy (Ủy Quyền OAuth)</h2>
+      <button class="modal-x" onclick="closeLogin()" aria-label="Đóng">×</button>
     </div>
     <div class="modal-bd">
       <div style="background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:16px">
-        <div style="font-size:12px;color:var(--dim);margin-bottom:8px;font-weight:600">选择要登录的版本：</div>
+        <div style="font-size:12px;color:var(--dim);margin-bottom:8px;font-weight:600">Chọn phiên bản để đăng nhập:</div>
         <div style="display:flex;gap:18px;flex-wrap:wrap">
           <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px">
             <input type="radio" name="loginRealm" value="cn" id="radioCn" onchange="switchLoginRealm(this.value)">
-            <span><b>国内版</b> (copilot.tencent.com)</span>
+            <span><b>Trong Nước</b> (copilot.tencent.com)</span>
           </label>
           <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px">
             <input type="radio" name="loginRealm" value="intl" id="radioIntl" onchange="switchLoginRealm(this.value)">
-            <span><b>国际版</b> (www.workbuddy.ai)</span>
+            <span><b>Quốc Tế</b> (www.workbuddy.ai)</span>
           </label>
         </div>
       </div>
-      <div class="step" id="step1"><div class="n">1</div><div class="t" id="step1Text">正在申请授权登录链接…</div></div>
-      <div class="step" id="step2"><div class="n">2</div><div class="t">在浏览器里打开下方链接并完成登录授权</div></div>
+      <div class="step" id="step1"><div class="n">1</div><div class="t" id="step1Text">Đang yêu cầu liên kết ủy quyền đăng nhập…</div></div>
+      <div class="step" id="step2"><div class="n">2</div><div class="t">Mở liên kết bên dưới trong trình duyệt và hoàn tất ủy quyền đăng nhập</div></div>
       <div id="loginLinkBox"></div>
-      <div class="step" id="step3"><div class="n">3</div><div class="t">等待授权回调完成（自动检测）</div></div>
+      <div class="step" id="step3"><div class="n">3</div><div class="t">Chờ hoàn tất callback ủy quyền (tự động phát hiện)</div></div>
       <p class="hint" id="loginStatus" style="font-weight:500"></p>
     </div>
     <div class="modal-ft">
-      <button class="sec" onclick="closeLogin()">关闭</button>
-      <button onclick="restartLogin()">重新生成链接</button>
+      <button class="sec" onclick="closeLogin()">Đóng</button>
+      <button onclick="restartLogin()">Tạo lại liên kết</button>
     </div>
   </div>
 </div>
@@ -847,19 +860,19 @@ a:hover{text-decoration:underline}
 <div class="modal-mask" id="desktopScanModal">
   <div class="modal" role="dialog" aria-modal="true" style="width:min(720px,100%)">
     <div class="modal-hd">
-      <h2>本机桌面客户端账号</h2>
-      <button class="modal-x" onclick="closeDesktopScan()" aria-label="关闭">×</button>
+      <h2>Tài Khoản Client Máy Tính</h2>
+      <button class="modal-x" onclick="closeDesktopScan()" aria-label="Đóng">×</button>
     </div>
     <div class="modal-bd">
       <p class="hint" style="margin-top:0">
-        下面是本机桌面客户端里已登录的账号（只读检测，点击「导入」才会加入网关）。
-        国际版账号归入国际版列表，国内版账号归入国内版列表。
+        Bên dưới là các tài khoản đã đăng nhập trong client desktop trên máy (chỉ kiểm tra đọc; nhấn「Nhập」mới thêm vào cổng).
+        Tài khoản Quốc Tế và Trong Nước sẽ được đưa vào danh sách tương ứng.
       </p>
-      <div id="desktopScanBody"><p class="hint">正在检测…</p></div>
+      <div id="desktopScanBody"><p class="hint">Đang kiểm tra…</p></div>
     </div>
     <div class="modal-ft">
-      <button class="sec" onclick="refreshDesktopScan(this)">重新扫描</button>
-      <button class="sec" onclick="closeDesktopScan()">关闭</button>
+      <button class="sec" onclick="refreshDesktopScan(this)">Quét lại</button>
+      <button class="sec" onclick="closeDesktopScan()">Đóng</button>
     </div>
   </div>
 </div>
@@ -867,24 +880,24 @@ a:hover{text-decoration:underline}
 <div class="modal-mask" id="importModal">
   <div class="modal" role="dialog" aria-modal="true" style="width:min(720px,100%)">
     <div class="modal-hd">
-      <h2>导入账号</h2>
-      <button class="modal-x" onclick="closeImport()" aria-label="关闭">×</button>
+      <h2>Nhập Tài Khoản</h2>
+      <button class="modal-x" onclick="closeImport()" aria-label="Đóng">×</button>
     </div>
     <div class="modal-bd">
       <p class="hint" style="margin-top:0">
-        选择一个账号 JSON 文件。支持本网关导出的文件、账号数组、单个账号对象，
-        以及桌面客户端的 <code>{"account":…,"auth":…}</code> 格式。
+        Chọn một tệp JSON tài khoản. Hỗ trợ tệp xuất từ cổng này, mảng tài khoản, một đối tượng tài khoản,
+        vàclient desktopcủa <code>{"account":…,"auth":…}</code> định dạng。
       </p>
-      <div id="importBody"><p class="hint">尚未选择文件。</p></div>
+      <div id="importBody"><p class="hint">Chưa chọntệp。</p></div>
     </div>
     <div class="modal-ft">
       <label class="sec" style="display:inline-flex;align-items:center;gap:6px;cursor:pointer">
         <input type="checkbox" id="importOverwrite" style="margin:0">
-        覆盖同 UID 账号
+        Ghi đè cùng UID Tài Khoản
       </label>
       <span style="flex:1"></span>
-      <button class="sec" onclick="closeImport()">取消</button>
-      <button id="btnImportCommit" class="primary" onclick="commitImport(this)" disabled>确认导入</button>
+      <button class="sec" onclick="closeImport()">Hủy</button>
+      <button id="btnImportCommit" class="primary" onclick="commitImport(this)" disabled>Xác nhận nhập</button>
     </div>
   </div>
 </div>
@@ -943,7 +956,7 @@ async function triggerLoginForSelectedRealm(){
   if(s3) s3.className = "step";
 
   const s1Text = document.getElementById("step1Text");
-  if(s1Text) s1Text.textContent = isCn ? "正在向 copilot.tencent.com (国内版) 申请授权..." : "正在向 www.workbuddy.ai (国际版) 申请授权...";
+  if(s1Text) s1Text.textContent = isCn ? "Đang yêu cầu ủy quyền tại copilot.tencent.com (Trong Nước)..." : "Đang yêu cầu ủy quyền tại www.workbuddy.ai (Quốc Tế)...";
 
   try{
     const r = await postJSON("/accounts/login/start", {platform: "CLI", realm: realm});
@@ -952,11 +965,11 @@ async function triggerLoginForSelectedRealm(){
     if(s2) s2.className = "step active";
     if(linkBox) linkBox.innerHTML =
       '<a class="login-link" href="' + esc(r.authUrl) + '" target="_blank" rel="noopener">' + esc(r.authUrl) + '</a>'
-      + '<div class="hint">点击上方链接在浏览器里完成登录授权。登录完成后本窗口会自动检测并完成入池。</div>';
+      + '<div class="hint">Nhấn liên kết phía trên trong trình duyệt để hoàn tất ủy quyền đăng nhập. Sau khi đăng nhập, cửa sổ này sẽ tự động kiểm tra và thêm tài khoản vào pool.</div>';
     pollLogin();
     loginTimer = setInterval(pollLogin, 2500);
   }catch(e){
-    if(statusBox) statusBox.textContent = "发起失败: " + e.message;
+    if(statusBox) statusBox.textContent = "Khởi tạo thất bại: " + e.message;
     if(s1) s1.className = "step";
   }
 }
@@ -971,7 +984,7 @@ async function pollLogin(){
     if(statusBox) statusBox.textContent = r.message || r.status;
     if(r.status === "ok"){
       if(s3) s3.className = "step done";
-      if(statusBox) statusBox.textContent = "登录成功：" + (r.account && r.account.nickname) + " 已加入账号池";
+      if(statusBox) statusBox.textContent = "Đăng nhập thành công: " + (r.account && r.account.nickname) + " đã được thêm vào pool tài khoản";
       if(loginTimer){ clearInterval(loginTimer); loginTimer = null; }
       loginState = null;
       await loadAccounts();
@@ -1008,7 +1021,7 @@ function updateUI(){
 
   const gwName = document.getElementById("activeGatewayName");
   if(gwName) {
-    gwName.textContent = isIntlGw ? "国际版 (Global)" : "国内版 (China)";
+    gwName.textContent = isIntlGw ? "Quốc Tế (Global)" : "Trong Nước (China)";
     gwName.style.color = isIntlGw ? "var(--accent)" : "#dc2626";
   }
   const ep = document.getElementById("activeEndpoint");
@@ -1016,7 +1029,7 @@ function updateUI(){
 
   const btnToggle = document.getElementById("btnToggleRealm");
   if(btnToggle) {
-    btnToggle.textContent = isIntlGw ? "切换默认出口为【国内版】" : "切换默认出口为【国际版】";
+    btnToggle.textContent = isIntlGw ? "Chuyển cổng mặc định thành【Trong Nước】" : "Chuyển cổng mặc định thành【Quốc Tế】";
     btnToggle.style.borderColor = isIntlGw ? "#dc2626" : "var(--accent)";
     btnToggle.style.color = isIntlGw ? "#dc2626" : "var(--accent)";
   }
@@ -1029,7 +1042,7 @@ function updateUI(){
   const btnCheckin = document.getElementById("btnCheckin");
   if(btnCheckin) btnCheckin.style.display = (window.VIEW_REALM === "cn" ? "inline-block" : "none");
 
-  // 计算当前绑定与生效的 Key 数量
+  // TínhHiện tạiGắnvàsinhhiệu lựccủa Key số lượng
   const keys = (typeof API_KEY_ROWS !== 'undefined' && API_KEY_ROWS.length) ? API_KEY_ROWS : (window.API_KEY_ROWS || []);
   const intlKeys = keys.filter(k => k.enabled !== false && k.realm === 'intl').length;
   const cnKeys = keys.filter(k => k.enabled !== false && k.realm === 'cn').length;
@@ -1037,15 +1050,15 @@ function updateUI(){
   const activeKeysTotal = isIntlGw ? (intlKeys + followKeys) : (cnKeys + followKeys);
 
   const elGwKeyBadge = document.getElementById("activeGatewayKeyCount");
-  if(elGwKeyBadge) elGwKeyBadge.textContent = activeKeysTotal + ' 个 Key 生效';
+  if(elGwKeyBadge) elGwKeyBadge.textContent = activeKeysTotal + ' Key có hiệu lực';
 
   const elIntlKey = document.getElementById("tabIntlKeyBadge");
-  if(elIntlKey) elIntlKey.textContent = intlKeys + ' 个 Key';
+  if(elIntlKey) elIntlKey.textContent = intlKeys + ' Key tài khoản';
 
   const elCnKey = document.getElementById("tabCnKeyBadge");
-  if(elCnKey) elCnKey.textContent = cnKeys + ' 个 Key';
+  if(elCnKey) elCnKey.textContent = cnKeys + ' Key tài khoản';
 
-  // 左侧卡片账号数与积分统计
+  // Tính số tài khoản và điểm trên các thẻ bên trái
   const allAccts = window.ACCOUNTS || [];
   const intlAccts = allAccts.filter(a => a.realm === 'intl' || !a.realm);
   const cnAccts = allAccts.filter(a => a.realm === 'cn');
@@ -1084,14 +1097,14 @@ async function toggleActiveGatewayRealm(){
   try {
     const res = await postJSON("/realm", {realm: next});
     window.ACTIVE_GATEWAY_REALM = res.current || next;
-    toast("网关默认上游已切换并永久保存为: " + (window.ACTIVE_GATEWAY_REALM === "intl" ? "国际版" : "国内版"));
+    toast("Đã chuyển và lưu vĩnh viễn cổng mặc định thành: " + (window.ACTIVE_GATEWAY_REALM === "intl" ? "Quốc Tế" : "Trong Nước"));
     window.VIEW_REALM = window.ACTIVE_GATEWAY_REALM;
     window.updateUI();
     await loadAccounts();
     await loadModels();
     await refresh();
   }catch(e){
-    alert("切换失败: " + e.message);
+    alert("Chuyển thất bại: " + e.message);
   }
 };
 
@@ -1122,41 +1135,41 @@ function renderAvailableModels(){
   const tb = document.querySelector('#modelsTable tbody');
   if(!tb) return;
   const countEm = document.getElementById('availModelCount');
-  if(countEm) countEm.textContent = '(共 ' + MODELS_DATA.length + ' 个)';
+  if(countEm) countEm.textContent = '(Tổng ' + MODELS_DATA.length + ' mục)';
   if(!MODELS_DATA.length){
-    tb.innerHTML = '<tr><td colspan="6" class="empty">暂无可用模型</td></tr>';
+      tb.innerHTML = '<tr><td colspan="6" class="empty">Chưa có mô hình khả dụng</td></tr>';
     return;
   }
   tb.innerHTML = MODELS_DATA.map(m => {
-    // 1. 倍率与折扣
+    // 1. Tỷ lệ giá & ưu đãi
     let credBadge = '-';
     const c = (m.credits || '').toString().toLowerCase().replace('x', '');
     if(c === '0.00' || c === '0' || m.id === 'hy3' || m.id === 'hy4-preview-f' || (m.id === 'deepseek-v4.1-flash' && window.VIEW_REALM === 'intl')){
-      credBadge = '<span class="badge ok" style="background:rgba(38,187,130,.15);color:#26bb82">限时免费 0.00x</span>';
+      credBadge = '<span class="badge ok" style="background:rgba(38,187,130,.15);color:#26bb82">Miễn phí có thời hạn 0.00x</span>';
     } else if(m.id === 'deepseek-v4.1-flash' && window.VIEW_REALM === 'cn'){
-      credBadge = '<span class="badge" style="background:rgba(255,77,79,.15);color:#ff4d4f;border:1px solid rgba(255,77,79,.3)">独家优惠 0.03x</span>';
+      credBadge = '<span class="badge" style="background:rgba(255,77,79,.15);color:#ff4d4f;border:1px solid rgba(255,77,79,.3)">Ưu đãi độc quyền 0.03x</span>';
     } else if((m.id === 'glm-5.2' || m.id === 'deepseek-v4-pro') && window.VIEW_REALM === 'cn'){
       const raw = m.credits ? (m.credits.startsWith('x') ? m.credits.slice(1) + 'x' : m.credits) : '0.79x';
-      credBadge = '<span class="badge s">' + raw + ' <span style="font-size:10px;color:var(--accent)">(夜间0.5x)</span></span>';
+      credBadge = '<span class="badge s">' + raw + ' <span style="font-size:10px;color:var(--accent)">(ban đêm0.5x)</span></span>';
     } else if(m.credits){
       credBadge = '<span class="badge s">' + esc(m.credits.startsWith('x') ? m.credits.slice(1) + 'x' : m.credits) + '</span>';
     }
 
-    // 2. 模型能力 (Vision, Tool calls)
+    // 2. Năng Lực Mô Hình (Vision, Tool calls)
     const caps = [];
     const hasVis = m.supports_vision || m.vision || m.multimodal || (m.input_modalities && m.input_modalities.includes('image'));
     if(hasVis){
-      caps.push('<span class="badge ok" style="font-size:11px">视觉</span>');
+      caps.push('<span class="badge ok" style="font-size:11px">Vision</span>');
     } else {
-      caps.push('<span class="badge" style="color:var(--dim);font-size:11px">文本</span>');
+      caps.push('<span class="badge" style="color:var(--dim);font-size:11px">Văn bản</span>');
     }
     const hasTool = m.supports_tool_calls || (m.capabilities && m.capabilities.tool_calls);
     if(hasTool){
-      caps.push('<span class="badge ok" style="font-size:11px">工具</span>');
+      caps.push('<span class="badge ok" style="font-size:11px">Công cụ</span>');
     }
     const hasReasoning = m.supports_reasoning || m.reasoning_fixed_effort || (m.reasoning_efforts && m.reasoning_efforts.length);
     if(hasReasoning){
-      caps.push('<span class="badge" style="background:rgba(124,58,237,.12);color:var(--think);border-color:rgba(124,58,237,.3);font-size:11px;font-weight:600">推理</span>');
+      caps.push('<span class="badge" style="background:rgba(124,58,237,.12);color:var(--think);border-color:rgba(124,58,237,.3);font-size:11px;font-weight:600">Suy luận</span>');
     }
     const capHtml = caps.join(' ');
 
@@ -1166,7 +1179,7 @@ function renderAvailableModels(){
       return k >= 1000 ? (k / 1000) + 'M' : k + 'K';
     };
 
-    // 3. 上下文窗口
+    // 3. Context
     let ctx = '-';
     if(m.context_length){
       ctx = '<b>' + fmtK(m.context_length) + '</b>';
@@ -1174,10 +1187,10 @@ function renderAvailableModels(){
       ctx = '<b>' + m.context_windows.map(fmtK).join(' / ') + '</b>';
     }
 
-    // 4. 最大输出
+    // 4. Max Output
     const maxOut = m.max_output_tokens ? ('<b>' + fmtK(m.max_output_tokens) + '</b>') : '-';
 
-    // 5. 思考档位
+    // 5. Cấp Độ Thinking
     let effort = '<span style="color:var(--dim)">—</span>';
     const renderEffortBadge = e => {
       const lvl = String(e || '').toLowerCase();
@@ -1190,16 +1203,16 @@ function renderAvailableModels(){
     } else if(m.reasoning_efforts && m.reasoning_efforts.length){
       effort = m.reasoning_efforts.map(renderEffortBadge).join(' ');
     } else if(m.supports_reasoning){
-      effort = '<span class="badge-effort">原生</span>';
+      effort = '<span class="badge-effort">Gốc</span>';
     }
 
     return '<tr>'
-      + '<td style="text-align:left" class="mono" data-label="模型 ID"><b>' + esc(m.id) + '</b></td>'
-      + '<td style="text-align:center" data-label="消费倍率">' + credBadge + '</td>'
-      + '<td style="text-align:center" data-label="能力">' + capHtml + '</td>'
-      + '<td style="text-align:center" data-label="上下文">' + ctx + '</td>'
-      + '<td style="text-align:center" data-label="最大输出">' + maxOut + '</td>'
-      + '<td style="text-align:left" data-label="思考档位">' + effort + '</td>'
+      + '<td style="text-align:left" class="mono" data-label="ID Mô Hình"><b>' + esc(m.id) + '</b></td>'
+      + '<td style="text-align:center" data-label="tiêuchi phílầntỷ lệ">' + credBadge + '</td>'
+      + '<td style="text-align:center" data-label="năng lựclực">' + capHtml + '</td>'
+      + '<td style="text-align:center" data-label="trêndướivăn bản">' + ctx + '</td>'
+      + '<td style="text-align:center" data-label="Max Output">' + maxOut + '</td>'
+      + '<td style="text-align:left" data-label="Cấp Độ Thinking">' + effort + '</td>'
       + '</tr>';
   }).join('');
 }
@@ -1231,14 +1244,14 @@ async function loadGrowthTasks(){
 
     const sel = document.getElementById("growthAcctSelect");
     if(sel && accts.length){
-      const opts = ['<option value="all"' + (CURRENT_GROWTH_UID === 'all' ? ' selected' : '') + '>全部国内账号 (批量)</option>']
+      const opts = ['<option value="all"' + (CURRENT_GROWTH_UID === 'all' ? ' selected' : '') + '>Tất cả tài khoản Trong Nước (hàng loạt)</option>']
         .concat(accts.map(a => '<option value="' + esc(a.uid) + '"' + (CURRENT_GROWTH_UID === a.uid ? ' selected' : '') + '>' + esc(a.nickname) + ' (' + esc(a.uid.slice(0,6)) + ')</option>'))
         .join('');
       sel.innerHTML = opts;
     }
 
     const elStk = document.getElementById("stkDays");
-    if(elStk) elStk.textContent = streak + ' 天';
+    if(elStk) elStk.textContent = streak + ' ngày';
     const elNrg = document.getElementById("nrgBalance");
     if(elNrg) elNrg.textContent = energy;
 
@@ -1246,46 +1259,46 @@ async function loadGrowthTasks(){
     const elCatDesc = document.getElementById("catDesc");
     if(elCat){
       if(tr.state === 'arrived') {
-        elCat.innerHTML = '<span style="color:#26bb82">旅行归来！待领奖</span>';
-        if(elCatDesc) elCatDesc.textContent = '获得奖励 +' + (tr.reward_credit || 0) + ' 积分';
+        elCat.innerHTML = '<span style="color:#26bb82">Đã về từ chuyến đi! Chờ nhận thưởng</span>';
+        if(elCatDesc) elCatDesc.textContent = 'Nhận thưởng +' + (tr.reward_credit || 0) + ' Điểm';
       } else if(tr.state === 'traveling') {
-        elCat.innerHTML = '<span style="color:var(--accent)">旅行中...</span>';
-        if(elCatDesc) elCatDesc.textContent = '预计稍后归来';
+        elCat.innerHTML = '<span style="color:var(--accent)">Đang du lịch...</span>';
+        if(elCatDesc) elCatDesc.textContent = 'Dự kiến sẽ về sau';
       } else if(tr.daily_limit_reached) {
-        elCat.textContent = '今日次数已用尽';
-        if(elCatDesc) elCatDesc.textContent = '次日 00:00 刷新';
+        elCat.textContent = 'Đã dùng hết lượt hôm nay';
+        if(elCatDesc) elCatDesc.textContent = 'Ngày mai 00:00 làm mới';
       } else {
-        elCat.textContent = '在家待命中';
-        if(elCatDesc) elCatDesc.textContent = '随时可出发旅行';
+        elCat.textContent = 'Đang chờ tại nhà';
+        if(elCatDesc) elCatDesc.textContent = 'Sẵn sàng khởi hành';
       }
     }
 
     const tb = document.querySelector("#growthTable tbody");
     if(!tb) return;
     if(!tasks.length){
-      tb.innerHTML = '<tr><td colspan="5" class="empty">暂无任务或未登录国内版账号</td></tr>';
+      tb.innerHTML = '<tr><td colspan="5" class="empty">Chưa có nhiệm vụ hoặc chưa đăng nhập tài khoản Trong Nước</td></tr>';
       return;
     }
     tb.innerHTML = tasks.map(t => {
       let stBadge = '<span class="badge">' + esc(t.status) + '</span>';
       if(t.status === 'claimed'){
-        stBadge = '<span class="badge off">已领取</span>';
+        stBadge = '<span class="badge off">Đã nhận</span>';
       } else if(t.status === 'completed' || t.current >= t.target){
-        stBadge = '<span class="badge ok">待领奖</span>';
+        stBadge = '<span class="badge ok">Chờ nhận thưởng</span>';
       } else if(t.status === 'accepted' || t.status === 'in_progress'){
-        stBadge = '<span class="badge s">进行中</span>';
+        stBadge = '<span class="badge s">Đang thực hiện</span>';
       } else if(t.status === 'not_accepted'){
-        stBadge = '<span class="badge">未接取</span>';
+        stBadge = '<span class="badge">Chưa nhận</span>';
       }
-      const prog = (t.status === 'claimed' || t.status === 'completed') ? '已达成' : (t.current + ' / ' + t.target);
-      const rwd = (t.reward_credit ? ('<b style="color:var(--accent2)">+' + t.reward_credit + '</b> 积分') : '') +
-                  (t.reward_energy ? (' <span style="color:var(--accent)">+' + t.reward_energy + ' 能量</span>') : '');
+      const prog = (t.status === 'claimed' || t.status === 'completed') ? 'Đã đạt' : (t.current + ' / ' + t.target);
+      const rwd = (t.reward_credit ? ('<b style="color:var(--accent2)">+' + t.reward_credit + '</b> Điểm') : '') +
+                  (t.reward_energy ? (' <span style="color:var(--accent)">+' + t.reward_energy + ' Năng lượng</span>') : '');
       return '<tr>'
-        + '<td data-label="任务"><b>' + esc(t.name) + '</b><br><span class="mono" style="font-size:11px;color:var(--dim)">' + esc(t.task_code) + '</span></td>'
-        + '<td style="font-size:12px;color:var(--dim);max-width:300px" data-label="说明">' + esc(t.description || '-') + '</td>'
-        + '<td data-label="进度">' + prog + '</td>'
-        + '<td data-label="奖励">' + (rwd || '-') + '</td>'
-        + '<td data-label="状态">' + stBadge + '</td>'
+        + '<td data-label="Nhiệm Vụ"><b>' + esc(t.name) + '</b><br><span class="mono" style="font-size:11px;color:var(--dim)">' + esc(t.task_code) + '</span></td>'
+        + '<td style="font-size:12px;color:var(--dim);max-width:300px" data-label="Mô tả">' + esc(t.description || '-') + '</td>'
+        + '<td data-label="Tiến Độ">' + prog + '</td>'
+        + '<td data-label="Phần Thưởng">' + (rwd || '-') + '</td>'
+        + '<td data-label="Trạng Thái">' + stBadge + '</td>'
         + '</tr>';
     }).join('');
   }catch(e){
@@ -1296,11 +1309,11 @@ async function loadGrowthTasks(){
 async function runGrowthTasks(btn){
   btn.disabled = true;
   const oldText = btn.textContent;
-  btn.textContent = '任务执行中...';
+  btn.textContent = 'Đang thực hiện nhiệm vụ...';
   const logBox = document.getElementById("taskLogBox");
   if(logBox){
     logBox.style.display = 'block';
-    logBox.innerHTML = '<div style="color:var(--accent)">[task_runner] 正在启动全自动任务接取、事件上报与奖励领取流水...</div>';
+    logBox.innerHTML = '<div style="color:var(--accent)">[task_runner] Đang khởi động tự độngNhiệm Vụnhậnlấy、báo cáo sự kiệnvàPhần Thưởngquy trình nhận thưởng...</div>';
   }
   try{
     const payload = {};
@@ -1315,11 +1328,11 @@ async function runGrowthTasks(btn){
     }
     await loadAccounts();
     await loadGrowthTasks();
-    const sumC = r.credit_added != null ? ('，共增加 +' + r.credit_added + ' 积分') : '';
-    toast("成长任务流水执行完成" + sumC + "！");
+    const sumC = r.credit_added != null ? ('，tăng tổng cộng +' + r.credit_added + ' Điểm') : '';
+    toast("Đã hoàn tất quy trình nhiệm vụ" + sumC + "!", "ok");
   }catch(e){
-    if(logBox) logBox.innerHTML += '<div style="color:var(--warn)">执行出错: ' + esc(e.message) + '</div>';
-    alert("任务执行失败: " + e.message);
+    if(logBox) logBox.innerHTML += '<div style="color:var(--warn)">Lỗi thực thi: ' + esc(e.message) + '</div>';
+    alert("Thực hiện nhiệm vụ thất bại: " + e.message);
   }finally{
     btn.disabled = false;
     btn.textContent = oldText;
@@ -1327,20 +1340,20 @@ async function runGrowthTasks(btn){
 }
 
 async function triggerCatTravel(btn){
-  if(btn){ btn.disabled = true; btn.textContent = '旅行中...'; }
+  if(btn){ btn.disabled = true; btn.textContent = 'Đang du lịch...'; }
   try{
     const payload = {};
     if(CURRENT_GROWTH_UID && CURRENT_GROWTH_UID !== 'all'){
       payload.uid = CURRENT_GROWTH_UID;
     }
     const r = await postJSON("/tasks/travel", payload);
-    toast(r.msg || (r.ok ? "猫猫旅行结算完成" : "操作失败"), r.ok ? "ok" : "warn");
+    toast(r.msg || (r.ok ? "Mèo Du Lịch đã quyết toán xong" : "Thao tác thất bại"), r.ok ? "ok" : "warn");
     await loadAccounts();
     await loadGrowthTasks();
   }catch(e){
-    toast("猫猫旅行失败: " + e.message, "bad");
+    toast("Mèo Du Lịch thất bại: " + e.message, "bad");
   }finally{
-    if(btn){ btn.disabled = false; btn.textContent = '猫猫旅行'; }
+    if(btn){ btn.disabled = false; btn.textContent = 'Mèo Du Lịch'; }
   }
 }
 
@@ -1357,25 +1370,25 @@ async function loadSchedulerStatus(){
 
     if(dot) dot.className = s.enabled ? 'dot' : 'dot off';
     const modeText = (window.VIEW_REALM === 'intl')
-      ? (s.mode_intl || '账号 Token 自动保活与凭证常驻 (每日 22:00 集中巡检)')
-      : (s.mode_cn || s.mode || '整点排程');
-    if(txt) txt.textContent = s.enabled ? ('运行中 · ' + modeText) : '已暂停';
-    if(times) times.textContent = '上次: ' + (s.last_run_time || '-') + ' · 下次: ' + (s.next_run_time || '-');
-    if(btn) btn.textContent = s.enabled ? '暂停调度' : '启用调度';
-    if(btnTrig) btnTrig.textContent = (window.VIEW_REALM === 'intl') ? '立即保活刷新' : '立即巡检保活';
+      ? (s.mode_intl || 'Tài Khoản Token tự động duy trì Token & giữ thông tin xác thực (kiểm tra tập trung lúc 22:00 hàng ngày)')
+      : (s.mode_cn || s.mode || 'lịch theo giờ');
+    if(txt) txt.textContent = s.enabled ? ('Đang chạy · ' + modeText) : 'Đã tạm dừng';
+    if(times) times.textContent = 'lần trước: ' + (s.last_run_time || '-') + ' · lần tới: ' + (s.next_run_time || '-');
+    if(btn) btn.textContent = s.enabled ? 'Tạm Dừng Lịch' : 'Bật Lịch';
+    if(btnTrig) btnTrig.textContent = 'Làm mới lịch trình';
   }catch(e){}
 }
 
 async function triggerSchedulerNow(btn){
-  if(btn){ btn.disabled = true; btn.textContent = '巡检中...'; }
+  if(btn){ btn.disabled = true; btn.textContent = 'Đang kiểm tra...'; }
   try{
     const r = await postJSON("/scheduler/trigger", {});
-    toast(r.msg || "已触发巡检保活", "ok");
+    toast(r.msg || "Đã kích hoạt kiểm tra duy trì", "ok");
     setTimeout(loadSchedulerStatus, 2000);
   }catch(e){
-    toast("触发失败: " + e.message, "bad");
+    toast("Kích hoạt thất bại: " + e.message, "bad");
   }finally{
-    if(btn){ btn.disabled = false; btn.textContent = (window.VIEW_REALM === 'intl') ? '立即保活刷新' : '立即巡检保活'; }
+    if(btn){ btn.disabled = false; btn.textContent = 'Làm mới lịch trình'; }
   }
 }
 
@@ -1384,9 +1397,9 @@ async function toggleScheduler(btn){
   try{
     const r = await postJSON("/scheduler/toggle", {});
     await loadSchedulerStatus();
-    toast("后台调度器已" + (r.enabled ? "启用" : "暂停"), "ok");
+    toast("nềnLịchĐã " + (r.enabled ? "Bật" : "Tạm dừng"), "ok");
   }catch(e){
-    toast("切换失败: " + e.message, "bad");
+    toast("Chuyển thất bại: " + e.message, "bad");
   }finally{
     if(btn){ btn.disabled = false; }
   }
@@ -1399,17 +1412,17 @@ function filterRealm(m){
   renderAccounts();
 }
 async function doCheckin(btn){
-  btn.disabled = true; const ot = btn.textContent; btn.textContent = "签到中...";
+  btn.disabled = true; const ot = btn.textContent; btn.textContent = "Đang điểm danh...";
   try {
     const r = await postJSON("/accounts/checkin", {});
     const res = r.results || [];
-    if(!res.length) toast("未发现国内版账号", "warn");
+    if(!res.length) toast("Không tìm thấy tài khoản Trong Nước", "warn");
     else {
-      const summary = res.map(x => (x.nickname||x.uid.slice(0,6)) + ": " + (x.ok ? "签到成功" : (x.error||x.msg))).join("；");
-      toast("每日签到: " + summary, res.some(x => x.ok) ? "ok" : "warn");
+      const summary = res.map(x => (x.nickname||x.uid.slice(0,6)) + ": " + (x.ok ? "Điểm danhthành công" : (x.error||x.msg))).join("；");
+      toast("Điểm Danh Hàng Ngày: " + summary, res.some(x => x.ok) ? "ok" : "warn");
     }
     await initRealm(); loadAccounts(); loadModels();
-  }catch(e){ toast("签到失败: " + e.message, "bad"); }
+  }catch(e){ toast("Điểm danh thất bại: " + e.message, "bad"); }
   finally { btn.disabled = false; btn.textContent = ot; }
 }
 
@@ -1417,8 +1430,8 @@ const fmt = n => (n ?? 0).toLocaleString('en-US');
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const ms = v => v == null ? '—' : (v >= 1000 ? (v/1000).toFixed(2) + ' s' : Math.round(v) + ' ms');
 const pct = v => v == null ? '—' : v.toFixed(1) + '%';
-// 输入 / 输出 / 思考 三个数字，各自一色，斜杠分隔。思考为 0 也写出来，
-// 列的形状因此固定，不会因某个模型不推理就缩短。
+// Input / Output / Thinking bamụcsốký tự，mỗitựmộtmàu，chéogạchphầncách。Thinkinglà 0 cũngghirađến，
+// cộtcủahình dạngtrạng tháivìnàyCố định，khôngsẽvìmộtmụcMô hìnhkhôngSuy luậnliềnrút gọnngắn。
 const tripleTokens = (inp, out, think) =>
   '<span style="color:var(--accent)">' + fmt(inp || 0) + '</span>' +
   ' <span style="color:var(--dim-light)">/</span> ' +
@@ -1427,7 +1440,7 @@ const tripleTokens = (inp, out, think) =>
   '<span style="color:var(--think)">' + fmt(think || 0) + '</span>';
 
 function perfRow(label, b, unit, fmtFn, color){
-  if(!b) return '<tr><td>' + label + '</td><td colspan="5" style="color:var(--dim)">暂无数据</td></tr>';
+  if(!b) return '<tr><td>' + label + '</td><td colspan="5" style="color:var(--dim)">Chưa có dữ liệu</td></tr>';
   const f = fmtFn || (v => v);
   const dot = color ? ' <i style="display:inline-block;width:7px;height:7px;border-radius:2px;background:' + color + ';margin-left:6px"></i>' : '';
   return '<tr><td>' + label + dot + '</td>'
@@ -1435,7 +1448,7 @@ function perfRow(label, b, unit, fmtFn, color){
     + '<td>' + f(b.p50) + unit + '</td>'
     + '<td>' + f(b.p90) + unit + '</td>'
     + '<td>' + f(b.p99) + unit + '</td>'
-    + '<td style="color:var(--dim)">' + b.samples + ' 次</td></tr>';
+    + '<td style="color:var(--dim)">' + b.samples + ' lượt</td></tr>';
 }
 
 function card(k, v, sub, cls){
@@ -1542,45 +1555,45 @@ let USAGE_BY_ACCOUNT = {};
 
 function accountRow(a){
   const realmBadge = a.realm === 'cn'
-    ? '<span class="realm-badge-cn">国内版</span>'
-    : '<span class="realm-badge-intl">国际版</span>';
+    ? '<span class="realm-badge-cn">Trong Nước</span>'
+    : '<span class="realm-badge-intl">Quốc Tế</span>';
   // Inline handlers embed these in an HTML attribute, so they must survive
   // both the attribute and the quoted JS string. uid comes from an upstream
   // JWT; treat it as untrusted and keep it to a safe charset.
   const uidAttr = esc(String(a.uid || '').replace(/[^\w.@-]/g, ''));
   const nameAttr = esc(String(a.nickname || '').replace(/["'\\<>]/g, ''));
   const usage = USAGE_BY_ACCOUNT[a.uid] || {};
-  const state = !a.enabled ? '<span class="badge off">已停用</span>'
-              : a.inCooldown ? '<span class="badge warn">冷却 ' + (a.cooldownFor||0) + 's</span>'
-              : a.expiresIn === 'expired' ? '<span class="badge bad">已过期</span>'
-              : '<span class="badge ok">可用</span>';
+  const state = !a.enabled ? '<span class="badge off">Đã Tắt</span>'
+              : a.inCooldown ? '<span class="badge warn">Đang làm mát ' + (a.cooldownFor||0) + 's</span>'
+              : a.expiresIn === 'expired' ? '<span class="badge bad">Đã hết hạn</span>'
+              : '<span class="badge ok">Khả dụng</span>';
   const err = a.lastError ? '<div class="hint" style="color:var(--warn);margin:2px 0 0">' + esc(a.lastError) + '</div>' : '';
   const cred = a.credits;
-  const credText = cred ? ('<b style="color:var(--accent2)">' + fmt(cred.remain) + '</b> / ' + fmt(cred.size)) : '<span style="color:var(--dim)">未查询</span>';
+  const credText = cred ? ('<b style="color:var(--accent2)">' + fmt(cred.remain) + '</b> / ' + fmt(cred.size)) : '<span style="color:var(--dim)">Chưa truy vấn</span>';
   return '<tr>'
-    + '<td style="text-align:center;white-space:nowrap" data-label="版本">' + realmBadge + '</td>'
-    + '<td style="text-align:left" data-label="账号">'
+    + '<td style="text-align:center;white-space:nowrap" data-label="Phiên bản">' + realmBadge + '</td>'
+    + '<td style="text-align:left" data-label="Tài Khoản">'
     +   '<div style="font-weight:600;font-size:13px;color:var(--fg)">' + esc(a.nickname) + '</div>'
-    + '<div class="mono" style="color:var(--dim);font-size:11px">' + esc(a.uid.slice(0,8)) + ' · ' + esc(a.source) + ' · 到期 ' + esc(a.expiresIn || '?') + '</div>'
-    + (a.machineId ? ('<div class="mono" style="color:var(--dim);font-size:10px;margin-top:2px" title="由账号UID稳定派生的专属设备码，防多号关联风控">设备码: ' + esc(a.machineId.slice(0,14)) + '...</div>') : '')
+    + '<div class="mono" style="color:var(--dim);font-size:11px">' + esc(a.uid.slice(0,8)) + ' · ' + esc(a.source) + ' · hết hạn ' + esc(a.expiresIn || '?') + '</div>'
+    + (a.machineId ? ('<div class="mono" style="color:var(--dim);font-size:10px;margin-top:2px" title="Mã thiết bị riêng được dẫn xuất ổn định từ UID tài khoản, giúp chống liên kết nhiều tài khoản">Mã thiết bị: ' + esc(a.machineId.slice(0,14)) + '...</div>') : '')
     + err + '</td>'
-    + '<td style="text-align:center" data-label="状态">' + state + '</td>'
-    + '<td style="text-align:center" data-label="出口">' + slotSelectHtml(a) + '</td>'
-    + '<td style="text-align:left;white-space:nowrap" data-label="积分">' + credText + '</td>'
-    + '<td style="text-align:right" data-label="请求">' + fmt(usage.requests) + '</td>'
-    + '<td style="text-align:right" data-label="总 token">' + fmt(usage.total_tokens) + '</td>'
-    + '<td style="text-align:right" data-label="缓存">' + fmt(usage.cached_tokens) + '</td>'
+    + '<td style="text-align:center" data-label="Trạng Thái">' + state + '</td>'
+    + '<td style="text-align:center" data-label="Cổng Proxy">' + slotSelectHtml(a) + '</td>'
+    + '<td style="text-align:center;white-space:nowrap" data-label="Điểm">' + credText + '</td>'
+    + '<td style="text-align:center" data-label="Request">' + fmt(usage.requests) + '</td>'
+    + '<td style="text-align:center" data-label="Tổng token">' + fmt(usage.total_tokens) + '</td>'
+    + '<td style="text-align:center" data-label="Cache">' + fmt(usage.cached_tokens) + '</td>'
     + '<td class="acct-actions" style="text-align:center;white-space:nowrap;vertical-align:middle">'
     + '<div class="acct-actions-col">'
     +   '<div class="acct-actions-row">'
-    +     '<button class="sec mini" onclick="toggleAccount(&quot;' + uidAttr + '&quot;,' + (!a.enabled) + ', this)">' + (a.enabled ? '停用' : '启用') + '</button>'
-    +     '<button class="sec mini" onclick="testAccount(&quot;' + uidAttr + '&quot;, this)">测试</button>'
-    +     '<button class="sec mini" onclick="refreshOne(&quot;' + uidAttr + '&quot;, this)">刷新</button>'
+    +     '<button class="sec mini" onclick="toggleAccount(&quot;' + uidAttr + '&quot;,' + (!a.enabled) + ', this)">' + (a.enabled ? 'Tắt' : 'Bật') + '</button>'
+    +     '<button class="sec mini" onclick="testAccount(&quot;' + uidAttr + '&quot;, this)">Kiểm tra</button>'
+    +     '<button class="sec mini" onclick="refreshOne(&quot;' + uidAttr + '&quot;, this)">Làm Mới</button>'
     +   '</div>'
     +   '<div class="acct-actions-row">'
-    +     '<button class="sec mini" title="切换出站身分：CLI ↔ WorkBuddy" onclick="switchProduct(&quot;' + uidAttr + '&quot;, this)">' + ((a.product === 'workbuddy') ? 'WB' : 'CLI') + '</button>'
-    +     '<button class="sec mini" onclick="exportOne(&quot;' + uidAttr + '&quot;)">导出</button>'
-    +     '<button class="danger mini" onclick="deleteAccount(&quot;' + uidAttr + '&quot;,&quot;' + nameAttr + '&quot;, this)">删除</button>'
+    +     '<button class="sec mini" title="ChuyểnDanh tính xuất：CLI ↔ WorkBuddy" onclick="switchProduct(&quot;' + uidAttr + '&quot;, this)">' + ((a.product === 'workbuddy') ? 'WB' : 'CLI') + '</button>'
+    +     '<button class="sec mini" onclick="exportOne(&quot;' + uidAttr + '&quot;)">Xuất</button>'
+    +     '<button class="danger mini" onclick="deleteAccount(&quot;' + uidAttr + '&quot;,&quot;' + nameAttr + '&quot;, this)">Xóa</button>'
     +   '</div>'
     + '</div>'
     + '</td></tr>';
@@ -1596,34 +1609,34 @@ function renderAccounts(){
     .sort((x, y) => (x[0].enabled === y[0].enabled) ? (x[1] - y[1]) : (x[0].enabled ? -1 : 1))
     .map(pair => pair[0]);
   const usable = list.filter(a => a.enabled).length;
-  const viewName = currentView === 'cn' ? '国内版' : '国际版';
+  const viewName = currentView === 'cn' ? 'Trong Nước' : 'Quốc Tế';
   document.getElementById('acctCount').textContent =
-    list.length ? ('（' + viewName + '共 ' + list.length + ' 个，启用 ' + usable + ' 个）') : '';
+    list.length ? ('（Tổng ' + list.length + ' mục, Bật ' + usable + ' mục）') : '';
   if(!list.length){
     box.innerHTML =
       '<div style="text-align:center;padding:30px 16px">'
-      + '<div style="font-size:15px;margin-bottom:8px">当前' + viewName + '还没有账号</div>'
+      + '<div style="font-size:15px;margin-bottom:8px">Hiện tại chưa có tài khoản</div>'
       + '<div style="color:var(--dim);font-size:13px;margin-bottom:18px">'
-      +   '请先登录或导入一个 ' + viewName + ' 账号，之后相关请求都会走该账号'
+      +   'Vui lòng đăng nhập hoặc nhập một tài khoản ' + viewName + ', sau đó các yêu cầu đều đi qua tài khoản đó.'
       + '</div>'
       + '<button onclick="startLogin()" style="font-size:14px;padding:10px 22px">'
-      +   '登录新账号 (OAuth)'
+      +   'Đăng nhập tài khoản mới (OAuth)'
       + '</button>'
       + '</div>';
     return;
   }
   box.innerHTML = '<div class="table-wrap"><table class="data-cards account-cards"><thead><tr>'
-    + '<th style="text-align:center;width:76px">版本</th>'
-    + '<th style="text-align:left">账号</th>'
-    + '<th style="text-align:center;width:84px">状态</th>'
-    + '<th style="text-align:center;width:150px">出口</th>'
-    + '<th style="text-align:left;width:120px">积分</th>'
-    + '<th style="text-align:right;width:70px">请求</th>'
-    + '<th style="text-align:right;width:88px">总 token</th>'
-    + '<th style="text-align:right;width:80px">缓存</th>'
-    + '<th style="text-align:center;width:150px">操作</th>'
+    + '<th style="text-align:center;width:76px">Phiên bản</th>'
+    + '<th style="text-align:left">Tài Khoản</th>'
+    + '<th style="text-align:center;width:84px">Trạng Thái</th>'
+    + '<th style="text-align:center;width:150px">Cổng Proxy</th>'
+    + '<th style="text-align:center;width:120px">Điểm</th>'
+    + '<th style="text-align:center;width:70px">Request</th>'
+    + '<th style="text-align:center;width:88px">Tổng token</th>'
+    + '<th style="text-align:center;width:80px">Cache</th>'
+    + '<th style="text-align:center;width:150px">Thao tác</th>'
     + '</tr></thead><tbody>' + list.map(accountRow).join('') + '</tbody></table></div>'
-    + '<div class="legend"><span>多个账号按会话粘性 + 轮询使用；某个账号被上游拒绝时自动切到下一个</span></div>';
+    + '<div class="legend"><span>Nhiều tài khoản dùng theo độ dính phiên + luân phiên; khi một tài khoản bị upstream từ chối sẽ tự chuyển sang tài khoản kế tiếp</span></div>';
 }
 
 async function loadAccounts(){
@@ -1642,23 +1655,23 @@ async function loadAccounts(){
         renderAccounts();
       }).catch(()=>{});
     }
-  }catch(e){ toast('账号加载失败: ' + e.message); }
+  }catch(e){ toast('Tải tài khoản thất bại: ' + e.message, 'bad'); }
 }
 
 async function fetchCredits(btn){
-  if(btn){ btn.disabled = true; btn.textContent = '刷新中...'; }
+  if(btn){ btn.disabled = true; btn.textContent = 'Đang làm mới...'; }
   const currentView = (window.VIEW_REALM || "intl");
-  const viewName = currentView === 'cn' ? '国内版' : '国际版';
+  const viewName = currentView === 'cn' ? 'Trong Nước' : 'Quốc Tế';
   try{
     const r = await postJSON('/accounts/credits', {realm: currentView});
     await loadAccounts();
     refresh();
     const count = (r.results || []).length;
-    toast('已成功刷新当前' + viewName + ' ' + count + ' 个账号的积分', 'ok');
+    toast('Đã làm mới điểm của ' + count + ' tài khoản ' + viewName + ' thành công', 'ok');
   }catch(e){
-    toast('刷新积分失败: ' + e.message, 'bad');
+    toast('Làm mới Credit thất bại: ' + e.message, 'bad');
   }finally{
-    if(btn){ btn.disabled = false; btn.textContent = '刷新积分'; }
+    if(btn){ btn.disabled = false; btn.textContent = 'Làm Mới Credit'; }
   }
 }
 const queryCredits = fetchCredits;
@@ -1668,9 +1681,9 @@ async function toggleAccount(uid, enable, btn){
   try{
     await postJSON('/accounts/set', {uid: uid, enabled: enable});
     await loadAccounts();
-    toast(enable ? '账号已成功启用' : '账号已停用', 'ok');
+    toast(enable ? 'Tài khoản đã bật thành công' : 'Tài khoản đã tắt', 'ok');
   }catch(e){
-    toast('操作失败: ' + e.message, 'bad');
+    toast('Thao tác thất bại: ' + e.message, 'bad');
   }finally{
     if(btn) btn.disabled = false;
   }
@@ -1693,38 +1706,38 @@ async function switchProduct(uid, btn){
 }
 
 async function refreshOne(uid, btn){
-  if(btn){ btn.disabled = true; btn.textContent = '刷新中...'; }
+  if(btn){ btn.disabled = true; btn.textContent = 'Đang làm mới...'; }
   try{
     const r = await postJSON('/accounts/refresh', {uid: uid});
     const ok = (r.results||[])[0];
-    toast(ok && ok.ok ? '账号凭证刷新成功' : ('刷新失败: ' + (ok && ok.error || '未知错误')), ok && ok.ok ? 'ok' : 'bad');
+    toast(ok && ok.ok ? 'Đã làm mới thông tin xác thực tài khoản thành công' : ('Làm mới thất bại: ' + (ok && ok.error || 'Lỗi không rõ')), ok && ok.ok ? 'ok' : 'bad');
     await loadAccounts();
   }catch(e){
-    toast('刷新失败: ' + e.message, 'bad');
+    toast('Làm mới thất bại: ' + e.message, 'bad');
   }finally{
-    if(btn){ btn.disabled = false; btn.textContent = '刷新'; }
+    if(btn){ btn.disabled = false; btn.textContent = 'Làm Mới'; }
   }
 }
 async function testAccount(uid, btn){
-  if(btn){ btn.disabled = true; btn.textContent = '测试中...'; }
+  if(btn){ btn.disabled = true; btn.textContent = 'Đang kiểm tra...'; }
   try{
     const r = await postJSON('/accounts/test', {uid: uid});
     if(r.ok){
-      toast('测试通过 (' + r.elapsed_ms + 'ms) [' + r.model + ']: ' + (r.reply || '正常'), 'ok');
+      toast('Kiểm tra thành công (' + r.elapsed_ms + 'ms) [' + r.model + ']: ' + (r.reply || 'Bình thường'), 'ok');
     } else {
-      toast('测试失败: ' + (r.error || r.status || '异常'), 'bad');
+      toast('Kiểm tra thất bại: ' + (r.error || r.status || 'Bất thường'), 'bad');
     }
     await loadAccounts();
   }catch(e){
-    toast('测试请求失败: ' + e.message, 'bad');
+    toast('Yêu cầu kiểm tra thất bại: ' + e.message, 'bad');
   }finally{
-    if(btn){ btn.disabled = false; btn.textContent = '测试'; }
+    if(btn){ btn.disabled = false; btn.textContent = 'Kiểm tra'; }
   }
 }
 async function refreshAccounts(){
   try{ const r = await postJSON('/accounts/refresh', {});
        const okc = (r.results||[]).filter(x=>x.ok).length;
-       toast('刷新完成: ' + okc + '/' + (r.results||[]).length);
+       toast('Làm mới hoàn tất: ' + okc + '/' + (r.results||[]).length, 'ok');
        await loadAccounts(); }
   catch(e){ toast(e.message); }
 }
@@ -1733,28 +1746,28 @@ async function setAll(enable, btn){
   try{
     await postJSON('/accounts/set-all', {enabled: enable});
     await loadAccounts();
-    toast(enable ? '已全部启用所有账号' : '已全部停用所有账号', 'ok');
+    toast(enable ? 'Đã bật tất cả tài khoản' : 'Đã tắt tất cả tài khoản', 'ok');
   }catch(e){
-    toast('批量操作失败: ' + e.message, 'bad');
+    toast('Thao tác hàng loạt thất bại: ' + e.message, 'bad');
   }finally{
     if(btn) btn.disabled = false;
   }
 }
 async function deleteAccount(uid, name, btn){
-  if(!confirm("确定删除账号 " + name + "？")) return;
+  if(!confirm("Xác nhận xóa tài khoản " + name + "？")) return;
   if(btn) btn.disabled = true;
   try{
     await postJSON('/accounts/delete', {uid: uid});
     await loadAccounts();
-    toast('已成功删除账号 ' + name, 'ok');
+    toast('Đã xóa tài khoản ' + name, 'ok');
   }catch(e){
-    toast('删除失败: ' + e.message, 'bad');
+    toast('Xóa thất bại: ' + e.message, 'bad');
   }finally{
     if(btn) btn.disabled = false;
   }
 }
 
-/* ---- 账号导出 / 导入 ---- */
+/* ---- Xuất / nhập tài khoản ---- */
 async function downloadExport(query, fallbackLabel){
   // Fetch through the authorised JSON API and save the blob client-side.
   // A plain <a href> would not carry the X-Panel-Token header, so a
@@ -1762,14 +1775,14 @@ async function downloadExport(query, fallbackLabel){
   const r = await fetch('/accounts/export' + (query || ''), {cache:'no-store', headers: authHeaders()});
   if(r.status === 401 || r.status === 403){ panelSessionLost(); throw new Error('unauthorized'); }
   if(r.status === 404){
-    let msg = '账号不存在';
+    let msg = 'Tài khoản không tồn tại';
     try{ const e = await r.json(); msg = (e.error && e.error.message) || msg; }catch(_){}
     throw new Error(msg);
   }
   if(!r.ok) throw new Error('HTTP ' + r.status);
   const text = await r.text();
   let doc;
-  try{ doc = JSON.parse(text); }catch(e){ throw new Error('返回内容不是 JSON'); }
+  try{ doc = JSON.parse(text); }catch(e){ throw new Error('Nội dung trả về không phải JSON'); }
   const stamp = new Date().toISOString().slice(0,19).replace(/[-:T]/g,'');
   const name = 'workbuddy-accounts-' + (fallbackLabel || '') + stamp + '.json';
   const blob = new Blob([text], {type:'application/json'});
@@ -1782,14 +1795,14 @@ async function downloadExport(query, fallbackLabel){
 }
 
 async function exportAccounts(btn){
-  if(btn){ btn.disabled = true; btn.textContent = '导出中...'; }
+  if(btn){ btn.disabled = true; btn.textContent = 'Đang xuất...'; }
   try{
     const r = await downloadExport('', '');
-    toast('已导出 ' + r.count + ' 个账号 → ' + r.name);
+    toast('Đã xuất ' + r.count + ' tài khoản → ' + r.name);
   }catch(e){
-    toast('导出失败: ' + e.message, 'err');
+    toast('Xuất thất bại: ' + e.message, 'err');
   }finally{
-    if(btn){ btn.disabled = false; btn.textContent = '导出账号'; }
+    if(btn){ btn.disabled = false; btn.textContent = 'Xuất Tài Khoản'; }
   }
 }
 
@@ -1798,13 +1811,13 @@ async function exportOne(uid){
   // the file can be re-imported on another instance without editing.
   try{
     const r = await downloadExport('?uid=' + encodeURIComponent(uid), uid.slice(0,8) + '-');
-    toast('已导出 1 个账号 → ' + r.name);
+    toast('Đã xuất 1 tài khoản → ' + r.name);
   }catch(e){
-    toast('导出失败: ' + e.message, 'err');
+    toast('Xuất thất bại: ' + e.message, 'err');
   }
 }
 
-let importRows = null;   // 已解析、待导入的账号行
+let importRows = null;   // Đã phân tích, đang chờ nhập dòng tài khoản
 
 function openImport(){
   importRows = null;
@@ -1812,7 +1825,7 @@ function openImport(){
   const body = document.getElementById('importBody');
   const ow = document.getElementById('importOverwrite');
   if(ow) ow.checked = false;
-  if(body) body.innerHTML = '<p class="hint">正在打开文件…</p>';
+  if(body) body.innerHTML = '<p class="hint">đangtrongMởtệp…</p>';
   if(m) m.classList.add('show');
   // The picker is created per call so choosing the same file twice still fires.
   const picker = document.createElement('input');
@@ -1840,16 +1853,16 @@ async function readImportFile(file){
     const text = await file.text();
     let doc;
     try{ doc = JSON.parse(text); }
-    catch(e){ throw new Error('文件不是合法 JSON'); }
+    catch(e){ throw new Error('tệpkhônglàhợp lệ JSON'); }
 
     // Accept the export document, a bare array, or a single account object.
     let rows;
     if(Array.isArray(doc)) rows = doc;
     else if(doc && Array.isArray(doc.accounts)) rows = doc.accounts;
     else if(doc && (doc.accessToken || doc.auth)) rows = [doc];
-    else throw new Error('文件里没有找到账号（既没有 accounts 数组，也不是单个账号）');
+    else throw new Error('Không tìm thấy tài khoản trong tệp (không có mảng accounts hoặc đối tượng tài khoản đơn)');
 
-    if(!rows.length) throw new Error('账号列表是空的');
+    if(!rows.length) throw new Error('Danh sách tài khoản trống');
     importRows = rows;
 
     // Dry-run first so the user sees exactly what will happen.
@@ -1859,7 +1872,7 @@ async function readImportFile(file){
     importRows = null;
     const btn = document.getElementById('btnImportCommit');
     if(btn) btn.disabled = true;
-    if(body) body.innerHTML = '<p class="hint" style="color:var(--warn)">读取失败: ' + esc(e.message) + '</p>';
+    if(body) body.innerHTML = '<p class="hint" style="color:var(--warn)">Đọc thất bại: ' + esc(e.message) + '</p>';
   }
 }
 
@@ -1875,30 +1888,30 @@ function renderImportPreview(filename, res, total){
     return '<li><code>' + esc(String(uid).slice(0,8)) + '</code>' + reason + '</li>';
   }).join('');
 
-  let html = '<p class="hint" style="margin-top:0">文件：<b>' + esc(filename) + '</b>'
-    + ' · 共 ' + total + ' 条</p>';
+  let html = '<p class="hint" style="margin-top:0">tệp：<b>' + esc(filename) + '</b>'
+    + ' · Tổng ' + total + '  dòng</p>';
   html += '<div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:10px">'
-    + '<span>新增 <b style="color:var(--accent2)">' + added.length + '</b></span>'
-    + '<span>覆盖 <b>' + updated.length + '</b></span>'
-    + '<span>跳过 <b>' + skipped.length + '</b></span>'
-    + '<span>无效 <b style="color:var(--warn)">' + invalid.length + '</b></span>'
+    + '<span>mớităng <b style="color:var(--accent2)">' + added.length + '</b></span>'
+    + '<span>ghi đèphủ <b>' + updated.length + '</b></span>'
+    + '<span>Bỏ qua <b>' + skipped.length + '</b></span>'
+    + '<span>Không hợp lệ <b style="color:var(--warn)">' + invalid.length + '</b></span>'
     + '</div>';
 
-  if(added.length)   html += '<div style="margin-bottom:8px"><b>将新增</b><ul class="hint" style="margin:4px 0 0 18px;padding:0">' + rowsHtml(added) + '</ul></div>';
-  if(updated.length) html += '<div style="margin-bottom:8px"><b>将覆盖</b><ul class="hint" style="margin:4px 0 0 18px;padding:0">' + rowsHtml(updated) + '</ul></div>';
-  if(skipped.length) html += '<div style="margin-bottom:8px"><b>将跳过</b><ul class="hint" style="margin:4px 0 0 18px;padding:0">' + rowsHtml(skipped) + '</ul></div>';
-  if(invalid.length) html += '<div style="margin-bottom:8px"><b>无法解析</b><ul class="hint" style="margin:4px 0 0 18px;padding:0">' + rowsHtml(invalid) + '</ul></div>';
+  if(added.length)   html += '<div style="margin-bottom:8px"><b>Sẽ thêm</b><ul class="hint" style="margin:4px 0 0 18px;padding:0">' + rowsHtml(added) + '</ul></div>';
+  if(updated.length) html += '<div style="margin-bottom:8px"><b>Sẽ ghi đè</b><ul class="hint" style="margin:4px 0 0 18px;padding:0">' + rowsHtml(updated) + '</ul></div>';
+  if(skipped.length) html += '<div style="margin-bottom:8px"><b>Sẽ bỏ qua</b><ul class="hint" style="margin:4px 0 0 18px;padding:0">' + rowsHtml(skipped) + '</ul></div>';
+  if(invalid.length) html += '<div style="margin-bottom:8px"><b>Không thể phân tích</b><ul class="hint" style="margin:4px 0 0 18px;padding:0">' + rowsHtml(invalid) + '</ul></div>';
 
   if(!added.length && !updated.length){
-    html += '<p class="hint" style="color:var(--warn)">没有可导入的账号。'
-      + (skipped.length ? '若要覆盖已存在的账号，请勾选下方「覆盖同 UID 账号」。' : '') + '</p>';
+    html += '<p class="hint" style="color:var(--warn)">Không có tài khoản.'
+      + (skipped.length ? 'Nếu muốn ghi đè tài khoản, hãy chọn bên dưới「Ghi đè cùng UID tài khoản」.' : '') + '</p>';
   }
   if(body) body.innerHTML = html;
 
   const canCommit = (added.length + updated.length) > 0;
   if(btn){
     btn.disabled = !canCommit;
-    btn.textContent = '确认导入 ' + (added.length + updated.length) + ' 个';
+    btn.textContent = 'Xác nhận nhập ' + (added.length + updated.length) + ' mục';
   }
 }
 
@@ -1906,28 +1919,28 @@ async function commitImport(btn){
   if(!importRows) return;
   const ow = document.getElementById('importOverwrite');
   const overwrite = !!(ow && ow.checked);
-  if(overwrite && !confirm('将覆盖同 UID 的现有账号（含其凭证），确定继续？')) return;
+  if(overwrite && !confirm('Sẽ ghi đè tài khoản hiện có cùng UID (kèm thông tin xác thực). Xác nhận tiếp tục?')) return;
 
-  if(btn){ btn.disabled = true; btn.textContent = '导入中...'; }
+  if(btn){ btn.disabled = true; btn.textContent = 'Đang nhập...'; }
   try{
     const r = await postJSON('/accounts/import', {data: importRows, overwrite: overwrite});
     const res = r.result || {};
     const n = (res.added || []).length + (res.updated || []).length;
-    toast('导入完成：新增 ' + (res.added || []).length
-          + '，覆盖 ' + (res.updated || []).length
-          + '，跳过 ' + (res.skipped || []).length
-          + '，无效 ' + (res.invalid || []).length);
+    toast('Nhập xong：mớităng ' + (res.added || []).length
+          + '，ghi đèphủ ' + (res.updated || []).length
+          + '，Bỏ qua ' + (res.skipped || []).length
+          + '，Không hợp lệ ' + (res.invalid || []).length);
     if(n > 0){ closeImport(); await loadAccounts(); }
-    else { renderImportPreview('（已导入）', res, importRows.length); }
+    else { renderImportPreview('（Đã nhập）', res, importRows.length); }
   }catch(e){
-    toast('导入失败: ' + e.message, 'err');
-    if(btn){ btn.disabled = false; btn.textContent = '确认导入'; }
+    toast('Nhập thất bại: ' + e.message, 'err');
+    if(btn){ btn.disabled = false; btn.textContent = 'Xác nhận nhập'; }
   }
 }
 
-/* 桌面客户端账号：两步确认（先扫描展示弹窗，再逐条导入） */
+/* Client desktop: xác nhận hai bước, quét trước rồi nhập từng dòng. */
 async function scanDesktop(btn){
-  if(btn){ btn.disabled = true; btn.textContent = '扫描中...'; }
+  if(btn){ btn.disabled = true; btn.textContent = 'Đang quét...'; }
   openDesktopScan();
   try{
     const acct = await getJSON('/accounts?realm=all').catch(() => ({accounts: []}));
@@ -1936,16 +1949,16 @@ async function scanDesktop(btn){
     renderDesktopScan(r.detected || []);
   }catch(e){
     const body = document.getElementById('desktopScanBody');
-    if(body) body.innerHTML = '<p class="hint" style="color:var(--warn)">扫描失败: ' + esc(e.message) + '</p>';
+    if(body) body.innerHTML = '<p class="hint" style="color:var(--warn)">Quét thất bại: ' + esc(e.message) + '</p>';
   }finally{
-    if(btn){ btn.disabled = false; btn.textContent = '扫描桌面客户端账号'; }
+    if(btn){ btn.disabled = false; btn.textContent = 'Quét Tài Khoản Ở Máy Tính'; }
   }
 }
 
 function openDesktopScan(){
   const m = document.getElementById('desktopScanModal');
   const body = document.getElementById('desktopScanBody');
-  if(body) body.innerHTML = '<p class="hint">正在检测本机桌面客户端账号…</p>';
+  if(body) body.innerHTML = '<p class="hint">Đang kiểm tra tài khoản client desktop trên máy…</p>';
   if(m) m.classList.add('show');
 }
 
@@ -1955,16 +1968,16 @@ function closeDesktopScan(){
 }
 
 async function refreshDesktopScan(btn){
-  if(btn){ btn.disabled = true; btn.textContent = '扫描中...'; }
+  if(btn){ btn.disabled = true; btn.textContent = 'Đang quét...'; }
   const body = document.getElementById('desktopScanBody');
-  if(body) body.innerHTML = '<p class="hint">正在检测本机桌面客户端账号…</p>';
+  if(body) body.innerHTML = '<p class="hint">Đang kiểm tra tài khoản client desktop trên máy…</p>';
   try{
     const r = await postJSON('/accounts/import/desktop', {});
     renderDesktopScan(r.detected || []);
   }catch(e){
-    if(body) body.innerHTML = '<p class="hint" style="color:var(--warn)">扫描失败: ' + esc(e.message) + '</p>';
+    if(body) body.innerHTML = '<p class="hint" style="color:var(--warn)">Quét thất bại: ' + esc(e.message) + '</p>';
   }finally{
-    if(btn){ btn.disabled = false; btn.textContent = '重新扫描'; }
+    if(btn){ btn.disabled = false; btn.textContent = 'Quét lại'; }
   }
 }
 
@@ -1980,8 +1993,8 @@ function renderDesktopScan(list){
     : new Set((window.ACCOUNTS || []).map(a => a.uid));
 
   if(!list.length){
-    body.innerHTML = '<p class="hint">未在本机检测到桌面客户端登录凭证。<br>'
-      + '请确认已安装并登录 WorkBuddy 客户端后点「重新扫描」。</p>';
+    body.innerHTML = '<p class="hint">Chưa phát hiện thông tin xác thực client desktop trên máy.<br>'
+      + 'Vui lòng cài đặt và đăng nhập WorkBuddy, sau đó nhấn「Quét lại」.</p>';
     return;
   }
 
@@ -1989,25 +2002,25 @@ function renderDesktopScan(list){
     let html = '<div style="margin:14px 0 6px;font-size:12px;font-weight:600" class="' + cls + '">'
       + title + ' <span style="color:var(--dim);font-weight:400">(' + items.length + ')</span></div>';
     if(!items.length){
-      html += '<div class="hint" style="margin:4px 0 10px">未检测到该版本账号</div>';
+      html += '<div class="hint" style="margin:4px 0 10px">Không phát hiện tài khoản phiên bản này</div>';
       return html;
     }
-    html += '<table><thead><tr><th>账号</th><th>域名</th><th>有效期</th><th></th></tr></thead><tbody>';
+    html += '<table><thead><tr><th>Tài Khoản</th><th>Tên miền</th><th>Thời hạn</th><th></th></tr></thead><tbody>';
     items.forEach(d => {
       const dup = already.has(d.uid);
       // NOTE: never interpolate the path into an inline onclick - JSON.stringify
       // emits double quotes, which would terminate the HTML attribute and make
       // the button silently do nothing. Use a data attribute + delegation.
       const act = dup
-        ? '<span class="badge off">已导入</span>'
+        ? '<span class="badge off">Đã nhập</span>'
         : '<button class="primary mini btn-import-desktop"'
           + ' data-path="' + esc(d.path) + '"'
-          + ' data-realm="' + esc(d.realm) + '">导入</button>';
+          + ' data-realm="' + esc(d.realm) + '">Nhập</button>';
       html += '<tr>'
         + '<td><b>' + esc(d.nickname || (d.uid||'').slice(0,8)) + '</b>'
         + '<div class="mono" style="font-size:11px;color:var(--dim)">' + esc((d.uid||'').slice(0,8)) + ' · ' + esc(d.file) + '</div></td>'
         + '<td class="mono" style="font-size:11px">' + esc(d.domain || '-') + '</td>'
-        + '<td>' + esc(d.expiresIn || '未知') + '</td>'
+        + '<td>' + esc(d.expiresIn || 'chưabiết') + '</td>'
         + '<td style="text-align:right">' + act + '</td>'
         + '</tr>';
     });
@@ -2015,17 +2028,17 @@ function renderDesktopScan(list){
     return html;
   };
 
-  let html = section('国际版 (Global) · www.workbuddy.ai',
+  let html = section('Quốc Tế (Global) · www.workbuddy.ai',
                      valid.filter(d => d.realm !== 'cn'), '');
-  html += section('国内版 (China) · copilot.tencent.com',
+  html += section('Trong Nước (China) · copilot.tencent.com',
                   valid.filter(d => d.realm === 'cn'), '');
 
   if(bad.length){
-    html += '<div style="margin:14px 0 6px;font-size:12px;font-weight:600;color:var(--warn)">无法读取的凭证</div>';
+    html += '<div style="margin:14px 0 6px;font-size:12px;font-weight:600;color:var(--warn)">Thông tin xác thực không đọc được</div>';
     html += '<table><tbody>';
     bad.forEach(d => {
       html += '<tr><td class="mono" style="font-size:11px">' + esc(d.file) + '</td>'
-        + '<td style="color:var(--warn);font-size:12px;text-align:right">' + esc(d.error || '未知原因') + '</td></tr>';
+        + '<td style="color:var(--warn);font-size:12px;text-align:right">' + esc(d.error || 'Không rõ nguyên nhân') + '</td></tr>';
     });
     html += '</tbody></table>';
   }
@@ -2040,11 +2053,11 @@ function renderDesktopScan(list){
 
 async function doImportDesktop(btn, path, realm){
   btn.disabled = true;
-  btn.textContent = '导入中...';
+  btn.textContent = 'Đang nhập...';
     try{
     const r = await postJSON('/accounts/import/desktop', {path: path, realm: realm});
     const a = (r.imported || [])[0] || {};
-    toast('已导入 ' + (a.nickname || (a.uid||'').slice(0,8)) + ' 到 ' + (a.realm === 'cn' ? '国内版' : '国际版'));
+    toast('Đã nhập ' + (a.nickname || (a.uid||'').slice(0,8)) + ' đến ' + (a.realm === 'cn' ? 'Trong Nước' : 'Quốc Tế'));
     if(a.uid && window.SCAN_POOL) window.SCAN_POOL.add(a.uid);
     await loadAccounts();
     await refresh();
@@ -2056,20 +2069,20 @@ async function doImportDesktop(btn, path, realm){
     // The scan list is filtered by the current view; tell the user where the
     // account actually landed so this never looks like a no-op.
     if(a.realm && a.realm !== window.VIEW_REALM){
-      toast('该账号属于' + (a.realm === 'cn' ? '国内版' : '国际版')
-            + '列表，点击上方选项卡即可查看', 'err');
+      toast('Tài khoản này thuộc' + (a.realm === 'cn' ? 'Trong Nước' : 'Quốc Tế')
+            + 'danh sách，nhấntrênphươngtabđể xem', 'err');
     }
   }catch(e){
-    toast('导入失败: ' + e.message, 'err');
+    toast('Nhập thất bại: ' + e.message, 'err');
     btn.disabled = false;
-    btn.textContent = '导入';
+    btn.textContent = 'Nhập';
   }
 }
 
 /* ------------------------------- dashboard ------------------------------ */
 let REFRESH_BUSY = false;
 async function refresh(){
-  // 5 秒轮询：上一轮尚未返回就跳过本轮，避免请求堆积把服务端拖慢
+  // 5 giâyluân phiên：trênmộtluânvẫnchưatrả vềhồiliềnBỏ quanàyluân，tránhmiễnyêu cầuchồngtích lũyđưadịch vụvụđầukéochậm
   if(REFRESH_BUSY) return;
   REFRESH_BUSY = true;
   try { await refreshInner(); }
@@ -2087,7 +2100,7 @@ async function refreshInner(){
   }catch(e){
     document.getElementById('statusDot').className = 'dot err';
     if(String(e.message) !== 'unauthorized'){
-      document.getElementById('meta').innerHTML = '<b>无法连接反代</b>';
+      document.getElementById('meta').innerHTML = '<b>Không thể kết nối reverse proxy</b>';
     }
     return;
   }
@@ -2111,15 +2124,15 @@ async function refreshInner(){
   const activeAccts = (window.ACCOUNTS || []).filter(a => a.enabled).length;
   const totalAccts = (window.ACCOUNTS || []).length;
   const pctRemain = totSize > 0 ? ((totRemain / totSize) * 100).toFixed(1) + '%' : '';
-  const subCredit = totSize > 0 ? ('总积分 ' + fmt(totSize) + ' · 剩余 ' + pctRemain) : '当前账号正常';
+  const subCredit = totSize > 0 ? ('Tổng điểm ' + fmt(totSize) + ' · còn lại ' + pctRemain) : 'Tài khoản hiện hoạt động bình thường';
   const succStr = perf.success_rate_pct != null ? pct(perf.success_rate_pct) : '100.0%';
-  const errSub = perf.errors ? (perf.errors + ' 次异常拦截') : '服务运行平稳';
+  const errSub = perf.errors ? (perf.errors + ' lượtlỗi bị chặn') : 'Dịch vụ hoạt động ổn định';
 
   document.getElementById('cards').innerHTML =
-    card('可用账号池', activeAccts + ' <span style="font-size:13px;font-weight:400;color:var(--dim)">/ ' + totalAccts + ' 正常</span>', (totalAccts - activeAccts > 0 ? (totalAccts - activeAccts) + ' 个停用' : '全部启用 · 状态健康'), 'accent') +
-    card('积分余额', hasCreds ? (fmt(totRemain) + ' <span style="font-size:13px;font-weight:400;color:var(--dim)">积分</span>') : '正常可用', subCredit, 'accent2') +
-    card('网关调用量', fmt(t.requests) + ' <span style="font-size:13px;font-weight:400;color:var(--dim)">次</span>', '本出口累计消耗 ' + fmt(t.total_tokens) + ' Token · ' + Number(t.credit || 0).toFixed(2) + ' 积分', '') +
-    card('请求成功率', succStr, errSub, perf.errors ? 'warn' : 'accent2');
+    card('Pool tài khoản khả dụng', activeAccts + ' <span style="font-size:13px;font-weight:400;color:var(--dim)">/ ' + totalAccts + ' bình thường</span>', (totalAccts - activeAccts > 0 ? (totalAccts - activeAccts) + ' tài khoản đã tắt' : 'Bật tất cả · trạng thái tốt'), 'accent') +
+    card('Số dư điểm', hasCreds ? (fmt(totRemain) + ' <span style="font-size:13px;font-weight:400;color:var(--dim)">Điểm</span>') : 'Hoạt động bình thường', subCredit, 'accent2') +
+    card('Lượng gọi cổng', fmt(t.requests) + ' <span style="font-size:13px;font-weight:400;color:var(--dim)">lượt</span>', 'Tiêu thụ tích lũy ' + fmt(t.total_tokens) + ' Token · ' + Number(t.credit || 0).toFixed(2) + ' Điểm', '') +
+    card('Tỷ lệ Request thành công', succStr, errSub, perf.errors ? 'warn' : 'accent2');
 
   const total = recent.total || 0;
   RECENT_PAGE = recent.page || 1;
@@ -2127,7 +2140,7 @@ async function refreshInner(){
 
   const pageInfo = document.getElementById('recentPageInfo');
   if(pageInfo){
-    pageInfo.textContent = '第 ' + RECENT_PAGE + ' / ' + RECENT_TOTAL_PAGES + ' 页 · 共 ' + fmt(total) + ' 条记录';
+    pageInfo.textContent = 'Trang ' + RECENT_PAGE + ' / ' + RECENT_TOTAL_PAGES + ' · Tổng ' + fmt(total) + ' dòng bản ghi';
   }
   const btnPrev = document.getElementById('btnRecentPrev');
   if(btnPrev) btnPrev.disabled = (RECENT_PAGE <= 1);
@@ -2151,39 +2164,39 @@ async function refreshInner(){
   // apart from a real failure because the gateway did nothing wrong.
   const outcomeBadge = r => {
     const o = r.outcome || (r.error ? 'failed' : 'completed');
-    if(o === 'completed') return '<span class="badge ok">完成</span>';
-    if(o === 'client_aborted') return '<span class="badge off">客户端取消</span>';
-    if(o === 'upstream_aborted') return '<span class="badge warn">上游中断</span>';
-    return '<span class="badge bad">失败</span>';
+    if(o === 'completed') return '<span class="badge ok">Thành công</span>';
+    if(o === 'client_aborted') return '<span class="badge off">Client hủy</span>';
+    if(o === 'upstream_aborted') return '<span class="badge warn">Upstream ngắt</span>';
+    return '<span class="badge bad">Thất bại</span>';
   };
   const countEl = document.getElementById('recentCount');
-  if(countEl) countEl.textContent = '(第 ' + RECENT_PAGE + ' 页 / 共 ' + fmt(total) + ' 条)';
-  // 账号列显示昵称：uid -> 昵称取自 /usage 的 accounts_map（当前账号池）。
-  // 已删除/不存在的账号回退到 uid 前 8 位，避免留空。
+  if(countEl) countEl.textContent = '(Trang ' + RECENT_PAGE + ' / Tổng ' + fmt(total) + ' dòng)';
+  // Cột tài khoản hiển thị nickname: uid -> nickname lấy từ accounts_map của /usage (pool tài khoản hiện tại).
+  // Tài khoản đã xóa/không còn tồn tại thì hiển thị 8 ký tự đầu của uid để tránh để trống.
   const acctName = (uid) => {
     if(!uid) return '—';
     const m = (t.accounts_map && t.accounts_map[uid]);
     return (m && m.nickname) ? m.nickname : String(uid).slice(0,8);
   };
   document.getElementById('recent').innerHTML = rows.length ?
-    '<table class="data-cards"><thead><tr><th>时间</th><th>模型</th><th>账号</th><th>模式</th><th>结果</th><th>耗时</th><th>首字</th><th>速度</th><th>输入</th><th>输出</th><th>思考</th><th>缓存</th><th>总 token</th><th>积分</th></tr></thead><tbody>'
+    '<table class="data-cards"><thead><tr><th>Thời gian</th><th>Mô hình</th><th>Tài Khoản</th><th style="text-align:center">Kiểu mô hình</th><th style="text-align:center">Kết quả</th><th style="text-align:center">Thời gian xử lý</th><th style="text-align:center">Ký tự đầu</th><th style="text-align:center">Tốc độ</th><th style="text-align:center">Input</th><th style="text-align:center">Output</th><th style="text-align:center">Thinking</th><th style="text-align:center">Cache</th><th>Tổng token</th><th style="text-align:center">Điểm</th></tr></thead><tbody>'
     + rows.map(r => '<tr>'
-        + '<td class="mono" data-label="时间">' + esc((r.iso||'').replace('T',' ').slice(5)) + '</td>'
-        + '<td class="mono" data-label="模型">' + esc(r.model) + '</td>'
-        + '<td class="mono" style="font-size:11px;color:var(--dim)" data-label="账号" title="' + esc(r.account||'') + '">' + esc(acctName(r.account)) + '</td>'
-        + '<td data-label="模式"><span class="badge ' + (r.stream?'s':'') + '">' + (r.stream?'流式':'非流式') + '</span></td>'
-        + '<td data-label="结果">' + outcomeBadge(r) + '</td>'
-        + '<td data-label="耗时">' + (r.elapsed_ms!=null ? fmt(r.elapsed_ms)+' ms' : '—') + '</td>'
-        + '<td data-label="首字">' + (r.ttft_ms!=null ? fmt(r.ttft_ms)+' ms' : '—') + '</td>'
-        + '<td data-label="速度">' + (r.tokens_per_sec ? r.tokens_per_sec.toFixed(1) : '—') + '</td>'
-        + '<td data-label="输入">' + fmt(r.prompt_tokens) + '</td>'
-        + '<td data-label="输出">' + fmt(r.completion_tokens) + '</td>'
-        + '<td style="color:var(--think)" data-label="思考">' + fmt(r.reasoning_tokens) + '</td>'
-        + '<td data-label="缓存">' + (r.cache_hit_pct!=null ? r.cache_hit_pct+'%' : '—') + '</td>'
-        + '<td data-label="总 token"><b>' + fmt(r.total_tokens) + '</b></td>'
-        + '<td data-label="积分" style="color:var(--accent2)">' + (r.credit != null ? Number(r.credit).toFixed(2) : '—') + '</td>'
+        + '<td class="mono" data-label="Thời gian">' + esc((r.iso||'').replace('T',' ').slice(5)) + '</td>'
+        + '<td class="mono" data-label="Mô hình">' + esc(r.model) + '</td>'
+        + '<td class="mono" style="font-size:11px;color:var(--dim)" data-label="Tài Khoản" title="' + esc(r.account||'') + '">' + esc(acctName(r.account)) + '</td>'
+        + '<td style="text-align:center" data-label="Kiểu mô hình"><span class="badge ' + (r.stream?'s':'') + '">' + (r.stream?'Có luồng':'Không luồng') + '</span></td>'
+        + '<td style="text-align:center" data-label="Kết quả">' + outcomeBadge(r) + '</td>'
+        + '<td style="text-align:center" data-label="Thời gian xử lý">' + (r.elapsed_ms!=null ? fmt(r.elapsed_ms)+' ms' : '—') + '</td>'
+        + '<td style="text-align:center" data-label="Ký tự đầu">' + (r.ttft_ms!=null ? fmt(r.ttft_ms)+' ms' : '—') + '</td>'
+        + '<td style="text-align:center" data-label="Tốc độ">' + (r.tokens_per_sec ? r.tokens_per_sec.toFixed(1) : '—') + '</td>'
+        + '<td style="text-align:center" data-label="Input">' + fmt(r.prompt_tokens) + '</td>'
+        + '<td style="text-align:center" data-label="Output">' + fmt(r.completion_tokens) + '</td>'
+        + '<td style="color:var(--think);text-align:center" data-label="Thinking">' + fmt(r.reasoning_tokens) + '</td>'
+        + '<td style="text-align:center" data-label="Cache">' + (r.cache_hit_pct!=null ? r.cache_hit_pct+'%' : '—') + '</td>'
+        + '<td data-label="Tổng token"><b>' + fmt(r.total_tokens) + '</b></td>'
+        + '<td style="text-align:center;color:var(--accent2)" data-label="Điểm">' + (r.credit != null ? Number(r.credit).toFixed(2) : '—') + '</td>'
       + '</tr>').join('') + '</tbody></table>'
-    : '<div class="empty">还没有请求记录</div>';
+    : '<div class="empty">Chưa có bản ghi yêu cầu</div>';
 }
 
 (async function initDashboard(){
@@ -2286,7 +2299,7 @@ function panelSessionLost(){
   PANEL_TOKEN = '';
   try { sessionStorage.removeItem(PANEL_STORE); } catch(e) {}
   const msg = document.getElementById('panelLoginMsg');
-  if(msg) msg.textContent = '会话已失效，请重新输入密码';
+  if(msg) msg.textContent = 'Phiên đã hết hạn, vui lòng nhập lại mật khẩu';
   panelNeedsLogin();
 }
 
@@ -2299,7 +2312,7 @@ async function submitPanelLogin(){
   const input = document.getElementById('panelPwdInput');
   const msg = document.getElementById('panelLoginMsg');
   const password = (input && input.value) || '';
-  if(!password){ if(msg) msg.textContent = '请输入面板密码'; return; }
+  if(!password){ if(msg) msg.textContent = 'Vui lòng nhập Mật khẩu bảng điều khiển'; return; }
   if(msg) msg.textContent = '';
   try {
     const r = await fetch('/panel/login', {
@@ -2309,20 +2322,20 @@ async function submitPanelLogin(){
     });
     const data = await r.json().catch(() => ({}));
     if(!r.ok){
-      if(msg) msg.textContent = (data.error && data.error.message) || '密码错误';
+      if(msg) msg.textContent = (data.error && data.error.message) || 'Mật khẩu sai';
       return;
     }
     PANEL_TOKEN = data.token || '';
     try { sessionStorage.setItem(PANEL_STORE, PANEL_TOKEN); } catch(e) {}
     if(input) input.value = '';
     panelHideGate();
-    toast('已进入面板', 'ok');
+    toast('Đã Vào Bảng Điều Khiển', 'ok');
     if(data.using_default_password){
-      toast('当前是默认密码 admin，建议到「设置」里修改', 'warn');
+      toast('Hiện tại mật khẩu mặc định là admin, bạn nên vào trang「Cài Đặt」để thay đổi.', 'warn');
     }
     await startDashboard();
   } catch(e) {
-    if(msg) msg.textContent = '登录失败: ' + e.message;
+    if(msg) msg.textContent = 'Đăng nhập thất bại: ' + e.message;
   }
 }
 
@@ -2394,13 +2407,13 @@ async function loadSettings(showToast){
     const data = await getJSON('/settings');
     const pwdState = document.getElementById('setPwdState');
     if(pwdState){
-      pwdState.textContent = data.panel_password_is_default ? '(当前为默认密码)' : '(已自定义)';
+      pwdState.textContent = data.panel_password_is_default ? '(Đang dùng mật khẩu mặc định)' : '(Đã tùy chỉnh)';
       pwdState.style.color = data.panel_password_is_default ? 'var(--warn)' : 'var(--accent2)';
     }
     const keyState = document.getElementById('setKeyState');
     if(keyState){
       const count = (data.api_keys || []).filter(k => k.enabled).length;
-      keyState.textContent = count ? ('(' + count + ' 个生效)') : '(当前不校验)';
+      keyState.textContent = count ? ('(' + count + ' Key có hiệu lực)') : '(hiện không kiểm tra)';
       keyState.style.color = count ? 'var(--accent2)' : 'var(--dim)';
     }
     // Rebuild the editable rows, keeping stored values so an untouched field
@@ -2427,16 +2440,16 @@ async function loadSettings(showToast){
     set('setUsageDir', data.usage_dir);
     set('setFile', data.settings_file);
     set('setSettingsFile', data.settings_file);
-    if(showToast) toast('设置已刷新', 'ok');
+    if(showToast) toast('Đã làm mới Cài Đặt', 'ok');
   } catch(e) {
-    if(showToast) toast('读取设置失败: ' + e.message, 'bad');
+    if(showToast) toast('Đọc Cài Đặt thất bại: ' + e.message, 'bad');
   }
 }
 
 async function savePanelPassword(btn){
   const cur = (document.getElementById('setPwdCurrent') || {}).value || '';
   const nw = (document.getElementById('setPwdNew') || {}).value || '';
-  if(!cur || !nw){ toast('请填写当前密码和新密码', 'warn'); return; }
+  if(!cur || !nw){ toast('Vui lòng nhập mật khẩu hiện tại và mật khẩu mới', 'warn'); return; }
   btn.disabled = true;
   try {
     const data = await postJSON('/panel/password', {current: cur, new: nw});
@@ -2446,10 +2459,10 @@ async function savePanelPassword(btn){
     }
     document.getElementById('setPwdCurrent').value = '';
     document.getElementById('setPwdNew').value = '';
-    toast('面板密码已更新', 'ok');
+    toast('Mật khẩu bảng điều khiểnĐã cập nhật', 'ok');
     loadSettings();
   } catch(e) {
-    toast('修改失败: ' + e.message, 'bad');
+    toast('Sửa đổi thất bại: ' + e.message, 'bad');
   } finally {
     btn.disabled = false;
   }
@@ -2468,16 +2481,16 @@ function randomKeyValue(){
 }
 
 const REALM_CHOICES = [
-  ['', '跟随面板切换'],
-  ['intl', '固定国际版出口'],
-  ['cn', '固定国内版出口'],
+  ['', 'Theo lựa chọn bảng điều khiển'],
+  ['intl', 'Cổng Proxy cố định Quốc Tế'],
+  ['cn', 'Cổng Proxy cố định Trong Nước'],
 ];
 
 function renderKeyRows(){
   const box = document.getElementById('keyList');
   if(!box) return;
   if(!API_KEY_ROWS.length){
-    box.innerHTML = '<div class="empty" style="padding:24px 0">还没有配置 API Key，点击右上角「+ 添加 API Key」创建。</div>';
+    box.innerHTML = '<div class="empty" style="padding:24px 0">Chưa cấu hình API Key，nhấn góc trên bên phải「+ Thêm API Key」tạo。</div>';
     return;
   }
   box.innerHTML = API_KEY_ROWS.map((row, i) => {
@@ -2487,55 +2500,55 @@ function renderKeyRows(){
       ).join('');
       return '<div class="key-card" style="border-color:var(--accent);background:#ffffff;box-shadow:0 0 0 1px var(--accent), var(--shadow-md)">'
         + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">'
-        +   '<div style="font-size:14px;font-weight:700;color:var(--fg)">' + (row.id ? '编辑 API Key' : '新建 API Key') + '</div>'
-        +   '<span class="badge s mini">设置出口</span>'
+        +   '<div style="font-size:14px;font-weight:700;color:var(--fg)">' + (row.id ? 'Chỉnh sửa API Key' : 'Tạo mới API Key') + '</div>'
+        +   '<span class="badge s mini">Cài Đặt Cổng Proxy</span>'
         + '</div>'
         + '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:14px">'
         +   '<div>'
-        +     '<div style="font-size:12px;color:var(--dim);margin-bottom:4px;font-weight:500">备注名称</div>'
-        +     '<input type="text" id="editKeyName_' + i + '" value="' + esc(row.name || '') + '" placeholder="如: Cursor / DSH / 本地测试" '
+        +     '<div style="font-size:12px;color:var(--dim);margin-bottom:4px;font-weight:500">Tên ghi chú</div>'
+        +     '<input type="text" id="editKeyName_' + i + '" value="' + esc(row.name || '') + '" placeholder="Ví dụ: Cursor / DSH / kiểm tra local" '
         +       'style="width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:7px 10px;font:inherit;color:var(--fg)">'
         +   '</div>'
         +   '<div>'
-        +     '<div style="font-size:12px;color:var(--dim);margin-bottom:4px;font-weight:500">出口绑定</div>'
+        +     '<div style="font-size:12px;color:var(--dim);margin-bottom:4px;font-weight:500">Gắn Cổng Proxy</div>'
         +     '<select id="editKeyRealm_' + i + '" style="width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:7px 10px;font:inherit;color:var(--fg)">'
         +       options
         +     '</select>'
         +   '</div>'
         +   '<div style="grid-column:1 / -1">'
-        +     '<div style="font-size:12px;color:var(--dim);margin-bottom:4px;font-weight:500">API Key 内容 ' + (row.masked ? '<span style="color:var(--dim-light)">(已保存: ' + esc(row.masked) + '，留空表示不改)</span>' : '') + '</div>'
+        +     '<div style="font-size:12px;color:var(--dim);margin-bottom:4px;font-weight:500">API Key nội dung ' + (row.masked ? '<span style="color:var(--dim-light)">(Đã lưu: ' + esc(row.masked) + '，để trống nếu không đổi)</span>' : '') + '</div>'
         +     '<div style="display:flex;gap:8px">'
-        +       '<input type="text" id="editKeyValue_' + i + '" value="' + esc(row.key || '') + '" placeholder="' + (row.masked ? '留空表示保持原 Key 不变' : '输入自定义密钥，或点击右侧生成') + '" '
+        +       '<input type="text" id="editKeyValue_' + i + '" value="' + esc(row.key || '') + '" placeholder="' + (row.masked ? 'để trống để giữ Key cũ' : 'Inputtùy chỉnhmậtkhóa，hoặcnhấnphảibênsinhthành') + '" '
         +         'style="flex:1;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:7px 10px;font:inherit;color:var(--fg)">'
-        +       '<button class="sec mini" style="white-space:nowrap;border-radius:8px;padding:7px 14px" onclick="generateKeyForEdit(' + i + ')">随机生成</button>'
+        +       '<button class="sec mini" style="white-space:nowrap;border-radius:8px;padding:7px 14px" onclick="generateKeyForEdit(' + i + ')">Tạo ngẫu nhiên</button>'
         +     '</div>'
         +   '</div>'
         + '</div>'
         + '<div style="display:flex;gap:8px;justify-content:flex-end">'
-        +   '<button class="sec mini" style="border-radius:8px;padding:6px 16px" onclick="cancelEditKey(' + i + ')">取消</button>'
-        +   '<button class="mini" style="border-radius:8px;padding:6px 18px" onclick="saveSingleKey(' + i + ', this)">保存</button>'
+        +   '<button class="sec mini" style="border-radius:8px;padding:6px 16px" onclick="cancelEditKey(' + i + ')">Hủy</button>'
+        +   '<button class="mini" style="border-radius:8px;padding:6px 18px" onclick="saveSingleKey(' + i + ', this)">Lưu</button>'
         + '</div>'
         + '</div>';
     }
 
     const statusBadge = row.enabled
-      ? '<span class="badge ok" style="font-size:11px;font-weight:600;padding:2px 10px">已启用</span>'
-      : '<span class="badge off" style="font-size:11px;font-weight:600;padding:2px 10px">已禁用</span>';
+      ? '<span class="badge ok" style="font-size:11px;font-weight:600;padding:2px 10px">Đã bật</span>'
+      : '<span class="badge off" style="font-size:11px;font-weight:600;padding:2px 10px">Đã tắt</span>';
 
     const realmBadge = (row.realm === 'intl')
-      ? '<span class="realm-badge-intl" style="font-size:11px">固定国际版出口</span>'
+      ? '<span class="realm-badge-intl" style="font-size:11px">Cổng Proxy cố định Quốc Tế</span>'
       : (row.realm === 'cn')
-      ? '<span class="realm-badge-cn" style="font-size:11px">固定国内版出口</span>'
-      : '<span class="badge s" style="font-size:11px">跟随面板切换</span>';
+      ? '<span class="realm-badge-cn" style="font-size:11px">Cổng Proxy cố định Trong Nước</span>'
+      : '<span class="badge s" style="font-size:11px">Theo lựa chọn bảng điều khiển</span>';
 
-    const displayKey = row.masked || (row.key ? (row.key.slice(0, 4) + '******' + row.key.slice(-4)) : '未设置');
-    const createdStr = row.created_at ? ('创建时间 ' + esc(row.created_at)) : '';
+    const displayKey = row.masked || (row.key ? (row.key.slice(0, 4) + '******' + row.key.slice(-4)) : 'chưaCài Đặt');
+    const createdStr = row.created_at ? ('Thời gian tạo ' + esc(row.created_at)) : '';
 
     return '<div class="key-card' + (row.enabled ? '' : ' disabled') + '">'
       + '<div class="key-card-main">'
       +   '<div>'
       +     '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">'
-      +       '<span style="font-size:15px;font-weight:700;color:var(--fg)">' + esc(row.name || '未命名') + '</span>'
+      +       '<span style="font-size:15px;font-weight:700;color:var(--fg)">' + esc(row.name || 'Chưa đặt tên') + '</span>'
       +       statusBadge
       +       realmBadge
       +     '</div>'
@@ -2545,10 +2558,10 @@ function renderKeyRows(){
       +     '</div>'
       +   '</div>'
       +   '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'
-      +     '<button class="key-action-btn" id="copyBtn' + i + '" onclick="copyKeyRow(' + i + ')">复制</button>'
-      +     '<button class="key-action-btn" onclick="openEditKey(' + i + ')">编辑</button>'
-      +     '<button class="key-action-btn" onclick="toggleKeyRow(' + i + ')">' + (row.enabled ? '禁用' : '启用') + '</button>'
-      +     '<button class="key-action-btn danger" onclick="removeKeyRow(' + i + ')">删除</button>'
+      +     '<button class="key-action-btn" id="copyBtn' + i + '" onclick="copyKeyRow(' + i + ')">Sao Chép</button>'
+      +     '<button class="key-action-btn" onclick="openEditKey(' + i + ')">Chỉnh sửa</button>'
+      +     '<button class="key-action-btn" onclick="toggleKeyRow(' + i + ')">' + (row.enabled ? 'Tắt' : 'Bật') + '</button>'
+      +     '<button class="key-action-btn danger" onclick="removeKeyRow(' + i + ')">Xóa</button>'
       +   '</div>'
       + '</div>'
       + '</div>';
@@ -2590,11 +2603,11 @@ async function saveSingleKey(index, btn){
   const keyVal = keyInput ? keyInput.value.trim() : (row.key || '');
 
   if(!keyVal && !row.masked){
-    toast('API Key 不能为空', 'warn');
+    toast('API Key không được để trống', 'warn');
     return;
   }
 
-  row.name = name || '未命名';
+  row.name = name || 'Chưa đặt tên';
   row.realm = realm;
   if(keyVal) row.key = keyVal;
   row._editing = false;
@@ -2602,9 +2615,9 @@ async function saveSingleKey(index, btn){
   if(btn) btn.disabled = true;
   try {
     await saveApiKeys();
-    toast('API Key [' + row.name + '] 已保存', 'ok');
+    toast('API Key [' + row.name + '] Đã lưu', 'ok');
   } catch(e){
-    toast('保存失败: ' + e.message, 'bad');
+    toast('Lưu thất bại: ' + e.message, 'bad');
   }
 }
 
@@ -2614,22 +2627,22 @@ async function toggleKeyRow(index){
   row.enabled = !row.enabled;
   try {
     await saveApiKeys();
-    toast(row.enabled ? 'Key [' + row.name + '] 已启用' : 'Key [' + row.name + '] 已禁用', 'ok');
+    toast(row.enabled ? 'Key [' + row.name + '] Đã bật' : 'Key [' + row.name + '] Đã tắt', 'ok');
   } catch(e){
-    toast('操作失败: ' + e.message, 'bad');
+    toast('Thao tác thất bại: ' + e.message, 'bad');
   }
 }
 
 async function removeKeyRow(index){
   const row = API_KEY_ROWS[index];
   if(!row) return;
-  if(!confirm('确定删除 API Key [' + (row.name || '未命名') + '] 吗？此操作不可撤销。')) return;
+  if(!confirm('xác nhậnđịnhXóa API Key [' + (row.name || 'Chưa đặt tên') + '] không?？nàyThao táckhông thể hoàn tác。')) return;
   API_KEY_ROWS.splice(index, 1);
   try {
     await saveApiKeys();
-    toast('已删除 API Key', 'ok');
+    toast('Đã Xóa API Key', 'ok');
   } catch(e){
-    toast('删除失败: ' + e.message, 'bad');
+    toast('Xóa thất bại: ' + e.message, 'bad');
   }
 }
 
@@ -2662,18 +2675,18 @@ async function copyKeyRow(index){
       value = data.key || '';
     }
     if(!value){
-      toast('这一行还没有 Key，点「随机生成」或直接填写', 'warn');
+      toast('Dòng này chưa có Key, nhấn「Tạo ngẫu nhiên」hoặc nhập trực tiếp', 'warn');
       return;
     }
     await writeClipboard(value);
     if(btn){
       const old = btn.textContent;
-      btn.textContent = '已复制';
+      btn.textContent = 'Đã sao chép';
       setTimeout(() => { btn.textContent = old; }, 1600);
     }
-    toast('已复制到剪贴板', 'ok');
+    toast('Đã sao chépđếnbảng nhớ tạm', 'ok');
   } catch(e) {
-    toast('复制失败: ' + e.message, 'bad');
+    toast('Sao chép thất bại: ' + e.message, 'bad');
   }
 }
 
@@ -2693,7 +2706,7 @@ async function writeClipboard(text){
   area.setSelectionRange(0, area.value.length);
   const ok = document.execCommand('copy');
   document.body.removeChild(area);
-  if(!ok) throw new Error('浏览器拒绝了复制操作');
+  if(!ok) throw new Error('Trình duyệt từ chối thao tác sao chép');
 }
 
 async function saveApiKeys(btn){
@@ -2707,7 +2720,7 @@ async function saveApiKeys(btn){
   }));
   const newRow = API_KEY_ROWS.find(row => !row.masked && !(row.key || '').trim());
   if(newRow){
-    toast('新增的行还没有填写 Key', 'warn');
+    toast('Dòng mới chưa nhập Key', 'warn');
     return;
   }
   // Several callers save without going through a button (saveSingleKey,
@@ -2715,10 +2728,10 @@ async function saveApiKeys(btn){
   if(btn) btn.disabled = true;
   try {
     await postJSON('/settings/save', {api_keys: payload});
-    toast('已保存 ' + payload.length + ' 个 Key', 'ok');
+    toast('Đã lưu ' + payload.length + '  Key tài khoản', 'ok');
     loadSettings();
   } catch(e) {
-    toast('保存失败: ' + e.message, 'bad');
+    toast('Lưu thất bại: ' + e.message, 'bad');
   } finally {
     if(btn) btn.disabled = false;
   }
@@ -2735,14 +2748,14 @@ function slotSelectHtml(a){
   const legacyLabel = legacy.length > 28 ? legacy.slice(0, 25) + '...' : legacy;
   const opts = [];
   if(legacy){
-    opts.push('<option value="__legacy__" selected>旧代理：' + esc(legacyLabel) + '</option>');
-    opts.push('<option value="">直连（清除旧代理）</option>');
+    opts.push('<option value="__legacy__" selected>Proxy cũ：' + esc(legacyLabel) + '</option>');
+    opts.push('<option value="">Kết nối trực tiếp（xóa proxy cũ）</option>');
   } else {
-    opts.push('<option value=""' + (current ? '' : ' selected') + '>直连</option>');
+    opts.push('<option value=""' + (current ? '' : ' selected') + '>Kết nối trực tiếp</option>');
   }
   opts.push.apply(opts, PROXY_SLOTS.map(s =>
     '<option value="' + esc(s.id) + '"' + (s.id === current ? ' selected' : '') + '>'
-    + esc(s.name || s.id) + (s.enabled === false ? '（停用）' : '') + '</option>'));
+    + esc(s.name || s.id) + (s.enabled === false ? '（Tắt）' : '') + '</option>'));
   const uidAttr = esc(String(a.uid || '').replace(/[^\w.@-]/g, ''));
   return '<select class="slot-select" onchange="setAccountSlot(&quot;' + uidAttr + '&quot;, this.value, this)">'
     + opts.join('') + '</select>';
@@ -2753,11 +2766,11 @@ async function setAccountSlot(uid, slotId, el){
   if(el) el.disabled = true;
   try{
     await postJSON('/accounts/set', {uid: uid, proxySlot: slotId});
-    toast('出口已更新', 'ok');
+    toast('Cổng Proxy đã cập nhật', 'ok');
     await loadAccounts();
     await loadProxySlots();
   }catch(e){
-    toast('出口更新失败: ' + e.message, 'bad');
+    toast('Cập nhật Cổng Proxy thất bại: ' + e.message, 'bad');
   }finally{
     if(el) el.disabled = false;
   }
@@ -2777,43 +2790,43 @@ function renderProxySlots(){
   const box = document.getElementById('slotList');
   if(!box) return;
   const stateEl = document.getElementById('slotState');
-  if(stateEl) stateEl.textContent = PROXY_SLOTS.length ? ('（' + PROXY_SLOTS.length + ' 个）') : '';
+  if(stateEl) stateEl.textContent = PROXY_SLOTS.length ? ('（' + PROXY_SLOTS.length + ' mục）') : '';
   if(!PROXY_SLOTS.length){
-    box.innerHTML = '<div class="hint" style="color:var(--dim)">还没有代理槽。点击「自动发现 mihomo 端口」或「+ 添加槽位」。</div>';
+    box.innerHTML = '<div class="hint" style="color:var(--dim)">Chưa cóProxy Slot。nhấn「Tự Động Tìm Cổng mihomo」hoặc「+ Thêm Slot」。</div>';
     return;
   }
   box.innerHTML = '<div class="table-wrap"><table class="data-cards"><thead><tr>'
-    + '<th style="width:150px">名称</th>'
-    + '<th>代理地址</th>'
-    + '<th style="width:90px;text-align:center">启用</th>'
-    + '<th style="width:90px;text-align:center">绑定账号</th>'
-    + '<th style="width:190px;text-align:center">操作</th>'
+    + '<th style="width:150px">Tên</th>'
+    + '<th>Địa chỉ proxy</th>'
+    + '<th style="width:90px;text-align:center">Bật</th>'
+    + '<th style="width:90px;text-align:center">Tài khoản đã gắn</th>'
+    + '<th style="width:190px;text-align:center">Thao tác</th>'
     + '</tr></thead><tbody>'
     + PROXY_SLOTS.map((s, i) =>
         '<tr>'
-        + '<td data-label="名称"><input value="' + esc(s.name || '') + '" oninput="PROXY_SLOTS[' + i + '].name=this.value" class="slot-input"></td>'
-        + '<td data-label="代理地址"><input value="' + esc(s.url || '') + '" oninput="PROXY_SLOTS[' + i + '].url=this.value" class="slot-input mono"></td>'
-        + '<td style="text-align:center" data-label="启用"><input type="checkbox" ' + (s.enabled === false ? '' : 'checked')
+        + '<td data-label="Tên"><input value="' + esc(s.name || '') + '" oninput="PROXY_SLOTS[' + i + '].name=this.value" class="slot-input"></td>'
+        + '<td data-label="Địa chỉ proxy"><input value="' + esc(s.url || '') + '" oninput="PROXY_SLOTS[' + i + '].url=this.value" class="slot-input mono"></td>'
+        + '<td style="text-align:center" data-label="Bật"><input type="checkbox" ' + (s.enabled === false ? '' : 'checked')
         +   ' onchange="PROXY_SLOTS[' + i + '].enabled=this.checked"></td>'
-        + '<td style="text-align:center" data-label="绑定账号">' + (s.bound || 0) + '</td>'
+        + '<td style="text-align:center" data-label="Tài khoản đã gắn">' + (s.bound || 0) + '</td>'
         + '<td style="text-align:center;white-space:nowrap" data-label="">'
-        +   '<button class="sec mini" onclick="testProxySlot(' + i + ', this)">测试</button> '
-        +   '<button class="danger mini" onclick="removeProxySlot(' + i + ')">删除</button>'
+        +   '<button class="sec mini" onclick="testProxySlot(' + i + ', this)">Kiểm tra</button> '
+        +   '<button class="danger mini" onclick="removeProxySlot(' + i + ')">Xóa</button>'
         + '</td></tr>'
       ).join('')
     + '</tbody></table></div>'
-    + '<div class="legend"><span>「绑定账号」只统计已启用账号；停用账号会自动释放槽位，重新启用后需重新绑定。在网关页账号表的「出口」下拉中调整绑定。</span></div>';
+    + '<div class="legend"><span>「Tài khoản đã gắn」chỉ tính tài khoản đã bật; tài khoản tắt sẽ tự động giải phóng slot và cần gắn lại khi bật. Điều chỉnh trong danh sách Cổng Proxy ở bảng tài khoản.</span></div>';
 }
 
 function addProxySlotRow(){
-  PROXY_SLOTS.push({id: '', name: '槽 ' + (PROXY_SLOTS.length + 1), url: '', enabled: true, bound: 0});
+  PROXY_SLOTS.push({id: '', name: 'slot ' + (PROXY_SLOTS.length + 1), url: '', enabled: true, bound: 0});
   renderProxySlots();
 }
 
 function removeProxySlot(index){
   const s = PROXY_SLOTS[index];
   if(!s) return;
-  if((s.bound || 0) > 0 && !confirm('该槽位被 ' + s.bound + ' 个账号绑定，删除后它们将回退直连。继续？')) return;
+  if((s.bound || 0) > 0 && !confirm('Slot này đang được ' + s.bound + ' tài khoản đã gắn，sau khi xóa sẽ chuyển về kết nối trực tiếp. Tiếp tục?')) return;
   PROXY_SLOTS.splice(index, 1);
   renderProxySlots();
 }
@@ -2826,9 +2839,9 @@ async function saveProxySlots(btn){
     PROXY_SLOTS = r.slots || [];
     renderProxySlots();
     await loadAccounts();
-    toast('已保存 ' + PROXY_SLOTS.length + ' 个代理槽', 'ok');
+    toast('Đã lưu ' + PROXY_SLOTS.length + ' Proxy Slot', 'ok');
   }catch(e){
-    toast('保存失败: ' + e.message, 'bad');
+    toast('Lưu thất bại: ' + e.message, 'bad');
   }finally{
     if(btn) btn.disabled = false;
   }
@@ -2836,8 +2849,8 @@ async function saveProxySlots(btn){
 
 async function testProxySlot(index, btn){
   const s = PROXY_SLOTS[index];
-  if(!s || !s.url){ toast('槽位还没有填写代理地址', 'warn'); return; }
-  if(btn){ btn.disabled = true; btn.textContent = '测试中...'; }
+  if(!s || !s.url){ toast('Slot chưa có địa chỉ proxy', 'warn'); return; }
+  if(btn){ btn.disabled = true; btn.textContent = 'Đang kiểm tra...'; }
   try{
     let id = s.id;
     if(!id){
@@ -2848,27 +2861,27 @@ async function testProxySlot(index, btn){
       id = (PROXY_SLOTS[index] || {}).id;
     }
     const r = await postJSON('/proxy/slots/test', {id: id});
-    if(r.ok) toast('出口 IP: ' + r.exit_ip + '（' + r.latency_ms + 'ms）', 'ok');
-    else toast('测试失败: ' + (r.error || 'unknown'), 'bad');
+    if(r.ok) toast('Cổng Proxy IP: ' + r.exit_ip + '（' + r.latency_ms + 'ms）', 'ok');
+    else toast('Kiểm tra thất bại: ' + (r.error || 'unknown'), 'bad');
   }catch(e){
-    toast('测试失败: ' + e.message, 'bad');
+    toast('Kiểm tra thất bại: ' + e.message, 'bad');
   }finally{
-    if(btn){ btn.disabled = false; btn.textContent = '测试'; }
+    if(btn){ btn.disabled = false; btn.textContent = 'Kiểm tra'; }
   }
 }
 
 async function discoverProxySlots(btn){
-  if(btn){ btn.disabled = true; btn.textContent = '探测中...'; }
+  if(btn){ btn.disabled = true; btn.textContent = 'Đang dò...'; }
   try{
     const r = await postJSON('/proxy/discover', {});
     SLOT_DISCOVER = r.candidates || [];
     renderDiscover();
     const ok = SLOT_DISCOVER.filter(c => c.reachable).length;
-    toast('发现 ' + ok + ' 个可用出口', ok ? 'ok' : 'warn');
+    toast('Đã tìm thấy ' + ok + ' cổng Proxy khả dụng', ok ? 'ok' : 'warn');
   }catch(e){
-    toast('自动发现失败: ' + e.message, 'bad');
+    toast('Tự động tìm thất bại: ' + e.message, 'bad');
   }finally{
-    if(btn){ btn.disabled = false; btn.textContent = '自动发现 mihomo 端口'; }
+    if(btn){ btn.disabled = false; btn.textContent = 'Tự Động Tìm Cổng mihomo'; }
   }
 }
 
@@ -2877,35 +2890,35 @@ function renderDiscover(){
   if(!box) return;
   if(!SLOT_DISCOVER.length){ box.innerHTML = ''; return; }
   box.innerHTML = '<div style="margin-top:14px"><div style="font-size:12px;color:var(--dim);margin-bottom:8px">'
-    + '勾选要导入为槽位的出口：</div>'
+    + 'Chọn các cổng Proxy muốn nhập thành Slot:</div>'
     + SLOT_DISCOVER.map((c, i) =>
         '<label style="display:flex;align-items:center;gap:8px;padding:6px 0;font-size:13px">'
         + '<input type="checkbox" ' + (c.reachable ? 'checked' : 'disabled') + ' data-idx="' + i + '">'
         + '<span class="mono">' + esc(c.url) + '</span>'
         + '<span style="color:' + (c.reachable ? 'var(--accent2)' : 'var(--bad)') + '">'
-        + (c.reachable ? ('出口 ' + esc(c.exit_ip) + ' · ' + c.latency_ms + 'ms') : '不可达') + '</span>'
+        + (c.reachable ? ('Cổng Proxy ' + esc(c.exit_ip) + ' · ' + c.latency_ms + 'ms') : 'Không thể truy cập') + '</span>'
         + '</label>').join('')
-    + '<button class="sec" onclick="importDiscovered()" style="margin-top:8px">导入勾选的出口</button></div>';
+    + '<button class="sec" onclick="importDiscovered()" style="margin-top:8px">Nhập các cổng xuất đã chọn</button></div>';
 }
 
 function importDiscovered(){
   const box = document.getElementById('slotDiscover');
   if(!box) return;
   const picked = Array.from(box.querySelectorAll('input[type=checkbox]:checked')).map(el => SLOT_DISCOVER[+el.dataset.idx]);
-  if(!picked.length){ toast('没有勾选任何出口', 'warn'); return; }
+  if(!picked.length){ toast('Chưa chọn cổng xuất nào', 'warn'); return; }
   picked.forEach(c => {
     if(PROXY_SLOTS.some(s => s.url === c.url)) return;
-    PROXY_SLOTS.push({id: '', name: '槽 ' + (PROXY_SLOTS.length + 1), url: c.url, enabled: true, bound: 0});
+    PROXY_SLOTS.push({id: '', name: 'slot ' + (PROXY_SLOTS.length + 1), url: c.url, enabled: true, bound: 0});
   });
   renderProxySlots();
-  toast('已加入 ' + picked.length + ' 个槽位，记得点「保存槽位」', 'ok');
+  toast('Đã thêm ' + picked.length + ' Slot, nhớ nhấn「Lưu Slot」', 'ok');
 }
 
 async function autoAssignSlots(){
   const unbound = (window.ACCOUNTS || []).filter(a => a.enabled && !a.proxySlot);
-  if(!unbound.length){ toast('所有已启用账号都已绑定槽位', 'ok'); return; }
+  if(!unbound.length){ toast('Tất cả tài khoản đã bật đều đã gắn Slot', 'ok'); return; }
   const slots = PROXY_SLOTS.filter(s => s.enabled !== false);
-  if(!slots.length){ toast('没有可用槽位，请先添加并保存', 'warn'); return; }
+  if(!slots.length){ toast('Không có Slot khả dụng, vui lòng thêm và lưu trước', 'warn'); return; }
   let i = 0;
   for(const a of unbound){
     const slot = slots[i % slots.length];
@@ -2914,7 +2927,7 @@ async function autoAssignSlots(){
   }
   await loadAccounts();
   await loadProxySlots();
-  toast('已为 ' + unbound.length + ' 个已启用账号分配出口', 'ok');
+  toast('Đã phân bổ cho ' + unbound.length + ' tài khoản đã bật', 'ok');
 }
 
 function switchMainTab(tab){
@@ -2959,7 +2972,7 @@ function switchMainTab(tab){
   }
 }
 
-/* ---- 系统运行日志模块 ---- */
+/* ---- Hệ ThốngNhật Ký Vận Hànhmô hìnhkhối ---- */
 let logEntries = [];
 let lastLogId = 0;
 let logFilterLevel = '';
@@ -2991,7 +3004,7 @@ async function fetchNewLogs(forceReset){
   if(logFetching) return;
   logFetching = true;
   const statusEl = document.getElementById('logTerminalStatus');
-  if(statusEl && forceReset) statusEl.textContent = '正在拉取...';
+  if(statusEl && forceReset) statusEl.textContent = 'Đang lấy...';
   try {
     const since = forceReset ? 0 : lastLogId;
     const limit = forceReset ? 500 : 200;
@@ -3016,9 +3029,9 @@ async function fetchNewLogs(forceReset){
       renderLogs();
       updateLogStats();
     }
-    if(statusEl) statusEl.textContent = '就绪 · ' + new Date().toLocaleTimeString();
+    if(statusEl) statusEl.textContent = 'Sẵn Sàng · ' + new Date().toLocaleTimeString();
   } catch(e) {
-    if(statusEl) statusEl.textContent = '连接中断: ' + e.message;
+    if(statusEl) statusEl.textContent = 'Mất kết nối: ' + e.message;
   } finally {
     logFetching = false;
   }
@@ -3032,9 +3045,9 @@ function updateLogStats(){
     if(x.level === 'ERROR') errors++;
     else if(x.level === 'WARN') warns++;
   });
-  let txt = '共 ' + logEntries.length + ' 条';
-  if(errors > 0) txt += ' · <span style="color:var(--bad)">' + errors + ' 错误</span>';
-  if(warns > 0) txt += ' · <span style="color:var(--warn)">' + warns + ' 警告</span>';
+  let txt = 'Tổng ' + logEntries.length + '  dòng';
+  if(errors > 0) txt += ' · <span style="color:var(--bad)">' + errors + ' Lỗi</span>';
+  if(warns > 0) txt += ' · <span style="color:var(--warn)">' + warns + ' Cảnh báo</span>';
   badge.innerHTML = txt;
 }
 
@@ -3084,11 +3097,11 @@ function toggleLogAuto(){
   const btn = document.getElementById('btnToggleLogAuto');
   if(btn){
     if(logAutoRefresh){
-      btn.textContent = '实时监听中';
+      btn.textContent = 'Giám sát thời gian thực';
       btn.style.color = 'var(--accent2)';
       startLogPolling();
     } else {
-      btn.textContent = '已暂停监听';
+      btn.textContent = 'Đã tạm dừnggiám sátnghe';
       btn.style.color = 'var(--dim)';
       stopLogPolling();
     }
@@ -3099,7 +3112,7 @@ function toggleLogScroll(){
   logAutoScroll = !logAutoScroll;
   const btn = document.getElementById('btnToggleLogScroll');
   if(btn){
-    btn.textContent = logAutoScroll ? '自动滚屏: 开' : '自动滚屏: 关';
+    btn.textContent = logAutoScroll ? 'Tự động cuộn: Bật' : 'tự độngcuộnmàn hình: đóng';
   }
   if(logAutoScroll){
     const body = document.getElementById('logTerminalBody');
@@ -3137,7 +3150,7 @@ function renderLogs(){
   });
 
   if(filtered.length === 0){
-    body.innerHTML = '<div class="log-empty">暂无匹配的日志记录</div>';
+    body.innerHTML = '<div class="log-empty">Chưa có bản ghi log phù hợp</div>';
     return;
   }
 
@@ -3173,9 +3186,9 @@ function copyFilteredLogs(){
   });
   const text = filtered.map(x => '[' + (x.ts || x.time) + '] [' + x.level + '] [' + x.tag + '] ' + x.msg).join('\n');
   navigator.clipboard.writeText(text).then(() => {
-    toast('已复制 ' + filtered.length + ' 行日志', 'ok');
+    toast('Đã sao chép ' + filtered.length + ' dòngngàylog', 'ok');
   }).catch(e => {
-    toast('复制失败: ' + e.message, 'bad');
+    toast('Sao chép thất bại: ' + e.message, 'bad');
   });
 }
 
@@ -3183,7 +3196,7 @@ async function exportLogsFile(){
   try {
     const data = await getJSON('/logs?limit=5000');
     if(!data || !data.logs || !data.logs.length){
-      toast('暂无日志可导出', 'warn');
+      toast('Chưa có log để xuất', 'warn');
       return;
     }
     const lines = data.logs.map(x => '[' + (x.ts || x.time) + '] [' + x.level + '] [' + x.tag + '] ' + x.msg);
@@ -3195,23 +3208,23 @@ async function exportLogsFile(){
     a.download = 'wb-proxy-' + ts + '.log';
     a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-    toast('已导出 ' + data.logs.length + ' 行日志', 'ok');
+    toast('Đã xuất ' + data.logs.length + ' dòngngàylog', 'ok');
   } catch(e) {
-    toast('导出日志失败: ' + e.message, 'bad');
+    toast('Xuất log thất bại: ' + e.message, 'bad');
   }
 }
 
 async function clearServerLogs(){
-  if(!confirm('确定要清空网关日志吗？此操作将清空内存中的全部日志缓冲。')) return;
+  if(!confirm('Bạn có chắc muốn xóa log cổng không? Thao tác này sẽ xóa toàn bộ bộ đệm log trong bộ nhớ.')) return;
   try {
     await postJSON('/logs/clear', {});
     logEntries = [];
     lastLogId = 0;
     renderLogs();
     updateLogStats();
-    toast('网关日志已清空', 'ok');
+    toast('Đã xóa log cổng', 'ok');
   } catch(e) {
-    toast('清空失败: ' + e.message, 'bad');
+    toast('Xóa log thất bại: ' + e.message, 'bad');
   }
 }
 
@@ -3238,9 +3251,9 @@ function setAnalyticsRange(range){
   loadAnalyticsMatrix();
 }
 
-/* 模型性能指标与用量一览
+/* Bảng chỉ số hiệu năng & lượng dùng mô hình
  *
- * Reads the combined view on purpose. The table carries its own 区域
+ * Reads the combined view on purpose. The table carries its own Khu vực
  * column, so scoping it to the gateway's current exit would hide exactly the
  * models this page exists to compare. */
 async function loadAnalyticsMatrix(){
@@ -3293,7 +3306,7 @@ function fillMatrixFilters(usage){
       return na.localeCompare(nb);
     });
     if(matrixAcctFilter && !seen.has(matrixAcctFilter)) matrixAcctFilter = '';
-    acctSel.innerHTML = '<option value="">全部账号</option>' + opts.map(uid => {
+    acctSel.innerHTML = '<option value="">Tất Cả Tài Khoản</option>' + opts.map(uid => {
       const info = names[uid] || {};
       const label = (info.nickname || uid.slice(0, 8)) + ' (' + uid.slice(0, 6) + ')';
       return '<option value="' + esc(uid) + '"' + (uid === matrixAcctFilter ? ' selected' : '') + '>' + esc(label) + '</option>';
@@ -3302,7 +3315,7 @@ function fillMatrixFilters(usage){
   if(modelSel){
     const ids = Object.keys(modelCount).filter(id => modelCount[id] > 0).sort();
     if(matrixModelFilter && ids.indexOf(matrixModelFilter) === -1) matrixModelFilter = '';
-    modelSel.innerHTML = '<option value="">全部模型</option>' + ids.map(id =>
+    modelSel.innerHTML = '<option value="">Tất Cả Mô Hình</option>' + ids.map(id =>
       '<option value="' + esc(id) + '"' + (id === matrixModelFilter ? ' selected' : '') + '>' + esc(id) + '</option>'
     ).join('');
   }
@@ -3399,12 +3412,12 @@ function renderPerfMatrix(usage, perf){
   if(countEm){
     const nModels = new Set(rowsData.map(r => r.id)).size;
     const anyFilter = !!(matrixAcctFilter || matrixModelFilter);
-    countEm.textContent = nModels ? ("(有调用的模型: " + nModels +
-      " 个·共 " + rowsData.length + " 行明细" + (anyFilter ? " · 已筛选" : "") + ")") : "";
+    countEm.textContent = nModels ? ("(Mô hình đã gọi: " + nModels +
+      " mục·Tổng " + rowsData.length + " dòng chi tiết" + (anyFilter ? " · Đã lọc" : "") + ")") : "";
   }
 
-  if(!rowsData.length){
-    matrixEl.innerHTML = '<div class="empty">当前版本暂无模型请求或性能数据</div>';
+    if(!rowsData.length){
+    matrixEl.innerHTML = '<div class="empty">Phiên bản hiện tại chưa có yêu cầu hoặc dữ liệu hiệu năng</div>';
   } else {
     const maxTok = Math.max(1, ...rowsData.map(m => m.total_tokens));
     /* Summary row (Total / All Models).
@@ -3452,20 +3465,20 @@ function renderPerfMatrix(usage, perf){
       totCache = cacheN ? ((cacheW / cacheN).toFixed(1) + "%") : "-";
     }
     const summaryRow = '<tr style="background:rgba(37,99,235,.06);font-weight:600">'
-      + '<td style="text-align:left" data-label="模型"><b>' + (filtering ? '筛选结果合计 (Filtered)' : '全部模型合计 (Total)') + '</b></td>'
-      + '<td style="text-align:center" data-label="区域"><span style="color:var(--dim)">—</span></td>'
-      + '<td style="text-align:left" data-label="账号"><span style="color:var(--dim)">' + (filtering ? '已筛选' : '全部账号') + '</span></td>'
-      + '<td data-label="请求数">' + fmt(sumReq) + '</td>'
-      + '<td data-label="失败">' + (sumErr
+        + '<td style="text-align:left" data-label="Mô hình"><b>' + (filtering ? 'Kết quả đã lọc (Filtered)' : 'Tất Cả Mô Hình (Total)') + '</b></td>'
+      + '<td style="text-align:center" data-label="Khu vực"><span style="color:var(--dim)">—</span></td>'
+      + '<td style="text-align:left" data-label="Tài Khoản"><span style="color:var(--dim)">' + (filtering ? 'Đã lọc' : 'Tất Cả Tài Khoản') + '</span></td>'
+      + '<td style="text-align:center" data-label="Số yêu cầu">' + fmt(sumReq) + '</td>'
+      + '<td style="text-align:center" data-label="Thất bại">' + (sumErr
           ? ('<span style="color:var(--bad)">' + fmt(sumErr) + '</span>')
           : '<span style="color:var(--dim)">0</span>') + '</td>'
-      + '<td data-label="总 Token"><b style="color:var(--accent)">' + fmt(sumTok) + '</b></td>'
-      + '<td class="triple" data-label="输入 / 输出 / 思考">' + tripleTokens(sumP, sumC, sumR) + '</td>'
-      + '<td data-label="首字延迟">' + totTtft + '</td>'
-      + '<td data-label="生成速度"><b style="color:var(--accent2)">' + totTps + '</b></td>'
-      + '<td data-label="端到端耗时">' + totWall + '</td>'
-      + '<td data-label="缓存命中">' + totCache + '</td>'
-      + '<td data-label="用量占比">100%</td>'
+      + '<td style="text-align:center" data-label="Tổng Token"><b style="color:var(--accent)">' + fmt(sumTok) + '</b></td>'
+      + '<td class="triple" data-label="Input / Output / Thinking">' + tripleTokens(sumP, sumC, sumR) + '</td>'
+        + '<td style="text-align:center" data-label="Độ trễ ký tự đầu">' + totTtft + '</td>'
+      + '<td style="text-align:center" data-label="Tốc độ sinh"><b style="color:var(--accent2)">' + totTps + '</b></td>'
+        + '<td style="text-align:center" data-label="Thời gian xử lý toàn trình">' + totWall + '</td>'
+        + '<td style="text-align:center" data-label="Cache">' + totCache + '</td>'
+      + '<td data-label="Tỷ Lệ Sử Dụng">100%</td>'
       + '</tr>';
 
     const rows = rowsData.map(m => {
@@ -3506,9 +3519,9 @@ function renderPerfMatrix(usage, perf){
       }
       if(realms.size === 1){
         const r = Array.from(realms)[0];
-        realmCell = r === 'cn' ? '<span class="realm-badge-cn">国内版</span>' : '<span class="realm-badge-intl">国际版</span>';
+        realmCell = r === 'cn' ? '<span class="realm-badge-cn">Trong Nước</span>' : '<span class="realm-badge-intl">Quốc Tế</span>';
       } else if(realms.size > 1){
-        realmCell = '<span class="realm-badge-intl">国际版</span> <span class="realm-badge-cn">国内版</span>';
+        realmCell = '<span class="realm-badge-intl">Quốc Tế</span> <span class="realm-badge-cn">Trong Nước</span>';
       } else {
         // No account attribution on these rows (a test call,
         // say). Decide from the model id itself: this table
@@ -3516,8 +3529,8 @@ function renderPerfMatrix(usage, perf){
         // would mislabel domestic-only models.
         const isIntlOnly = ['gpt-6-astra', 'gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.6-luna', 'gpt-5.5', 'gpt-5.4', 'gpt-5.3-codex', 'gemini-3.5-flash'].includes(m.id);
         const isCnOnly = ['deepseek-v4-pro', 'glm-5.3-flash', 'glm-5.1', 'glm-5v-turbo', 'kimi-k3-1', 'kimi-k2.8-preview', 'kimi-k2.7', 'minimax-m3'].includes(m.id);
-        realmCell = isIntlOnly ? '<span class="realm-badge-intl">国际版</span>'
-          : (isCnOnly ? '<span class="realm-badge-cn">国内版</span>'
+        realmCell = isIntlOnly ? '<span class="realm-badge-intl">Quốc Tế</span>'
+          : (isCnOnly ? '<span class="realm-badge-cn">Trong Nước</span>'
             : '<span style="color:var(--dim)">—</span>');
       }
       if(acctEntries.length === 1 && acctEntries[0][0] === '(unattributed)'){
@@ -3535,27 +3548,27 @@ function renderPerfMatrix(usage, perf){
         }).join('');
       }
       return '<tr>'
-        + '<td style="text-align:left" class="mono" data-label="模型"><b>' + esc(m.id) + '</b></td>'
-        + '<td style="text-align:center;white-space:nowrap" data-label="区域">' + realmCell + '</td>'
-        + '<td style="text-align:left" data-label="账号">' + acctCell + '</td>'
-        + '<td data-label="请求数">' + fmt(m.requests) + '</td>'
-        + '<td data-label="失败">' + errCell + '</td>'
-        + '<td data-label="总 Token"><b>' + fmt(m.total_tokens) + '</b></td>'
-        + '<td class="triple" data-label="输入 / 输出 / 思考">' + tripleTokens(m.prompt_tokens, m.completion_tokens, m.reasoning_tokens) + '</td>'
-        + '<td data-label="首字延迟">' + m_ttft + '</td>'
-        + '<td data-label="生成速度">' + m_tps + '</td>'
-        + '<td data-label="端到端耗时">' + m_wall + '</td>'
-        + '<td data-label="缓存命中">' + m_cache + '</td>'
-        + '<td style="min-width:90px" data-label="用量占比"><span class="bar-fill" style="width:' + Math.max(3, pctTok) + '%"></span> <span style="font-size:11px;color:var(--dim)">' + pctTok + '%</span></td>'
+        + '<td style="text-align:left" class="mono" data-label="Mô hình"><b>' + esc(m.id) + '</b></td>'
+        + '<td style="text-align:center;white-space:nowrap" data-label="Khu vực">' + realmCell + '</td>'
+        + '<td style="text-align:left" data-label="Tài Khoản">' + acctCell + '</td>'
+        + '<td style="text-align:center" data-label="Số yêu cầu">' + fmt(m.requests) + '</td>'
+        + '<td style="text-align:center" data-label="Thất bại">' + errCell + '</td>'
+        + '<td style="text-align:center" data-label="Tổng Token"><b>' + fmt(m.total_tokens) + '</b></td>'
+        + '<td class="triple" data-label="Input / Output / Thinking">' + tripleTokens(m.prompt_tokens, m.completion_tokens, m.reasoning_tokens) + '</td>'
+      + '<td style="text-align:center" data-label="Độ trễ ký tự đầu (TTFT)">' + m_ttft + '</td>'
+        + '<td style="text-align:center" data-label="Tốc độ sinh">' + m_tps + '</td>'
+      + '<td style="text-align:center" data-label="Thời gian xử lý">' + m_wall + '</td>'
+      + '<td style="text-align:center" data-label="Cache">' + m_cache + '</td>'
+        + '<td style="min-width:90px" data-label="Tỷ Lệ Sử Dụng"><span class="bar-fill" style="width:' + Math.max(3, pctTok) + '%"></span> <span style="font-size:11px;color:var(--dim)">' + pctTok + '%</span></td>'
         + '</tr>';
     }).join('');
 
     matrixEl.innerHTML = '<table class="data-cards"><thead><tr>'
-      + '<th style="text-align:left">模型名称</th>'
-      + '<th style="text-align:center;width:76px">区域</th>'
-      + '<th style="text-align:left">账号</th>'
-      + '<th>请求数</th><th>失败</th><th>总 Token</th><th style="min-width:190px">输入 / 输出 / 思考</th>'
-      + '<th>首字延迟 (TTFT)</th><th>生成速度</th><th>端到端耗时</th><th>缓存命中率</th><th>用量占比</th>'
+      + '<th style="text-align:left">Tên Mô Hình</th>'
+      + '<th style="text-align:center;width:76px">Khu vực</th>'
+      + '<th style="text-align:left">Tài Khoản</th>'
+      + '<th style="text-align:center">Request</th><th style="text-align:center">Thất Bại</th><th style="text-align:center">Tổng Token</th><th style="min-width:190px">Input / Output / Thinking</th>'
+      + '<th style="text-align:center">Độ trễ ký tự đầu (TTFT)</th><th style="text-align:center">Tốc Độ Sinh</th><th style="text-align:center">Thời Gian Xử Lý</th><th style="text-align:center">Tỷ Lệ Cache</th><th>Tỷ Lệ Sử Dụng</th>'
       + '</tr></thead><tbody>' + summaryRow + rows + '</tbody></table>';
   }
 
@@ -3584,87 +3597,87 @@ function renderAnalytics(data){
   const elTodayTok = document.getElementById('kpiTodayTokens');
   const elTodayDetail = document.getElementById('kpiTodayTokensDetail');
   const elTodayTitle = document.getElementById('kpiRangeTokenTitle');
-  if(elTodayTitle) elTodayTitle.textContent = isToday ? '今日消耗 Token' : '全部历史消耗 Token';
+  if(elTodayTitle) elTodayTitle.textContent = isToday ? 'Số token đã tiêu thụ hôm nay' : 'Toàn Bộ Lịch Sử Tiêu Thụ Token';
   if(elTodayTok) elTodayTok.textContent = fmt(currentSum.total_tokens || 0);
   if(elTodayDetail) elTodayDetail.innerHTML =
-    '<span style="color:var(--accent)">输入 ' + fmt(currentSum.prompt_tokens || 0) + '</span>' +
-    ' <span style="color:var(--dim-light)">/</span> ' + '<span style="color:var(--accent2)">输出 ' + fmt(currentSum.completion_tokens || 0) + '</span>' +
-    ' <span style="color:var(--dim-light)">/</span> ' + '<span style="color:var(--think)">思考 ' + fmt(currentSum.reasoning_tokens || 0) + '</span>';
+    '<span style="color:var(--accent)">Input ' + fmt(currentSum.prompt_tokens || 0) + '</span>' +
+    ' <span style="color:var(--dim-light)">/</span> ' + '<span style="color:var(--accent2)">Output ' + fmt(currentSum.completion_tokens || 0) + '</span>' +
+    ' <span style="color:var(--dim-light)">/</span> ' + '<span style="color:var(--think)">Thinking ' + fmt(currentSum.reasoning_tokens || 0) + '</span>';
 
   // KPI 2: always the all-time figure, as the stable reference next to KPI 1.
   const elTotalTok = document.getElementById('kpiTotalTokens');
   const elTotalDetail = document.getElementById('kpiTotalTokensDetail');
   if(elTotalTok) elTotalTok.textContent = fmt(sumAll.total_tokens || 0);
   if(elTotalDetail) elTotalDetail.innerHTML =
-    '<span style="color:var(--accent)">输入 ' + fmt(sumAll.prompt_tokens || 0) + '</span>' +
-    ' <span style="color:var(--dim-light)">/</span> ' + '<span style="color:var(--accent2)">输出 ' + fmt(sumAll.completion_tokens || 0) + '</span>' +
-    ' <span style="color:var(--dim-light)">/</span> ' + '<span style="color:var(--think)">思考 ' + fmt(sumAll.reasoning_tokens || 0) + '</span>' +
+    '<span style="color:var(--accent)">Input ' + fmt(sumAll.prompt_tokens || 0) + '</span>' +
+    ' <span style="color:var(--dim-light)">/</span> ' + '<span style="color:var(--accent2)">Output ' + fmt(sumAll.completion_tokens || 0) + '</span>' +
+    ' <span style="color:var(--dim-light)">/</span> ' + '<span style="color:var(--think)">Thinking ' + fmt(sumAll.reasoning_tokens || 0) + '</span>' +
     // Two cards showing the same number reads as a broken counter rather than
     // as "there is nothing older to show", so say which case it is.
     ((!isToday && (sumAll.total_tokens || 0) > 0)
-      ? '<br><span style="color:var(--dim);font-size:11px">当前为「全部历史」视图，两张卡片口径相同</span>'
+      ? '<br><span style="color:var(--dim);font-size:11px">Đang xem toàn bộ lịch sử; hai thẻ có cùng phạm vi dữ liệu</span>'
       : ((isToday && (sumAll.total_tokens || 0) === (sumToday.total_tokens || 0) && (sumAll.total_tokens || 0) > 0)
-        ? '<br><span style="color:var(--dim);font-size:11px">与今日相同：日志中暂无更早的数据</span>'
+        ? '<br><span style="color:var(--dim);font-size:11px">Giống hôm nay: log chưa có dữ liệu cũ hơn</span>'
         : ''));
 
-  // KPI 3: 网关平均生成速度
+  // KPI 3: Tốc độ sinh trung bình
   const elAvgSpeed = document.getElementById('kpiAvgSpeed');
   const elAvgLatency = document.getElementById('kpiAvgLatency');
   if(elAvgSpeed) elAvgSpeed.innerHTML = (currentSum.speed_avg ? currentSum.speed_avg.toFixed(1) : '0.0') + ' <span style="font-size:12px;font-weight:400;color:var(--dim)">tok/s</span>';
-  if(elAvgLatency) elAvgLatency.textContent = '平均首字延迟 ' + (currentSum.ttft_ms_avg ? fmt(currentSum.ttft_ms_avg) + ' ms' : '—') + ' · 耗时 ' + (currentSum.elapsed_ms_avg ? (currentSum.elapsed_ms_avg / 1000).toFixed(2) + ' s' : '—');
+  if(elAvgLatency) elAvgLatency.textContent = 'Độ trễ ký tự đầu TB ' + (currentSum.ttft_ms_avg ? fmt(currentSum.ttft_ms_avg) + ' ms' : '—') + ' · Thời gian xử lý ' + (currentSum.elapsed_ms_avg ? (currentSum.elapsed_ms_avg / 1000).toFixed(2) + ' s' : '—');
 
-  // KPI 4: 缓存命中率
+  // KPI 4: Cache
   const elCacheRate = document.getElementById('kpiCacheRate');
   if(elCacheRate) elCacheRate.textContent = (currentSum.cache_hit_pct != null ? currentSum.cache_hit_pct.toFixed(1) : '0.0') + '%';
 
-  // KPI 5: 请求数与成功率
+  // KPI 5: Số Request và tỷ lệ thành công
   const elReqTitle = document.getElementById('kpiReqTitle');
   const elReqCount = document.getElementById('kpiReqCount');
   const elReqSuccess = document.getElementById('kpiReqSuccess');
-  if(elReqTitle) elReqTitle.textContent = (isToday ? '今日' : '累计') + '请求数 & 成功率';
+  if(elReqTitle) elReqTitle.textContent = (isToday ? 'Hôm nay' : 'Tích lũy') + ' · Số Request & Tỷ lệ thành công';
   const totalReq = (currentSum.requests || 0) + (currentSum.errors || 0);
   const successPct = totalReq > 0 ? ((currentSum.requests / totalReq) * 100).toFixed(1) : '100.0';
-  if(elReqCount) elReqCount.textContent = fmt(currentSum.requests || 0) + ' 次';
-  if(elReqSuccess) elReqSuccess.textContent = '成功率 ' + successPct + '% · 失败 ' + (currentSum.errors || 0);
+  if(elReqCount) elReqCount.textContent = fmt(currentSum.requests || 0) + ' lượt';
+  if(elReqSuccess) elReqSuccess.textContent = 'Tỷ lệ thành công ' + successPct + '% · Thất bại ' + (currentSum.errors || 0);
 
-  // Table 1: 账号透视表
+  // Table 1: Bảng phân tích tài khoản
   const acctTbody = document.getElementById('analyticsAccountTbody');
   const acctCountEm = document.getElementById('analyticsAcctCount');
   let accts = (data.accounts || []).filter(a => {
     if(a.uid === '(unattributed)' && !(a.today.requests || a.all_time.requests)) return false;
     return true;
   });
-  if(acctCountEm) acctCountEm.textContent = accts.length ? '(' + accts.length + ' 个账号)' : '';
+  if(acctCountEm) acctCountEm.textContent = accts.length ? '(' + accts.length + ' tài khoản)' : '';
 
   if(acctTbody){
     if(!accts.length){
-      acctTbody.innerHTML = '<tr><td colspan="7" class="empty">暂无账号用量数据</td></tr>';
+      acctTbody.innerHTML = '<tr><td colspan="7" class="empty">Chưa có hoạt động</td></tr>';
     } else {
       acctTbody.innerHTML = accts.map(a => {
         const st = isToday ? a.today : a.all_time;
         const modelsMap = isToday ? a.today_models : a.all_models;
         const entries = Object.entries(modelsMap || {}).sort((x, y) => (y[1].tokens || 0) - (x[1].tokens || 0));
         
-        let pills = '<span style="color:var(--dim)">无调用</span>';
+        let pills = '<span style="color:var(--dim)">Chưa có hoạt động</span>';
         if(entries.length){
           pills = entries.map(([mid, ms]) => {
             return '<span class="model-pill">'
               + '<b style="color:var(--fg)">' + esc(mid) + '</b>: '
-              + ms.requests + '次 · <b style="color:var(--accent)">' + fmt(ms.tokens) + '</b> tok'
+              + ms.requests + 'lượt · <b style="color:var(--accent)">' + fmt(ms.tokens) + '</b> tok'
               + '</span>';
           }).join('');
         }
 
         const realmBadge = a.realm === 'cn'
-          ? '<span class="badge warn" style="font-size:10px">国内版</span>'
-          : '<span class="badge s" style="font-size:10px">国际版</span>';
+          ? '<span class="badge warn" style="font-size:10px">Trong Nước</span>'
+          : '<span class="badge s" style="font-size:10px">Quốc Tế</span>';
 
         let creditStr = '<span style="color:var(--dim)">—</span>';
         if(a.credits && a.credits.remain != null){
           if(a.credits.size){
-            creditStr = '<b style="color:var(--accent2)">' + fmt(a.credits.remain) + '</b> <span style="color:var(--dim);font-size:11px">/ ' + fmt(a.credits.size) + ' 积分</span>';
+            creditStr = '<b style="color:var(--accent2)">' + fmt(a.credits.remain) + '</b> <span style="color:var(--dim);font-size:11px">/ ' + fmt(a.credits.size) + ' Điểm</span>';
           } else {
-            creditStr = '<b style="color:var(--accent2)">' + fmt(a.credits.remain) + '</b> <span style="color:var(--dim);font-size:11px">积分</span>';
+            creditStr = '<b style="color:var(--accent2)">' + fmt(a.credits.remain) + '</b> <span style="color:var(--dim);font-size:11px">Điểm</span>';
           }
         }
 
@@ -3673,11 +3686,11 @@ function renderAnalytics(data){
           +   '<b>' + esc(a.nickname || a.uid) + '</b>'
           +   '<div style="color:var(--dim);font-size:11px;font-family:monospace">' + esc((a.uid || '').slice(0, 10)) + '...</div>'
           + '</td>'
-          + '<td>' + realmBadge + '</td>'
-          + '<td>' + creditStr + '</td>'
-          + '<td>' + fmt(st.requests || 0) + '</td>'
-          + '<td><b style="color:var(--accent)">' + fmt(st.total_tokens || 0) + '</b></td>'
-          + '<td><b style="color:var(--accent2)">' + (st.credit != null ? Number(st.credit).toFixed(2) : '0.00') + '</b></td>'
+          + '<td style="text-align:center">' + realmBadge + '</td>'
+          + '<td style="text-align:center">' + creditStr + '</td>'
+          + '<td style="text-align:center">' + fmt(st.requests || 0) + '</td>'
+          + '<td style="text-align:center"><b style="color:var(--accent)">' + fmt(st.total_tokens || 0) + '</b></td>'
+          + '<td style="text-align:center"><b style="color:var(--accent2)">' + (st.credit != null ? Number(st.credit).toFixed(2) : '0.00') + '</b></td>'
           + '<td style="text-align:left;max-width:440px">' + pills + '</td>'
           + '</tr>';
       }).join('');

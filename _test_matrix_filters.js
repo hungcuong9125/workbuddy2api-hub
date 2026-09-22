@@ -90,8 +90,8 @@ const perf = {
 // The alternation must be grouped: writing 筛选结果合计|全部模型合计[...]
 // makes the trailing part apply to the second branch only, so the capture is
 // undefined whenever the label is "Filtered" and the check fails spuriously.
-const summaryReq = (o) => { const m = o.match(/(?:筛选结果合计|全部模型合计)[\s\S]*?<td data-label="请求数">([^<]*)</); return m ? m[1] : null; };
-const summaryTok = (o) => { const m = o.match(/<td data-label="总 Token"><b style="color:var\(--accent\)">([^<]*)</); return m ? m[1] : null; };
+const summaryReq = (o) => { const m = o.match(/(?:Kết quả đã lọc|Tất Cả Mô Hình)[\s\S]*?<td data-label="Số yêu cầu">([^<]*)</); return m ? m[1] : null; };
+const summaryTok = (o) => { const m = o.match(/<td data-label="Tổng Token"><b style="color:var\(--accent\)">([^<]*)</); return m ? m[1] : null; };
 let pass = 0, fail = 0;
 const check = (label, cond, extra) => { if (cond) { pass++; console.log('  [PASS] ' + label); } else { fail++; console.log('  [FAIL] ' + label + (extra ? '  ' + extra : '')); } };
 
@@ -100,7 +100,7 @@ api.setFilters('', '');
 api.fillMatrixFilters(usage);
 api.renderPerfMatrix(usage, perf);
 let out = document.getElementById('perfMatrix').innerHTML;
-check('summary label is Total, not Filtered', out.includes('全部模型合计'));
+check('summary label is Total, not Filtered', out.includes('Tất Cả Mô Hình (Total)'));
 check('summary shows all 4 requests', summaryReq(out) === '4', summaryReq(out));
 check('summary shows all 8,300 tokens', summaryTok(out) === '8,300', summaryTok(out));
 check('both models present', out.includes('deepseek-v4.1-flash') && out.includes('glm-5.3'));
@@ -116,7 +116,7 @@ api.setFilters('', 'glm-5.3');
 api.renderPerfMatrix(usage, perf);
 out = document.getElementById('perfMatrix').innerHTML;
 check('only glm is rendered', out.includes('glm-5.3') && !out.includes('deepseek-v4.1-flash'));
-check('summary switches to Filtered', out.includes('筛选结果合计'));
+check('summary switches to Filtered', out.includes('Kết quả đã lọc (Filtered)'));
 check('summary counts only the filtered row (1)', summaryReq(out) === '1', summaryReq(out));
 check('summary tokens are the filtered row (2,500)', summaryTok(out) === '2,500', summaryTok(out));
 
@@ -126,7 +126,7 @@ api.setFilters('acct-A', '');
 api.renderPerfMatrix(usage, perf);
 out = document.getElementById('perfMatrix').innerHTML;
 check('glm row (acct-B) is dropped', !out.includes('glm-5.3'));
-check('summary switches to Filtered', out.includes('筛选结果合计'));
+check('summary switches to Filtered', out.includes('Kết quả đã lọc (Filtered)'));
 check('summary counts only acct-A rows (3)', summaryReq(out) === '3', summaryReq(out));
 check('summary tokens are acct-A only (5,800)', summaryTok(out) === '5,800', summaryTok(out));
 
@@ -135,7 +135,7 @@ console.log('[4] filter combination that matches nothing');
 api.setFilters('acct-B', 'deepseek-v4.1-flash');
 api.renderPerfMatrix(usage, perf);
 out = document.getElementById('perfMatrix').innerHTML;
-check('empty state shown', out.includes('暂无模型请求'), out.slice(0, 120));
+check('empty state shown', out.includes('Phiên bản hiện tại chưa có yêu cầu'), out.slice(0, 120));
 
 console.log();
 console.log('[5] a stale filter is cleared when the range changes the data');
