@@ -10,10 +10,10 @@ services:
     environment:
       - HOST=0.0.0.0
       - PORT=8788
-      # 留空则容器启动时自动生成 API Key（写入 ./accounts/settings.json，并打印在启动日志）；
-      # 想自己指定就取消下面这行注释并填上。
-      # - API_KEY=your_api_key_here
-      - TZ=Asia/Shanghai
+      # Điền API key của gateway vào đây; để trống (comment lại dòng dưới) thì container sẽ
+      # tự sinh API key lúc khởi động (ghi vào ./accounts/settings.json và in trong log khởi động).
+      - API_KEY=your_api_key_here
+      - TZ=Asia/Ho_Chi_Minh
     volumes:
       # 持久化挂载账号凭证与用量流水
       - ./accounts:/app/accounts
