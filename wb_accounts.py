@@ -547,7 +547,7 @@ class Account(object):
                 self.fetch_credits()
             except Exception:
                 pass
-            return {"ok": True, "msg": "每日活跃对话成功完成"}
+            return {"ok": True, "msg": "Điểm danh hoạt động hàng ngày hoàn tất"}
         except urllib.error.HTTPError as exc:
             try:
                 err = exc.read().decode("utf-8", "replace")
