@@ -648,14 +648,14 @@ class Account(object):
             session = (self._web_conversation_get(conversation, "/session") or {}).get("data") or {}
         except Exception as exc:
             return {"ok": False, "conversation": conversation,
-                    "error": "session 查询失败: %s" % exc}
+                    "error": "truy vấn session thất bại: %s" % exc}
         link = session.get("link") or session.get("endpoint") or ""
         token = session.get("token") or ""
         session_id = session.get("sessionId") or session.get("session_id") or conversation
         cwd = session.get("cwd") or "/workspace"
         if not link or not token:
             return {"ok": False, "conversation": conversation,
-                    "error": "沙箱未就绪（没有 link/token）"}
+                    "error": "sandbox chưa sẵn sàng (thiếu link/token)"}
 
         result = wb_webagent.run_turn(
             link, token, session_id, cwd, prompt or DAILY_CHAT_WEB_PROMPT,
@@ -664,7 +664,7 @@ class Account(object):
             wait_seconds=WEB_TURN_TIMEOUT, proxy=self.proxy)
         result["conversation"] = conversation
         if result.get("ok"):
-            result["msg"] = "网页通道会话跑完：%d 段输出，%d ms" % (
+            result["msg"] = "phiên kênh web chạy xong: %d đoạn, %d ms" % (
                 result.get("chunks") or 0, result.get("elapsed_ms") or 0)
         return result
 
@@ -716,18 +716,18 @@ class Account(object):
                 self.fetch_credits()
             except Exception:
                 pass
-            result = {"ok": True, "msg": "每日活跃对话成功完成"}
+            result = {"ok": True, "msg": "Điểm danh hoạt động hàng ngày hoàn tất"}
             if web is None:
                 web = bool(self.path) and wb_settings.daily_chat_web(os.path.dirname(self.path))
             if web:
                 res = self.daily_chat_web()
                 result["web"] = res
                 if res.get("ok"):
-                    result["msg"] = ("每日活跃对话成功完成（网页通道 %s：%d 段输出，%d ms）"
+                    result["msg"] = ("Điểm danh hoạt động hàng ngày hoàn tất (kênh web %s: %d đoạn, %d ms)"
                                      % (res.get("status") or "completed",
                                         res.get("chunks") or 0, res.get("elapsed_ms") or 0))
                 else:
-                    result["msg"] = ("每日活跃对话成功完成（网页通道失败：%s）"
+                    result["msg"] = ("Điểm danh hoạt động hàng ngày hoàn tất (kênh web thất bại: %s)"
                                      % res.get("error"))
             return result
         except urllib.error.HTTPError as exc:

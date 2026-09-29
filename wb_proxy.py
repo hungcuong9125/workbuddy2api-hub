@@ -2954,10 +2954,10 @@ def banned_model_message(model):
 
 def key_model_message(entry, model):
     """Explain a per-key model restriction the same way the global ban does."""
-    name = (entry or {}).get("name") or "未命名"
-    allowed = "、".join((entry or {}).get("models") or []) or "-"
-    return ("API Key「%s」的模型限制不允許 %s。該 Key 目前允許：%s。"
-            "請在看板「設置」頁修改這個 Key 的模型限制，或改用允許該模型的 Key。"
+    name = (entry or {}).get("name") or "Chưa đặt tên"
+    allowed = ", ".join((entry or {}).get("models") or []) or "-"
+    return ("API Key「%s」giới hạn mô hình không cho phép %s. Key này hiện cho phép: %s."
+            "Vui lòng sửa giới hạn mô hình của Key này trong trang「Cài Đặt」của bảng điều khiển, hoặc dùng Key cho phép mô hình đó."
             % (name, model, allowed))
 
 
@@ -3266,7 +3266,7 @@ def parse_rate_limit_reset(detail):
     """Pull the reset time out of an upstream 429 body, if it names one.
 
     Upstream answers code 6004 with "... your usage will reset at
-    2026-09-19 18:29:03 UTC+8 ...". Returns an epoch or None. Kept tolerant on
+      2026-09-19 18:29:03 UTC+7 ...". Returns an epoch or None. Kept tolerant on
     purpose: an unparseable body must not break the request path.
     """
     if not detail:
@@ -5305,11 +5305,11 @@ class Handler(BaseHTTPRequestHandler):
         owner = exclusive_realm(model)
         if not owner or owner == realm:
             return ""
-        name = (self.key_entry or {}).get("name") or "当前 Key"
-        served = "国内版" if owner == "cn" else "国际版"
-        used = "国内版" if realm == "cn" else "国际版"
-        return ("模型 %s 只在%s提供，但「%s」绑定的是%s出口。"
-                "请改用对应出口的 Key，或把该 Key 的出口改为「跟随面板切换」。"
+        name = (self.key_entry or {}).get("name") or "Key hiện tại"
+        served = "Trong Nước" if owner == "cn" else "Quốc Tế"
+        used = "Trong Nước" if realm == "cn" else "Quốc Tế"
+        return ("Mô hình %s chỉ cung cấp tại %s, nhưng「%s」được gán cho cổng xuất %s。"
+                "Vui lòng dùng Key của cổng xuất tương ứng, hoặc đổi cổng xuất của Key này thành「theo bảng điều khiển chuyển đổi」。"
                 % (model, served, name, used))
     def _banned_model_error(self, model):
         """被封鎖的模型直接報錯，不碰上游、不扣任何點數。"""
@@ -5623,7 +5623,7 @@ class Handler(BaseHTTPRequestHandler):
             return
         cn_accounts = [a for a in (POOL.accounts if POOL else []) if a.realm == "cn" and a.enabled]
         if not cn_accounts:
-            return self._json(200, {"tasks": [], "summary": {}, "accounts": [], "msg": "未找到可用的国内版账号"})
+            return self._json(200, {"tasks": [], "summary": {}, "accounts": [], "msg": "Không tìm thấy tài khoản Trong Nước khả dụng"})
         uid = (query.get("uid") or [None])[0]
         acc = None
         if uid and uid != "all":
@@ -5646,7 +5646,7 @@ class Handler(BaseHTTPRequestHandler):
     def _get_scheduler(self):
         if not self._authorized():
             return
-        return self._json(200, SCHEDULER.status() if SCHEDULER else {"enabled": False, "msg": "未运行"})
+        return self._json(200, SCHEDULER.status() if SCHEDULER else {"enabled": False, "msg": "Chưa chạy"})
 
     def _get_settings(self):
         if not self._authorized():
@@ -6155,24 +6155,24 @@ class Handler(BaseHTTPRequestHandler):
 
     def _route_tasks_run(self, payload):
         if not POOL:
-            return self._json(200, {"ok": False, "msg": "账号池不可用"})
+            return self._json(200, {"ok": False, "msg": "Nhóm tài khoản không khả dụng"})
         uid = payload.get("uid")
         if uid and uid != "all":
             target = POOL.get(uid)
             if not target or target.realm != "cn":
-                return self._json(200, {"ok": False, "msg": "未找到指定的国内版账号"})
+                return self._json(200, {"ok": False, "msg": "Không tìm thấy tài khoản Trong Nước được chỉ định"})
             targets = [target]
         else:
             targets = [a for a in POOL.accounts if a.realm == "cn" and a.enabled]
         if not targets:
-            return self._json(200, {"ok": False, "msg": "未找到已启用的国内版账号"})
+            return self._json(200, {"ok": False, "msg": "Không tìm thấy tài khoản Trong Nước đã bật"})
         from wb_tasks import run_growth_tasks
         combined_logs = []
         total_credit = 0
         for i, acc in enumerate(targets):
             uid_str = acc.uid[:8] if acc.uid else "?"
             nick = acc.nickname or uid_str
-            combined_logs.append(f"====== 正在为账号 [{nick} ({acc.uid})] 执行全自动成长任务 ({i+1}/{len(targets)}) ======")
+            combined_logs.append(f"====== Đang thực thi tự động nhiệm vụ phát triển cho tài khoản [{nick} ({acc.uid})] ({i+1}/{len(targets)}) ======")
             res = run_growth_tasks(acc, gap=1.0)
             # run_growth_tasks() reports its total as "earned_credit";
             # reading the old "credit_added" name silently summed zeros
@@ -6182,7 +6182,7 @@ class Handler(BaseHTTPRequestHandler):
                 combined_logs.append(f"  {l}")
             if i < len(targets) - 1:
                 time.sleep(1.5)
-        combined_logs.append(f"====== 全部 {len(targets)} 个账号任务执行完毕，累计新增积分: +{total_credit} ======")
+        combined_logs.append(f"====== Hoàn tất thực thi nhiệm vụ cho {len(targets)} tài khoản, tích lũy điểm mới: +{total_credit} ======")
         return self._json(200, {
             "ok": True,
             "credit_added": total_credit,
@@ -6192,17 +6192,17 @@ class Handler(BaseHTTPRequestHandler):
 
     def _route_tasks_travel(self, payload):
         if not POOL:
-            return self._json(200, {"ok": False, "msg": "账号池不可用"})
+            return self._json(200, {"ok": False, "msg": "Nhóm tài khoản không khả dụng"})
         uid = payload.get("uid")
         if uid and uid != "all":
             target = POOL.get(uid)
             if not target or target.realm != "cn":
-                return self._json(200, {"ok": False, "msg": "未找到指定的国内版账号"})
+                return self._json(200, {"ok": False, "msg": "Không tìm thấy tài khoản Trong Nước được chỉ định"})
             targets = [target]
         else:
             targets = [a for a in POOL.accounts if a.realm == "cn" and a.enabled]
         if not targets:
-            return self._json(200, {"ok": False, "msg": "未找到已启用的国内版账号"})
+            return self._json(200, {"ok": False, "msg": "Không tìm thấy tài khoản Trong Nước đã bật"})
         from wb_tasks import do_cat_travel
         results = []
         for i, acc in enumerate(targets):
@@ -6230,14 +6230,14 @@ class Handler(BaseHTTPRequestHandler):
     def _route_scheduler_trigger(self, payload):
         if SCHEDULER:
             return self._json(200, SCHEDULER.trigger_now())
-        return self._json(200, {"ok": False, "msg": "调度器未初始化"})
+        return self._json(200, {"ok": False, "msg": "Bộ lịch chưa khởi tạo"})
 
     def _route_scheduler_toggle(self, payload):
         if SCHEDULER:
             SCHEDULER.enabled = not SCHEDULER.enabled
-            SCHEDULER.log(f"用户切换调度器状态为: {'启用' if SCHEDULER.enabled else '暂停'}")
+            SCHEDULER.log(f"Người dùng chuyển trạng thái bộ lịch thành: {'bật' if SCHEDULER.enabled else 'tạm dừng'}")
             return self._json(200, SCHEDULER.status())
-        return self._json(200, {"ok": False, "msg": "调度器未初始化"})
+        return self._json(200, {"ok": False, "msg": "Bộ lịch chưa khởi tạo"})
 
     def _route_logs_clear(self, payload):
         clear_logs()
@@ -6297,7 +6297,7 @@ class Handler(BaseHTTPRequestHandler):
             if account is None:
                 continue
             res = account.daily_chat_web()
-            log("account %s: 网页通道打卡 -> %s"
+            log("account %s: điểm danh qua kênh web -> %s"
                 % (account.uid[:8], res.get("conversation") if res.get("ok") else res.get("error")),
                 level="INFO" if res.get("ok") else "WARN")
             results.append({"uid": account.uid, "nickname": account.nickname, **res})
@@ -7040,11 +7040,11 @@ def _probe_running_instance(args):
             print()
             raise SystemExit(1)
         print()
-        print(f"  [已有一个反代在 {args.port} 端口运行，无需重复启动]")
-        print(f"  账号: {existing.get('uid', '?')} @ {existing.get('domain', '?')}")
-        print(f"  看板: http://127.0.0.1:{args.port}/")
+        print(f"  [Đã có một proxy ngược chạy trên cổng {args.port}, không cần khởi động lại]")
+        print(f"  Tài khoản: {existing.get('uid', '?')} @ {existing.get('domain', '?')}")
+        print(f"  Bảng điều khiển: http://127.0.0.1:{args.port}/")
         print()
-        print("  如果要重启: 先把原来那个窗口关掉（或结束 python 进程），再运行本程序。")
+        print("  Nếu muốn khởi động lại: hãy đóng cửa sổ cũ (hoặc kết thúc tiến trình python), rồi chạy lại chương trình này.")
         print()
         # Return True so main() stops here. A bare return gives None, which
         # main() reads as "no running copy" and it would carry on to bind the
