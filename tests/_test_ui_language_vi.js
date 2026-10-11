@@ -105,8 +105,45 @@ const screenshotStrings = [
   ['未归属', 'Chưa phân bổ'],
   ['（切换前）', '(Trước khi nâng cấp)'],
   ['(2 把)', '(2 API Key)'],
+  ['平均耗时', 'Thời gian trung bình'],
+  ['平均首字延迟', 'Độ trễ token đầu tiên trung bình'],
+  ['首个 token 的平均等待时间', 'Thời gian chờ trung bình đến token đầu tiên'],
+  ['Input', 'Đầu vào'],
+  ['Output', 'Đầu ra'],
+  ['Thinking', 'Suy luận'],
+  ['上次:', 'Lần trước:'],
+  ['下次:', 'Lần tiếp theo:'],
+  ['尚未运行', 'Chưa chạy'],
+  ['待调度', 'Đang chờ lịch'],
+  ['整点排程 (09:00/21:00 签到旅行 · 22:00 保活 · 01:00 夜猫)',
+    'Lịch theo giờ cố định (09:00/21:00 điểm danh và du lịch · 22:00 duy trì Token · 01:00 nhiệm vụ đêm)'],
+  ['(不指定模型)', '(Không chỉ định mô hình)'],
+  ['(未指定)', '(Chưa chỉ định)'],
+  ['全局 API Key', 'API Key chung'],
+  ['OpenAI 兼容', 'Tương thích OpenAI'],
+  ['检测中...', 'Đang kiểm tra...'],
+  ['应用时间:', 'Thời gian áp dụng:'],
+  ['模型:', 'Mô hình:'],
+  ['输入 · 输出 · 思考', 'Đầu vào · đầu ra · suy luận'],
+  ['请求次数', 'Số yêu cầu'],
+  ['消耗总 Token', 'Tổng Token đã dùng'],
+  ['调用的模型分布 (请求数 · 消耗)', 'Phân bố mô hình đã gọi (số yêu cầu · mức dùng)'],
+  ['客户端检测完成', 'Đã kiểm tra ứng dụng'],
+  ['暂未获取到客户端列表，点右上角「刷新」重新检测。',
+    'Chưa lấy được danh sách ứng dụng. Nhấn “Làm mới” ở góc trên bên phải để kiểm tra lại.'],
 ];
 for(const [source, expected] of screenshotStrings){
+  assert.strictEqual(vi.window.WB_I18N.translateVi(source), expected, source);
+}
+const generatedScreenshotStrings = [
+  ['运行中 · 整点排程 (09:00/21:00 签到旅行 · 22:00 保活 · 01:00 夜猫)',
+    'Đang chạy · Lịch theo giờ cố định (09:00/21:00 điểm danh và du lịch · 22:00 duy trì Token · 01:00 nhiệm vụ đêm)'],
+  ['上次: 2026-03-01 09:00:00 · 下次: 2026-03-01 21:00:00',
+    'Lần trước: 2026-03-01 09:00:00 · Lần tiếp theo: 2026-03-01 21:00:00'],
+  ['(已检测到 2 个)', '(Đã phát hiện 2 ứng dụng)'],
+  ['输入 1 / 输出 2 / 思考 3', 'Đầu vào 1 / Đầu ra 2 / Suy luận 3'],
+];
+for(const [source, expected] of generatedScreenshotStrings){
   assert.strictEqual(vi.window.WB_I18N.translateVi(source), expected, source);
 }
 const mixedLanguageStrings = [
