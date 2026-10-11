@@ -57,7 +57,7 @@ class AcpChannel(object):
     def _target(self):
         parsed = urllib.parse.urlparse(self.link)
         if parsed.scheme not in ("http", "https") or not parsed.hostname:
-            raise AcpError("沙箱地址不可用: %r" % self.link)
+            raise AcpError("địa chỉ sandbox không dùng được: %r" % self.link)
         port = parsed.port or (443 if parsed.scheme == "https" else 80)
         return parsed, port
 
@@ -84,11 +84,11 @@ class AcpChannel(object):
         resp = conn.getresponse()
         if resp.status != 200:
             conn.close()
-            raise AcpError("SSE 通道返回 HTTP %s" % resp.status)
+            raise AcpError("kênh SSE trả về HTTP %s" % resp.status)
         connection_id = resp.getheader("Acp-Connection-Id") or ""
         if not connection_id:
             conn.close()
-            raise AcpError("SSE 通道没有返回 Acp-Connection-Id")
+            raise AcpError("kênh SSE không trả về Acp-Connection-Id")
         self._conn = conn
         self.connection_id = connection_id
         self._reader = threading.Thread(target=self._read_events, args=(resp,), daemon=True)
@@ -147,7 +147,7 @@ class AcpChannel(object):
         finally:
             conn.close()
         if status not in (200, 202):
-            raise AcpError("%s 返回 HTTP %s" % (method, status))
+            raise AcpError("%s trả về HTTP %s" % (method, status))
         return status
 
     def close(self):
@@ -192,12 +192,12 @@ def run_turn(link, token, session_id, cwd, prompt, user_agent, poll_status=None,
                 try:
                     status = str(poll_status() or "")
                 except Exception as exc:
-                    log("web agent: 状态查询失败 (%s)" % exc)
+                    log("web agent: truy vấn trạng thái thất bại (%s)" % exc)
                 if status == "completed":
                     finished = True
                     break
                 if status in ("failed", "error"):
-                    error = "会话状态=%s" % status
+                    error = "trạng thái phiên=%s" % status
                     break
             if poll_interval:
                 time.sleep(poll_interval)
@@ -214,7 +214,7 @@ def run_turn(link, token, session_id, cwd, prompt, user_agent, poll_status=None,
         except Exception:
             pass
     if not finished and not error:
-        error = "会话在 %ss 内没有跑完（状态=%s）" % (wait_seconds, status or "未知")
+        error = "phiên không chạy xong trong %ss (trạng thái=%s)" % (wait_seconds, status or "không rõ")
     ok = finished and not error
     return {"ok": ok, "status": status, "events": channel.updates,
             "chunks": channel.chunks, "elapsed_ms": elapsed_ms, "error": error}

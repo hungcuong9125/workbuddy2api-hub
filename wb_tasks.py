@@ -433,7 +433,7 @@ def do_cat_travel(account):
     try:
         st = _travel_status(account)
     except Exception as exc:
-        return {"ok": False, "msg": f"查询旅行状态失败: {exc}"}
+        return {"ok": False, "msg": f"Truy vấn trạng thái du lịch thất bại: {exc}"}
 
     state = st.get("state")
     if state == "arrived":
@@ -444,15 +444,13 @@ def do_cat_travel(account):
                 c_res = json.loads(resp.read().decode("utf-8"))
                 credit = (c_res.get("data") or {}).get("reward_credit", 0)
                 account.fetch_credits()
-                return {"ok": True, "action": "claim", "credit": credit, "msg": f"旅行归来领奖成功！获得 {credit} 积分"}
+                return {"ok": True, "action": "claim", "credit": credit, "msg": f"Du lịch trở về nhận thưởng thành công! Nhận được {credit} điểm"}
         except Exception as e:
-            return {"ok": False, "msg": f"领奖失败: {e}"}
+            return {"ok": False, "msg": f"Nhận thưởng thất bại: {e}"}
 
     if state == "idle":
         if st.get("daily_limit_reached"):
-            return {"ok": True, "action": "idle", "msg": "猫猫今日已完成旅行，明日 00:00 刷新"}
-        # 派出旅行: 官方前端要求 body 携带 {location_id} (目的地清单在
-        # travel/config) —— 空 body 会被拒 400 "invalid request"。
+            return {"ok": True, "action": "idle", "msg": "Mèo đã hoàn thành du lịch hôm nay, làm mới lúc 00:00 ngày mai"}
         lid = None
         try:
             req_cfg = urllib.request.Request(CHAT_BASE + "/activity/growth/buddy/travel/config", headers=headers)
@@ -465,25 +463,25 @@ def do_cat_travel(account):
             _log(f"buddy/travel/config query failed: {exc}")
         if lid is None:
             lid = 1
-        # 状态里的 buddy_id 是"当前旅行实例"的 id，猫在家 (idle) 时恒为 0，
-        # 不能拿它判断有没有 Buddy。以 depart 的 "no active buddy" 为准：
-        # 先直接派，失败再补齐 first_buddy（其奖励即 Buddy 实例）重试一次。
+        # buddy_id here means an active trip, not whether the account owns a Buddy.
+        # Try departure first; only complete the prerequisite if the upstream says
+        # there is no active Buddy, then retry once.
         data, err = _travel_depart(account, lid)
         if data is None and "no active buddy" in (err or "").lower():
             if ensure_buddy(account):
                 data, err = _travel_depart(account, lid)
             else:
                 return {"ok": False,
-                        "msg": "还没有 Buddy：需先完成并领取「领取一只 Buddy」任务（新建任务并发起对话）"}
+                        "msg": "Chưa có Buddy: cần hoàn thành và nhận nhiệm vụ「Nhận một Buddy」trước."}
         if data is not None:
             loc = (data.get("location") or {}).get("name") or ""
-            return {"ok": True, "action": "depart", "msg": f"猫猫已出发前往「{loc}」，预计数小时后归来！"}
-        return {"ok": False, "msg": f"派出旅行失败: {err}"}
+            return {"ok": True, "action": "depart", "msg": f"Mèo đã lên đường đến「{loc}」, dự kiến vài giờ sau trở về!"}
+        return {"ok": False, "msg": f"Phái mèo đi du lịch thất bại: {err}"}
 
     if state == "traveling":
-        return {"ok": True, "action": "traveling", "msg": "猫猫正在旅行途中，请稍后再来查看！"}
+        return {"ok": True, "action": "traveling", "msg": "Mèo đang trên đường du lịch, vui lòng quay lại sau!"}
 
-    return {"ok": True, "action": state, "msg": f"当前状态: {state}"}
+    return {"ok": True, "action": state, "msg": f"Trạng thái hiện tại: {state}"}
 
 
 def _progress_one(account, t, logs, gap):
@@ -598,13 +596,13 @@ def _progress_one(account, t, logs, gap):
 def run_growth_tasks(account, gap=1.0):
     """完整执行批量成长任务点亮与领奖。"""
     if account.realm != "cn":
-        return {"ok": False, "msg": "国际版不适用国内成长任务中心", "logs": []}
+        return {"ok": False, "msg": "Bản Quốc Tế không áp dụng trung tâm nhiệm vụ phát triển Trong Nước", "logs": []}
 
     logs = []
-    logs.append(f"开始为账号 {account.nickname or account.uid[:8]} 运行成长任务自动化...")
+    logs.append(f"Bắt đầu chạy tự động hóa nhiệm vụ phát triển cho tài khoản {account.nickname or account.uid[:8]}...")
     tasks = fetch_growth_tasks(account)
     if not tasks:
-        logs.append("未能获取到任务清单，请检查网络或账号状态")
+        logs.append("Không lấy được danh sách nhiệm vụ, vui lòng kiểm tra mạng hoặc trạng thái tài khoản")
         return {"ok": False, "logs": logs, "earned_credit": 0}
 
     total_earned = 0
@@ -623,34 +621,34 @@ def run_growth_tasks(account, gap=1.0):
 
     unaccepted = [t["task_code"] for t in tasks if _needs_accept(t)]
     if unaccepted:
-        logs.append(f"发现 {len(unaccepted)} 个待接取任务，正在批量接取...")
+        logs.append(f"Phát hiện {len(unaccepted)} nhiệm vụ chờ nhận, đang nhận hàng loạt...")
         acc = accept_tasks(account, unaccepted)
         if acc.get("failed"):
             why = acc.get("msg") or ("; ".join(acc.get("reasons") or [])[:160])
-            logs.append(f"! 接取未成功 {len(acc['failed'])} 个: {', '.join(acc['failed'][:5])}"
+            logs.append(f"! Nhận không thành công {len(acc['failed'])} nhiệm vụ: {', '.join(acc['failed'][:5])}"
                         + (" ..." if len(acc["failed"]) > 5 else "")
                         + (f" ({why})" if why else ""))
         if acc.get("accepted"):
-            logs.append(f"✓ 已接取 {len(acc['accepted'])} 个任务")
+            logs.append(f"✓ Đã nhận {len(acc['accepted'])} nhiệm vụ")
         time.sleep(gap)
         tasks = fetch_growth_tasks(account)
         # 复核一次: 上游偶尔会瞬时拒绝整个批次, 复查后仍处于未接取的再补一次,
         # 否则后面所有上报都作用在未接取的任务上 —— 进度全是 0。
         still = [t["task_code"] for t in tasks if _needs_accept(t)]
         if still:
-            logs.append(f"仍有 {len(still)} 个未接取，重试接取一次...")
+            logs.append(f"Vẫn còn {len(still)} nhiệm vụ chưa được nhận, thử nhận lại một lần...")
             retry = accept_tasks(account, still)
             if retry.get("accepted"):
-                logs.append(f"✓ 重试接取成功 {len(retry['accepted'])} 个")
+                logs.append(f"✓ Nhận lại thành công {len(retry['accepted'])} nhiệm vụ")
             time.sleep(gap)
             tasks = fetch_growth_tasks(account)
         if not tasks:
-            logs.append("! 接取后无法获取任务清单，本轮中止")
+            logs.append("! Sau khi nhận nhiệm vụ không lấy được danh sách; dừng lượt chạy này")
             return {"ok": False, "logs": logs, "earned_credit": total_earned}
         still_pending = [t["task_code"] for t in tasks if _needs_accept(t)]
         if still_pending:
-            logs.append(f"! 仍有 {len(still_pending)} 个任务处于未接取状态，"
-                        f"对未接取任务上报事件不会计入进度，本轮跳过这些任务")
+            logs.append(f"! Vẫn còn {len(still_pending)} nhiệm vụ ở trạng thái chưa được nhận, "
+                        f"báo cáo sự kiện cho nhiệm vụ chưa nhận sẽ không tính tiến độ, vòng này bỏ qua các nhiệm vụ đó")
 
     # 2. 处理每个任务（auto 已在第 0 步处理过）
     for t in tasks:
@@ -661,13 +659,13 @@ def run_growth_tasks(account, gap=1.0):
     # 3. 顺手检查猫猫旅行
     tr_res = do_cat_travel(account)
     if tr_res.get("msg"):
-        logs.append(f"猫猫日常: {tr_res.get('msg')}")
+        logs.append(f"Mèo hàng ngày: {tr_res.get('msg')}")
         if tr_res.get("credit"):
             total_earned += tr_res.get("credit", 0)
 
     # 4. 刷新积分余额
     account.fetch_credits()
-    logs.append(f"🎉 全部完成！本次累计新增到账: +{total_earned} 积分，当前总剩余: {account.credits.get('remain', 0)} 积分")
+    logs.append(f"🎉 Hoàn tất tất cả! Lần này tích lũy thêm vào tài khoản: +{total_earned} điểm, tổng số dư hiện tại: {account.credits.get('remain', 0)} điểm")
     return {"ok": True, "logs": logs, "earned_credit": total_earned, "credits": account.credits}
 
 
@@ -675,18 +673,18 @@ def run_night_growth(account):
     """夜猫子任务 (black_cat): 每日 23:00-08:00 上报 1 次 GLM-5.2 夜间对话事件,
     每天计 1 次、累计 3 天后可领奖。白天调用会诚实跳过。"""
     if account.realm != "cn":
-        return {"ok": False, "msg": "国际版不适用国内成长任务中心", "logs": [], "earned_credit": 0}
+        return {"ok": False, "msg": "Bản Quốc Tế không áp dụng trung tâm nhiệm vụ phát triển Trong Nước", "logs": [], "earned_credit": 0}
     logs = []
     name = account.nickname or account.uid[:8]
     if not in_night_window():
         return {"ok": True, "earned_credit": 0, "logs": [
-            f"[{name}] 当前不在 23:00-08:00 夜间窗口, 夜猫子任务跳过 (每日 01:00 自动执行)"]}
+            f"[{name}] hiện không trong khung giờ đêm 23:00-08:00, nhiệm vụ mèo đêm bỏ qua (mỗi ngày 01:00 tự động thực hiện)"]}
     tasks = fetch_growth_tasks(account)
     t = next((x for x in tasks if x["task_code"] == "black_cat"), None)
     if not t:
-        return {"ok": False, "earned_credit": 0, "logs": [f"[{name}] 未获取到夜猫子任务清单"]}
+        return {"ok": False, "earned_credit": 0, "logs": [f"[{name}] không lấy được danh sách nhiệm vụ mèo đêm"]}
     if t["status"] == "claimed":
-        return {"ok": True, "earned_credit": 0, "logs": [f"[{name}] 夜猫子任务已领奖"]}
+        return {"ok": True, "earned_credit": 0, "logs": [f"[{name}] nhiệm vụ mèo đêm đã nhận thưởng"]}
     if t["status"] == "not_accepted":
         # 上游只对已接取的任务累计进度；夜猫子任务也必须先接取。
         acc_res = accept_tasks(account, ["black_cat"])
@@ -700,11 +698,11 @@ def run_night_growth(account):
         res = claim_task(account, "black_cat")
         cr = res.get("credit", 0) if res.get("ok") else 0
         account.fetch_credits()
-        logs.append(f"[{name}] 夜猫子任务达标, 领奖 {'✓ +' + str(cr) + ' 积分' if res.get('ok') else '! 失败: ' + (res.get('msg') or '')}")
+        logs.append(f"[{name}] nhiệm vụ mèo đêm đạt chuẩn, nhận thưởng {'✓ +' + str(cr) + ' điểm' if res.get('ok') else '! Thất bại: ' + (res.get('msg') or '')}")
         return {"ok": res.get("ok", False), "earned_credit": cr, "logs": logs}
     ev = build_event(account, "cat", idx=0)
     ok = report_events(account, [ev])
-    logs.append(f"[{name}] 上报夜间 GLM-5.2 对话事件: {'成功' if ok else '失败'} (进度 {cur}/{tgt})")
+    logs.append(f"[{name}] báo cáo sự kiện trò chuyện đêm GLM-5.2: {'thành công' if ok else 'thất bại'} (tiến độ {cur}/{tgt})")
     fresh = None
     for _ in range(4):
         time.sleep(4)
@@ -715,15 +713,15 @@ def run_night_growth(account):
     if new_cur >= tgt:
         res = claim_task(account, "black_cat")
         cr = res.get("credit", 0) if res.get("ok") else 0
-        logs.append(f"[{name}] 夜猫子任务完成 {new_cur}/{tgt}, 领奖 {'✓ +' + str(cr) + ' 积分' if res.get('ok') else '! 失败: ' + (res.get('msg') or '')}")
+        logs.append(f"[{name}] nhiệm vụ mèo đêm hoàn thành {new_cur}/{tgt}, nhận thưởng {'✓ +' + str(cr) + ' điểm' if res.get('ok') else '! Thất bại: ' + (res.get('msg') or '')}")
     elif new_cur > cur:
-        logs.append(f"[{name}] 今晚 +1 ({new_cur}/{tgt}), 明晚继续, 累计 3 天可领奖")
+        logs.append(f"[{name}] tối nay +1 ({new_cur}/{tgt}), tối mai tiếp tục, tích lũy đủ 3 ngày sẽ nhận được thưởng")
     else:
-        logs.append(f"[{name}] 已上报但进度暂未变化 ({new_cur}/{tgt}), 明晚调度器会继续累计")
+        logs.append(f"[{name}] đã báo cáo nhưng tiến độ chưa thay đổi ({new_cur}/{tgt}), tối mai bộ lịch sẽ tiếp tục tích lũy")
     account.fetch_credits()
     earned = 0
     for line in logs:
-        m = re.search(r"\+(\d+) 积分", line)
+        m = re.search(r"\+(\d+) điểm", line)
         if m:
             earned = int(m.group(1))
     return {"ok": True, "earned_credit": earned, "logs": logs}

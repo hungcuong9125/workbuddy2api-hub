@@ -56,7 +56,7 @@ class DockerTests(unittest.TestCase):
         self.assertIn("/health", text)
 
     def test_compose_supports_puid_pgid(self):
-        text = read("docker-compose.yml")
+        text = read("docker-compose.example.yml")
         self.assertIn("${PUID:-", text)
         self.assertIn("${PGID:-", text)
 

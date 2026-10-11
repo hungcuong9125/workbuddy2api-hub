@@ -97,11 +97,11 @@ global.__toasts = toasts;
   for(const name of ['Cursor', 'DSH', '本地测试']){
     assert.ok(list.includes(name), '列表里缺少 ' + name);
   }
-  assert.ok(list.includes('固定国际版出口'), '固定国际版出口的徽章丢了');
-  assert.ok(list.includes('固定国内版出口'), '固定国内版出口的徽章丢了');
-  assert.ok(list.includes('限 deepseek*'), '模型白名单徽章丢了');
+  assert.ok(list.includes('Cổng Proxy cố định Quốc Tế'), 'fixed Global exit badge is missing');
+  assert.ok(list.includes('Cổng Proxy cố định Trong Nước'), 'fixed China exit badge is missing');
+  assert.ok(list.includes('Giới hạn deepseek*'), 'model allowlist badge is missing');
   assert.ok(list.includes('wb-aaaa****1111'), '掩码后的 Key 没显示');
-  assert.equal(element('setKeyState').textContent, '(2 个生效)',
+  assert.equal(element('setKeyState').textContent, '(2 Key có hiệu lực)',
     '计数只算启用中的 Key');
 
   // 3. 空列表时给的是提示语，不是一片空白。

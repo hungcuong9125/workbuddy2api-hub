@@ -28,8 +28,8 @@ assert.equal(fmtCoolAt(until), localTime);
 assert.equal(fmtCoolAt('bad-value'), '');
 
 const row = accountRow(base({modelCooldowns: [{model: 'glm-5.3', expiresAt: until}]}));
-assert(row.includes('glm-5.3 · ' + localTime + ' 恢复'));
-assert(row.includes('时间为本地时间'));
+assert(row.includes('glm-5.3 · ' + localTime + ' phục hồi'));
+assert(row.includes('giờ địa phương'));
 assert(row.includes('>可用</span>')); // The account still serves other models.
 assert(!row.includes('冷却 600s'));
 const throttled = accountRow(base({lastError: 'HTTP 429 (model throttled)',

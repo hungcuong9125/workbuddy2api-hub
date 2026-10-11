@@ -147,7 +147,15 @@ function summaryShare(out){
   }
   return null;
 }
-const summaryTok = (out) => { const m = out.match(/(?:筛选结果合计|全部模型合计)[\s\S]*?<td data-label="总 Token">[\s\S]*?>([^<]*)</); return m ? m[1] : null; };
+function summaryTok(out){
+  for(const match of out.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/g)){
+    const row = match[1];
+    if(!/(?:Kết quả đã lọc|Tất Cả Mô Hình)/.test(row)) continue;
+    const cell = row.match(/<td[^>]*data-label="(?:总 Token|Tổng Token)"[^>]*>([\s\S]*?)<\/td>/);
+    if(cell) return visible(cell[1]);
+  }
+  return null;
+}
 
 let pass = 0, fail = 0;
 const check = (label, cond, extra) => { if (cond) { pass++; console.log('  [PASS] ' + label); } else { fail++; console.log('  [FAIL] ' + label + (extra !== undefined ? '  ' + extra : '')); } };

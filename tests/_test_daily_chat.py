@@ -171,7 +171,7 @@ class WebChannelTests(unittest.TestCase):
             wb_accounts.urlopen = old
         self.assertTrue(res.get("ok"), res)
         self.assertTrue(res.get("web", {}).get("ok"), res)
-        self.assertIn("网页通道", res.get("msg", ""))
+        self.assertIn("kênh web", res.get("msg", ""))
         self.assertTrue(any(r.full_url.endswith("/console/as/conversations/") for r in calls),
                         [r.full_url for r in calls])
 
@@ -201,7 +201,7 @@ class WebChannelTests(unittest.TestCase):
         finally:
             wb_accounts.urlopen = old
         self.assertFalse(res.get("ok"), res)
-        self.assertIn("沙箱", res.get("error", ""))
+        self.assertIn("sandbox", res.get("error", ""))
 
     def test_daily_chat_skips_the_web_step_when_off(self):
         acc = self.account()

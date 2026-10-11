@@ -88,7 +88,7 @@ class RunTurnTests(unittest.TestCase):
     def test_a_conversation_that_never_finishes_is_reported(self):
         result, channel = run(["working"], wait_seconds=1)
         self.assertFalse(result["ok"])
-        self.assertIn("没有跑完", result["error"])
+        self.assertIn("không chạy xong", result["error"])
         self.assertTrue(channel.closed)
 
     def test_a_failed_conversation_stops_early(self):
