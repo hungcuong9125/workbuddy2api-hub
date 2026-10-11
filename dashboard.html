@@ -681,7 +681,7 @@ button.page-nav-top:hover{background:var(--panel2);border-color:var(--accent);co
   var LANG_KEY = 'wb-lang';
   var HAN = /[\u4e00-\u9fff]/;
   var WS = /\s+/g;
-  var ATTRS = ['title', 'placeholder', 'aria-label', 'data-label', 'alt'];
+  var ATTRS = ['title', 'placeholder', 'aria-label', 'data-label', 'data-tip', 'alt'];
   var SKIP = {SCRIPT: 1, STYLE: 1, TEXTAREA: 1, NOSCRIPT: 1};
   var DICT = {
     '(不限)': '(unlimited)',
@@ -1622,8 +1622,8 @@ button.page-nav-top:hover{background:var(--panel2);border-color:var(--accent);co
     '一键分配代理': 'Phân proxy một lần',
     '全部启用': 'Bật tất cả',
     '全部停用': 'Tắt tất cả',
-    '当前禁用': 'Đang tắt',
-    '「上游限流」到点自动恢复；「本地停用」需手动启用；「日限额」次日零点恢复': 'Giới hạn từ upstream tự mở lại khi hết hạn; tài khoản tắt cục bộ cần bật thủ công; hạn mức ngày đặt lại lúc 0 giờ.',
+    '当前禁用': 'Đang bị tạm ngưng',
+    '「上游限流」到点自动恢复；「本地停用」需手动启用；「日限额」次日零点恢复': 'Giới hạn từ upstream tự khôi phục khi hết thời gian; tài khoản bị tắt cục bộ cần bật lại thủ công; hạn mức ngày được đặt lại lúc 0 giờ.',
     '最近请求': 'Yêu cầu gần đây',
     '网关模型清单': 'Danh sách mô hình',
     '展示当前视图下官方对话大模型、上下文容量、推理/视觉能力及在售倍率': 'Mô hình hội thoại chính thức, dung lượng ngữ cảnh, khả năng suy luận/thị giác và hệ số tiêu thụ trong chế độ hiện tại.',
@@ -1757,9 +1757,7 @@ button.page-nav-top:hover{background:var(--panel2);border-color:var(--accent);co
     '添加账号 (OAuth)': 'Thêm tài khoản (OAuth)',
     '输入 0 / 输出 0 / 思考 0': 'Đầu vào 0 / đầu ra 0 / suy luận 0',
     '请求数': 'Số yêu cầu',
-    '消耗总 Token': 'Tổng Token đã dùng',
     'GitHub 项目仓库': 'Kho dự án trên GitHub',
-    '关闭': 'Đóng',
     '切换语言': 'Đổi ngôn ngữ',
     '切换语言 (简体中文 / 正體中文 / English)': 'Đổi ngôn ngữ (Tiếng Trung giản thể / phồn thể / English / Tiếng Việt)',
     '切换颜色主题': 'Đổi giao diện sáng/tối',
@@ -1778,10 +1776,86 @@ button.page-nav-top:hover{background:var(--panel2);border-color:var(--accent);co
     '剩余积分 · ': 'Điểm còn lại · ',
     '复制登录链接': 'Sao chép liên kết đăng nhập',
     '添加账号': 'Thêm tài khoản',
-    '账号 (昵称 / UID)': 'Tài khoản (biệt danh / UID)',
     '登录链接': 'Liên kết đăng nhập',
     '进入面板': 'Mở bảng điều khiển',
-    '请输入面板访问密码': 'Vui lòng nhập mật khẩu truy cập bảng điều khiển'
+    '本页导航': 'Điều hướng trang này',
+    '回到顶部': 'Về đầu trang',
+    '版本': 'Phiên bản',
+    '范围': 'Phạm vi',
+    '类型': 'Loại',
+    '原因': 'Lý do',
+    '恢复时间': 'Thời gian khôi phục',
+    '启用': 'Bật',
+    '停用': 'Tắt',
+    '测试': 'Kiểm tra',
+    '刷新凭证': 'Làm mới thông tin đăng nhập',
+    '同步昵称': 'Đồng bộ biệt danh',
+    '出站身份：': 'Danh tính kết nối ra:',
+    '出站身份：WB = WorkBuddy 独立桌面客户端（默认），VSC = 官方 VSCode 插件，CLI = 官方 CodeBuddy CLI；三者对应不同的出站指纹与配额通道。': 'Danh tính kết nối ra: WB = ứng dụng WorkBuddy trên máy tính (mặc định), VSC = tiện ích VSCode chính thức, CLI = CodeBuddy CLI chính thức. Mỗi lựa chọn dùng dấu vân tay kết nối và hạn mức riêng.',
+    '出站身份：默认 WorkBuddy 桌面端 (WB) / 官方 VSCode 插件 (VSC) / 官方 CodeBuddy CLI (CLI)': 'Danh tính kết nối ra: ứng dụng WorkBuddy trên máy tính (WB) / tiện ích VSCode chính thức (VSC) / CodeBuddy CLI chính thức (CLI)',
+    '多个账号按会话粘性 + 轮询使用；某个账号被上游拒绝时自动切到下一个': 'Nhiều tài khoản được dùng theo tính liên tục của phiên và luân phiên; nếu upstream từ chối một tài khoản, hệ thống tự chuyển sang tài khoản tiếp theo.',
+    '会话粘性': 'tính liên tục của phiên',
+    '轮询使用': 'được dùng luân phiên',
+    '某个账号被上游拒绝时自动切到下一个': 'nếu upstream từ chối một tài khoản, hệ thống tự chuyển sang tài khoản tiếp theo',
+    '本地停用': 'Tắt cục bộ',
+    '面板手动停用，该账号不参与轮询': 'Tài khoản bị tắt thủ công trên bảng điều khiển, không tham gia luân phiên.',
+    '上游限流': 'Giới hạn từ upstream',
+    '熔断': 'Tạm ngắt để bảo vệ',
+    '降权': 'Giảm mức ưu tiên',
+    '日限额': 'Hạn mức ngày',
+    '积分限额': 'Hạn mức điểm',
+    '已停用': 'Đã tắt',
+    '已禁用': 'Đã tắt',
+    '已过期': 'Đã hết hạn',
+    '可用': 'Khả dụng',
+    '冷却': 'Đang chờ',
+    '临期': 'Sắp hết hạn',
+    '7天内到期': 'Sắp hết hạn trong 7 ngày',
+    '明细': 'Chi tiết',
+    '未查询': 'Chưa tra cứu',
+    '查询': 'Tra cứu',
+    '—（需手动启用）': '— (Cần bật thủ công)',
+    '当前没有禁用的账号或模型。': 'Hiện không có tài khoản hoặc mô hình nào bị tạm ngưng.',
+    '账号与凭证本身没问题，': 'tài khoản và thông tin đăng nhập vẫn hợp lệ, ',
+    '上游连续失败触发熔断，本窗口内不接单；': 'Nhiều lỗi upstream liên tiếp đã kích hoạt cơ chế bảo vệ; tài khoản tạm ngừng nhận yêu cầu trong khoảng này; ',
+    '连续未知失败进入降权窗口，': 'Nhiều lỗi chưa xác định liên tiếp làm giảm mức ưu tiên trong ',
+    '后自动恢复': ' sau đó tự khôi phục',
+    '后恢复': ' sẽ khôi phục',
+    '连续软限流 ': 'Bị giới hạn nhẹ liên tiếp ',
+    ' 次，冷却时间按 2 倍递增': ' lần; thời gian chờ tăng gấp đôi',
+    '今日已用 ': 'Đã dùng hôm nay ',
+    ' / 上限 ': ' / giới hạn ',
+    ' token，暂停接单（本地 0 点恢复）': ' Token, tạm ngừng nhận yêu cầu (đặt lại lúc 0 giờ địa phương)',
+    '今日已消费 ': 'Đã tiêu thụ hôm nay ',
+    ' 积分，仅免费模型可用（本地 0 点恢复）': ' điểm; chỉ mô hình miễn phí khả dụng (đặt lại lúc 0 giờ địa phương)',
+    '剩余积分低于保留线': 'Số điểm còn lại thấp hơn mức dự trữ',
+    '该模型配额耗尽（code 6004），同账号其他模型不受影响': 'Mô hình này đã hết hạn mức (mã 6004); các mô hình khác của cùng tài khoản không bị ảnh hưởng.',
+    '该模型今日已达限额，仅此模型受限（本地 0 点恢复）': 'Mô hình này đã chạm hạn mức hôm nay; chỉ mô hình này bị giới hạn (đặt lại lúc 0 giờ địa phương).',
+    ' tok 达限': ' Token đã chạm hạn mức',
+    '有 ': 'Có ',
+    ' 把 Key 没有绑定出口，它的积分由国际版与国内版两套价格相加而来，只能当量级看。': ' API Key chưa gắn với cổng ra; điểm được tính bằng cách cộng giá của hai khu vực, chỉ nên xem như ước tính.',
+    ' 把)': ' API Key)',
+    '面板 Key': 'Key trên bảng điều khiển',
+    '启动参数': 'Tham số khởi chạy',
+    '未归属': 'Chưa phân bổ',
+    '内置': 'Tích hợp sẵn',
+    '无调用': 'Không có yêu cầu',
+    '切换前': 'Trước khi nâng cấp',
+    '（切换前）': '(Trước khi nâng cấp)',
+    '暂无 API Key 用量数据': 'Chưa có dữ liệu sử dụng API Key',
+    '（其他）': '(Khác)',
+    'Key 维度只从本次升级之后开始记录：更早的请求没有这个字段，会一直留在「(切换前)」里且不会再增长。': 'Việc phân bổ theo API Key chỉ được ghi nhận từ bản nâng cấp này. Yêu cầu cũ không có thông tin đó nên luôn nằm trong mục “(Trước khi nâng cấp)” và sẽ không tăng thêm.',
+    '调用的模型分布': 'Phân bố mô hình đã gọi',
+    '状态': 'Trạng thái',
+    '请求': 'Yêu cầu',
+    '总 token': 'Tổng Token',
+    '缓存': 'Bộ nhớ đệm',
+    '设备码: ': 'Mã thiết bị: ',
+    '由账号UID稳定派生的专属设备码，防多号关联风控': 'Mã thiết bị riêng được tạo ổn định từ UID tài khoản để hạn chế liên kết nhiều tài khoản.',
+    '从 Web 控制台同步最新昵称（改名后免重登）': 'Đồng bộ biệt danh mới nhất từ bảng điều khiển web (không cần đăng nhập lại sau khi đổi tên).',
+    '账号与凭证本身没问题，恢复后可继续用': 'tài khoản và thông tin đăng nhập vẫn hợp lệ; có thể tiếp tục dùng sau khi khôi phục.',
+    '其他': 'Khác',
+    '(其他)': '(Khác)'
   };
   var VI_KEYS = Object.keys(VI_DICT);
   VI_KEYS.sort(function(a, b){ return b.length - a.length; });
@@ -2707,10 +2781,15 @@ button.page-nav-top:hover{background:var(--panel2);border-color:var(--accent);co
     var lbl = document.getElementById('langToggleLabel');
     var btn = document.getElementById('langToggleBtn');
     if(lbl) lbl.textContent = (lang === 'en') ? '简' : (lang === 'zh-Hant' ? 'EN' : (lang === 'vi' ? 'VI' : '繁'));
-    if(btn) btn.title = (lang === 'en')
-      ? 'Switch language: English → Tiếng Việt'
-      : (lang === 'vi' ? 'Đổi ngôn ngữ: Tiếng Việt → 简体中文'
-        : (lang === 'zh-Hant' ? '切換語言：正體中文（台灣） → English' : '切换语言：简体中文 → 正體中文（台灣）'));
+    if(btn){
+      btn.title = (lang === 'en')
+        ? 'Switch language: English → Vietnamese'
+        : (lang === 'vi' ? 'Đổi ngôn ngữ: Tiếng Việt → Tiếng Trung giản thể'
+          : (lang === 'zh-Hant' ? '切換語言：正體中文（台灣） → English' : '切换语言：简体中文 → 正體中文（台灣）'));
+      btn.setAttribute('aria-label', lang === 'en' ? 'Switch language'
+        : (lang === 'vi' ? 'Đổi ngôn ngữ'
+          : (lang === 'zh-Hant' ? '切換語言' : '切换语言')));
+    }
     var zh = document.getElementById('langOptZh');
     var hant = document.getElementById('langOptHant');
     var en = document.getElementById('langOptEn');
