@@ -9,13 +9,13 @@
  *
  *   node _test_matrix_filters.js
  */
-const {dashboardScript} = require('./_dashboard_source.js');
+const { dashboardScript } = require('./_dashboard_source.js');
 const code = dashboardScript();
 
 // One shared fake DOM for every dashboard suite: tests/_dom_stub.js.
 const dom = require('./_dom_stub.js');
 dom.installDom({
-  fetch: () => Promise.resolve({ ok:true, status:200, json: () => Promise.resolve({}) }),
+  fetch: () => Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve({}) }),
 });
 
 var api;
@@ -39,15 +39,15 @@ const usage = {
   requests: 4, total_tokens: 8300, prompt_tokens: 6600, completion_tokens: 1700, reasoning_tokens: 0,
   by_model: {
     'deepseek-v4.1-flash': dsRow(3, 5800, 4600, 1200),
-    'glm-5.3':            dsRow(1, 2500, 2000, 500),
+    'glm-5.3': dsRow(1, 2500, 2000, 500),
   },
   by_model_realm: {
     'deepseek-v4.1-flash': { intl: dsRow(3, 5800, 4600, 1200) },
-    'glm-5.3':            { intl: dsRow(1, 2500, 2000, 500) },
+    'glm-5.3': { intl: dsRow(1, 2500, 2000, 500) },
   },
   by_model_acct: {
     'deepseek-v4.1-flash': { intl: { 'acct-A': dsRow(3, 5800, 4600, 1200) } },
-    'glm-5.3':            { intl: { 'acct-B': dsRow(1, 2500, 2000, 500) } },
+    'glm-5.3': { intl: { 'acct-B': dsRow(1, 2500, 2000, 500) } },
   },
   accounts_map: { 'acct-A': { nickname: 'Hades', realm: 'intl' }, 'acct-B': { nickname: 'lenguedogahz', realm: 'intl' } },
 };
@@ -55,11 +55,11 @@ const perf = {
   errors: 0, ttft_ms: S(400), tokens_per_sec: S(100), wall_ms: S(1200), cache_hit_pct: { avg: 0, samples: 0 },
   by_model: {
     'deepseek-v4.1-flash': { errors: 0, ttft_ms: S3(400), tokens_per_sec: S3(100), wall_ms: S3(1200), cache_hit_pct: { avg: 0, samples: 0 } },
-    'glm-5.3':            { errors: 0, ttft_ms: S(900),  tokens_per_sec: S(50),  wall_ms: S(3000),  cache_hit_pct: { avg: 0, samples: 0 } },
+    'glm-5.3': { errors: 0, ttft_ms: S(900), tokens_per_sec: S(50), wall_ms: S(3000), cache_hit_pct: { avg: 0, samples: 0 } },
   },
   by_model_realm: {
     'deepseek-v4.1-flash': { intl: { errors: 0, ttft_ms: S3(400), tokens_per_sec: S3(100), wall_ms: S3(1200), cache_hit_pct: { avg: 0, samples: 0 } } },
-    'glm-5.3':            { intl: { errors: 0, ttft_ms: S(900),  tokens_per_sec: S(50),  wall_ms: S(3000),  cache_hit_pct: { avg: 0, samples: 0 } } },
+    'glm-5.3': { intl: { errors: 0, ttft_ms: S(900), tokens_per_sec: S(50), wall_ms: S(3000), cache_hit_pct: { avg: 0, samples: 0 } } },
   },
   by_model_acct: {},
 };
@@ -83,7 +83,7 @@ function summaryCell(out, labels) {
   }
   return null;
 }
-const summaryReq = (out) => summaryCell(out, ['Số yêu cầu', '请求数']);
+const summaryReq = (out) => summaryCell(out, ['Số request', '请求数']);
 const summaryTok = (out) => summaryCell(out, ['Tổng Token', '总 Token']);
 let pass = 0, fail = 0;
 const check = (label, cond, extra) => { if (cond) { pass++; console.log('  [PASS] ' + label); } else { fail++; console.log('  [FAIL] ' + label + (extra ? '  ' + extra : '')); } };
@@ -98,10 +98,10 @@ check('summary shows all 4 requests', summaryReq(out) === '4', summaryReq(out));
 check('summary shows all 8,300 tokens', summaryTok(out) === '8,300', summaryTok(out));
 check('both models present', out.includes('deepseek-v4.1-flash') && out.includes('glm-5.3'));
 check('account dropdown lists both accounts',
-      document.getElementById('matrixAcctFilter').innerHTML.includes('acct-A') &&
-      document.getElementById('matrixAcctFilter').innerHTML.includes('acct-B'));
+  document.getElementById('matrixAcctFilter').innerHTML.includes('acct-A') &&
+  document.getElementById('matrixAcctFilter').innerHTML.includes('acct-B'));
 check('model dropdown lists both models',
-      document.getElementById('matrixModelFilter').innerHTML.includes('glm-5.3'));
+  document.getElementById('matrixModelFilter').innerHTML.includes('glm-5.3'));
 
 console.log();
 console.log('[2] filter by model = glm-5.3');
@@ -128,7 +128,7 @@ console.log('[4] filter combination that matches nothing');
 api.setFilters('acct-B', 'deepseek-v4.1-flash');
 api.renderPerfMatrix(usage, perf);
 out = document.getElementById('perfMatrix').innerHTML;
-check('empty state shown', out.includes('Phiên bản hiện tại chưa có yêu cầu'), out.slice(0, 120));
+check('empty state shown', out.includes('Phiên bản hiện tại chưa có request'), out.slice(0, 120));
 
 console.log();
 console.log('[5] a stale filter is cleared when the range changes the data');
