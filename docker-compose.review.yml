@@ -1,6 +1,6 @@
-# Isolated review stack for the custom/v1.4.7 branch.
+# Isolated review stack for the custom/v1.7.4 (Vietnamese) branch.
 #
-# Deliberately separate from docker-compose.yml so the production "wb-proxy"
+# Deliberately separate from docker-compose.yaml so any production "wb-proxy"
 # container (host :8788) is never touched. Host port is 8789 -> container 8788.
 #
 #   docker compose -f docker-compose.review.yml up -d --build
@@ -10,6 +10,7 @@
 services:
   wb-proxy-review:
     build: .
+    image: wb-proxy:v1.7.4-vi
     container_name: wb-proxy-review
     restart: unless-stopped
     ports:
@@ -17,7 +18,7 @@ services:
     environment:
       - HOST=0.0.0.0
       - PORT=8788
-        - TZ=Asia/Ho_Chi_Minh
+      - TZ=Asia/Ho_Chi_Minh
     volumes:
       - ./accounts:/app/accounts
       - ./usage:/app/usage
