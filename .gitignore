@@ -46,3 +46,16 @@ desktop.ini
 
 # Local Docker Compose override
 docker-compose.override.yml
+
+# Local compose override (contains secret API_KEY) - never commit
+/docker-compose.yml
+docker-compose.yml
+/docker-compose.yaml
+docker-compose.yaml
+
+# Dokploy compose (references the private ghcr.io image / deployment secrets) - never commit
+docker-compose.dokploy.yml
+docker-compose.dokploy.yaml
+
+# Local scratch (release zips, account backups with credentials) - never commit
+tmp/

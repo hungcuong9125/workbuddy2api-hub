@@ -742,7 +742,7 @@ button.page-nav-top:hover{background:var(--panel2);border-color:var(--accent);co
   var LANG_KEY = 'wb-lang';
   var HAN = /[\u4e00-\u9fff]/;
   var WS = /\s+/g;
-  var ATTRS = ['title', 'placeholder', 'aria-label', 'data-label', 'alt'];
+  var ATTRS = ['title', 'placeholder', 'aria-label', 'data-label', 'data-tip', 'alt'];
   var SKIP = {SCRIPT: 1, STYLE: 1, TEXTAREA: 1, NOSCRIPT: 1};
   var DICT = {
     '(不限)': '(unlimited)',
@@ -1821,6 +1821,374 @@ button.page-nav-top:hover{background:var(--panel2);border-color:var(--accent);co
     '猫猫今日已完成旅行，明日 00:00 刷新': 'The cat already finished its trip today; resets at 00:00 tomorrow',
     '猫猫正在旅行途中，请稍后再来查看！': 'The cat is still travelling; check again later!'
   };
+  var VI_DICT = {
+        'WorkBuddy 用量看板': 'WorkBuddy Bảng Theo Dõi Sử Dụng',
+        '保存': 'Lưu',
+        '没有积分扣减记录': 'Không có bản ghi trừ điểm',
+        '总 Token ': 'Tổng Token ',
+        ' · 扣减积分 ': ' · Điểm bị trừ ',
+        ' · 桶 ': ' · Chu kỳ ',
+        '今日': 'Hôm nay',
+        '未检测到': 'Chưa phát hiện',
+        '名称': 'Tên',
+        '代理地址': 'Địa chỉ proxy',
+        '绑定账号': 'Tài khoản đã gắn',
+        '操作': 'Thao tác',
+        '请求成功率': 'Request thành công',
+        '请求成功率（国内版）': 'Request thành công (Trong Nước)',
+        '请求成功率（国际版）': 'Request thành công (Quốc Tế)',
+        'Request成功率': 'Request thành công',
+        '网关调用量（国际版）': 'Lượt gọi cổng (Quốc Tế)',
+        '流式': 'Truyền trực tuyến',
+        '非流式': 'Không truyền trực tuyến',
+        '跟随 · 混合': 'Theo · kết hợp',
+        '跟随': 'Theo',
+        '未定价模型': 'Mô hình chưa có giá',
+        '未定价模型：': 'Mô hình chưa có giá: ',
+        ' 个需要人工关注': ' cần được kiểm tra thủ công',
+        '（无对应 ': ' (không có mục khớp ',
+        '（变体未命中 ': ' (biến thể chưa khớp ',
+        '）；另有 ': '); ngoài ra có ',
+        ' 个虚拟别名不参与统计': ' bí danh ảo không được tính vào thống kê',
+        '；变体继承当前已关闭': '; kế thừa biến thể hiện đang tắt',
+        '展开查看每个模型当前生效的策略': 'Mở rộng để xem chính sách đang áp dụng cho từng mô hình',
+        '(已启用)': '(Đã bật)',
+        '已启用': 'Đã bật',
+        '每 5 分钟': 'Mỗi 5 phút',
+        '全局 ': 'Toàn cục ',
+        ' 次': ' lượt',
+        '到期 ·': 'Hết hạn ·',
+        '到期 (剩': 'Hết hạn (còn',
+        '到期': 'hết hạn',
+        '（': '(',
+        '）': ')',
+        '「绑定账号」只统计已启用账号；停用账号会自动释放槽位，重新启用后需重新绑定。在网关页账号表的「出口」下拉中调整绑定。名称留空时按出口自动显示「国家 类型」，点「测试」会补全出口信息并据此命名。': '“Tài khoản đã gắn” chỉ tính các tài khoản đang bật; khi tắt tài khoản, hệ thống tự giải phóng slot. Sau khi bật lại, bạn cần gắn lại. Điều chỉnh liên kết trong danh sách tài khoản trên trang Cổng, tại menu “Cổng ra”. Nếu để trống tên, hệ thống tự đặt theo “Quốc gia · Loại”; nhấn “Kiểm tra” để lấy thông tin cổng và đặt tên theo đó.',
+        '(全局生效)': '(Áp dụng toàn cục)',
+        '(全部关闭)': '(Đóng tất cả)',
+        '全部关闭': 'Đóng tất cả',
+        '第 ': 'Trang ',
+        ' 页 / 共 ': ' / tổng ',
+        ' 条)': ' mục)',
+        '推理强度': 'Mức độ thinking',
+        '模式': 'Chế độ',
+        '结果': 'Kết quả',
+        '耗时': 'Thời gian',
+        '首字': 'Token đầu',
+        '速度': 'Tốc độ',
+        'Input': 'Input',
+        'Output': 'Output',
+        'Thinking': 'Thinking',
+        '平均耗时': 'Thời gian trung bình',
+        '平均首字延迟': 'Độ trễ token đầu tiên trung bình',
+        '首个 token 的平均等待时间': 'Thời gian chờ trung bình đến token đầu tiên',
+        '上次:': 'Lần trước:',
+        '下次:': 'Lần tiếp theo:',
+        '尚未运行': 'Chưa chạy',
+        '待调度': 'Đang chờ lịch',
+        '整点排程 (09:00/21:00 签到旅行 · 22:00 保活 · 01:00 夜猫)': 'Lịch theo giờ cố định (09:00/21:00 điểm danh và du lịch · 22:00 duy trì Token · 01:00 nhiệm vụ đêm)',
+        '不指定模型': 'Không chỉ định mô hình',
+        '(不指定模型)': '(Không chỉ định mô hình)',
+        '(未指定)': '(Chưa chỉ định)',
+        '全局 API Key': 'API Key chung',
+        'OpenAI 兼容': 'Tương thích OpenAI',
+        '检测中...': 'Đang kiểm tra...',
+        '应用时间:': 'Thời gian áp dụng:',
+        '模型:': 'Mô hình:',
+        '输入 · 输出 · 思考': 'Input · Output · Thinking',
+        '输入 / 输出 / 思考': 'Input / Output / Thinking',
+        '输入': 'Input',
+        '输出': 'Output',
+        '思考': 'Thinking',
+        '请求次数': 'Số lượt request',
+        '消耗总 Token': 'Tổng Token đã dùng',
+        '调用的模型分布 (请求数 · 消耗)': 'Phân bố mô hình được gọi (số request · mức sử dụng)',
+        '次数': 'lượt',
+        '暂无账号用量数据': 'Chưa có dữ liệu sử dụng tài khoản',
+        '整点排程': 'Lịch theo giờ cố định',
+        '运行中 ·': 'Đang chạy ·',
+        '已暂停': 'Đã tạm dừng',
+        '暂停调度': 'Tạm dừng lịch',
+        '启用调度': 'Bật lịch',
+        '立即巡检保活': 'Kiểm tra duy trì ngay',
+        '客户端检测完成': 'Đã kiểm tra ứng dụng',
+        '已检测到 ': 'Đã phát hiện ',
+        ' 个)': ' ứng dụng)',
+        'OpenAI 兼容 Base URL': 'Base URL tương thích OpenAI',
+        '检测到外部修改：还原将覆盖外部改动': 'Phát hiện thay đổi bên ngoài: khôi phục sẽ ghi đè các thay đổi đó',
+        '未检测到该客户端': 'Không phát hiện ứng dụng này',
+        '应用之后被外部修改过': 'đã bị sửa đổi bên ngoài sau khi áp dụng',
+        '还原原始配置': 'Khôi phục cấu hình ban đầu',
+        '一键配置': 'Cấu hình bằng một lần nhấn',
+        '暂未获取到客户端列表，点右上角「刷新」重新检测。': 'Chưa lấy được danh sách ứng dụng. Nhấn “Làm mới” ở góc trên bên phải để kiểm tra lại.',
+        'WorkBuddy 网关': 'WorkBuddy',
+        '网关与账号': 'Cổng kết nối và tài khoản',
+        '智能体配置': 'Cấu hình agent',
+        '剩余积分 ·': 'Điểm còn lại ·',
+        '0/0 账号': '0/0 tài khoản',
+        '刷新': 'Làm mới',
+        '请求次数': 'Số request',
+        '消耗总 Token': 'Tổng Token đã dùng',
+        '全局默认': 'Mặc định chung',
+        '国际版': 'Quốc Tế',
+        '国内版': 'Trong Nước',
+        '变体后缀继承': 'Kế thừa hậu tố biến thể',
+        '复制': 'Sao chép',
+        '数据看板': 'Bảng thống kê',
+        '设置': 'Cài Đặt',
+        '运行日志': 'Nhật ký hoạt động',
+        '浅色': 'Sáng',
+        '深色': 'Tối',
+        '跟随系统': 'Theo hệ thống',
+        '请输入面板访问密码': 'Vui lòng nhập mật khẩu truy cập bảng điều khiển',
+        '管理账号池与代理出口，查看当日调用量、估算花费、成功率、最近请求与网关模型清单。': 'Quản lý tài khoản và proxy, xem mức sử dụng, chi phí ước tính, tỷ lệ thành công, request gần đây và danh sách mô hình.',
+        '账号列表': 'Danh sách tài khoản',
+        '添加': 'Thêm',
+        '扫描桌面客户端': 'Quét ứng dụng WorkBuddy trên máy',
+        '导入': 'Nhập',
+        '导出': 'Xuất',
+        '一键刷新积分': 'Làm mới điểm một lần',
+        '一键刷新凭证': 'Làm mới thông tin đăng nhập',
+        '每日签到 (国内版)': 'Điểm danh hằng ngày (Trong Nước)',
+        '每日活跃打卡 (国际版)': 'Hoạt động hằng ngày (Quốc Tế)',
+        '网页通道打卡 (国际版)': 'Điểm danh qua web (Quốc Tế)',
+        '一键分配代理': 'Phân proxy một lần',
+        '全部启用': 'Bật tất cả',
+        '全部停用': 'Tắt tất cả',
+        '当前禁用': 'Đang bị tạm ngưng',
+        '「上游限流」到点自动恢复；「本地停用」需手动启用；「日限额」次日零点恢复': 'Giới hạn từ upstream tự khôi phục khi hết thời gian; tài khoản bị tắt cục bộ cần bật lại thủ công; hạn mức ngày được đặt lại lúc 0 giờ.',
+        '最近请求': 'Request gần đây',
+        '网关模型清单': 'Danh sách mô hình',
+        '展示当前视图下官方对话大模型、上下文容量、推理/视觉能力及在售倍率': 'Mô hình hội thoại chính thức, dung lượng ngữ cảnh, khả năng thinking/thị giác và hệ số tiêu thụ trong chế độ hiện tại.',
+        '平均耗时 0 s': 'Thời gian trung bình 0 giây',
+        '平均首字延迟': 'Độ trễ token đầu tiên trung bình',
+        '首个 token 的平均等待时间': 'Thời gian chờ trung bình đến token đầu tiên',
+        '今日请求数': 'Số request hôm nay',
+        '0 次': '0 lượt',
+        '含失败共 0 次': 'Tổng 0 lượt, gồm cả thất bại',
+        '成功率': 'Tỷ lệ thành công',
+        '失败 0 次': '0 lượt thất bại',
+        'API 等价花费': 'Chi phí API',
+        '按 OpenRouter 模型价折算的等价 token 花费': 'Chi phí Token ước tính theo giá mô hình OpenRouter',
+        'Token 时序': 'Diễn biến Token',
+        '按当前范围自动选择分钟/小时/天粒度；柱高为总 Token，折线为请求数。': 'Tự chọn khoảng phút/giờ/ngày; cột biểu thị tổng Token, đường biểu thị số request.',
+        '积分扣减历史': 'Lịch sử trừ điểm',
+        '当前范围内最近消耗积分（credit > 0）的请求。': 'Các request gần nhất trong khoảng thời gian này có tiêu thụ điểm (credit > 0).',
+        '时间': 'Thời gian',
+        '模型': 'Mô hình',
+        '账号': 'Tài khoản',
+        '积分': 'Điểm',
+        '账号 (昵称 / UID)': 'Tài khoản (biệt danh / UID)',
+        '所属区域': 'Khu vực',
+        '剩余积分 / 额度': 'Điểm / hạn mức còn lại',
+        '消耗积分 (全出口)': 'Điểm đã dùng (mọi cổng)',
+        '调用的模型分布明细 (请求数 · 消耗)': 'Phân bố mô hình đã gọi (số request · mức dùng)',
+        '估算价格': 'Chi phí ước tính',
+        '按 API Key 的消耗归属': 'Mức sử dụng theo API Key',
+        '同一批请求按调用方使用的 API Key 再分一次组，用于把消耗归属到人 / 项目': 'Nhóm các request theo API Key để phân bổ mức sử dụng cho từng người hoặc dự án.',
+        '出口': 'Cổng ra',
+        '输入 · 输出 · 思考': 'Input · Output · Thinking',
+        '缓存命中': 'Lượt dùng bộ nhớ đệm',
+        '消耗积分': 'Điểm đã dùng',
+        '调用的模型分布 (请求数 · 消耗)': 'Phân bố mô hình đã gọi (số request · mức dùng)',
+        '网关设置': 'Cài đặt cổng kết nối',
+        '面板密码与界面语言、API Key 与出口绑定、代理槽与限额、价格估算、出站身份与本地网络工具。': 'Mật khẩu và ngôn ngữ bảng điều khiển, API Key và cổng ra, proxy, hạn mức, chi phí ước tính, danh tính gửi đi và công cụ mạng cục bộ.',
+        '界面语言': 'Ngôn ngữ giao diện',
+        '这里设置的是这台网关的实例默认语言；右上角语言按钮只覆盖当前浏览器，换端口、主机名或清掉站点数据后会回退到这个默认值。': 'Chọn ngôn ngữ mặc định cho cổng này. Nút ngôn ngữ góc trên chỉ áp dụng cho trình duyệt hiện tại; khi đổi địa chỉ hoặc xóa dữ liệu trang, ngôn ngữ sẽ trở về mặc định.',
+        '实例默认语言': 'Ngôn ngữ mặc định của cổng',
+        '简体中文': 'Tiếng Trung giản thể',
+        '正體中文（台灣）': 'Tiếng Trung phồn thể (Đài Loan)',
+        '保存默认语言': 'Lưu ngôn ngữ mặc định',
+        '清除本浏览器的语言覆盖': 'Xóa lựa chọn ngôn ngữ riêng của trình duyệt này',
+        '账号代理槽': 'Proxy riêng cho tài khoản',
+        '账号限额': 'Hạn mức tài khoản',
+        '五条护栏默认按': 'Năm hạn mức mặc định theo',
+        '生效，同时作用于': 'có hiệu lực cho cả',
+        '与': 'và',
+        '；需要时可单独给某一版本设值，留空即': '; có thể đặt riêng từng phiên bản, để trống sẽ',
+        '继承全局': 'kế thừa mặc định chung',
+        '。每条护栏填 0 表示关闭该项。': '. Nhập 0 để tắt từng hạn mức.',
+        '分别设置国际版 / 国内版': 'Đặt riêng cho Quốc Tế / Trong Nước',
+        '保存限额': 'Lưu hạn mức',
+        '护栏': 'Hạn mức',
+        '保留积分': 'Điểm dự trữ tối thiểu',
+        '账号余额低于该值时不再接单，避免余额被用尽后触发上游的短信提醒。': 'Tạm ngừng nhận request khi số dư tài khoản thấp hơn mức này, tránh hết điểm và bị upstream gửi cảnh báo.',
+        '每日 Token 限额': 'Hạn mức Token hằng ngày',
+        '账号当日消耗的 token 达到该值后暂停接单，请求自动切到其他账号；本地时间 0 点后自动恢复。与「保留积分」各自独立，任一命中都会暂停接单。': 'Tạm ngừng nhận request khi tài khoản dùng đủ Token trong ngày; request tự chuyển sang tài khoản khác. Hạn mức được đặt lại lúc 0 giờ theo giờ máy.',
+        '每日积分限额': 'Hạn mức điểm hằng ngày',
+        '账号当日消费的积分达到该值后，只允许请求免费模型（目录中标记为 x0.00 的模型），需要花费积分的模型自动切到其他账号；本地时间 0 点后自动恢复。': 'Khi dùng hết hạn mức điểm trong ngày, tài khoản chỉ nhận request tới mô hình miễn phí; mô hình tốn điểm sẽ chuyển sang tài khoản khác. Đặt lại lúc 0 giờ.',
+        '按模型每日 Token 限额': 'Hạn mức Token hằng ngày theo mô hình',
+        '账号在单个模型上当日消耗的 token 达到该值后，该模型自动切到其他账号（同一账号的其他模型不受影响）；本地时间 0 点后自动恢复。': 'Khi đạt hạn mức Token của một mô hình trong ngày, mô hình đó chuyển sang tài khoản khác; các mô hình khác không bị ảnh hưởng. Đặt lại lúc 0 giờ.',
+        '临期积分优先': 'Ưu tiên điểm sắp hết hạn',
+        '账号最早到期的积分包进入该天数窗口时，分派优先使用这些账号，避免快到期的积分被浪费；窗口内按到期先后使用，同一天到期的账号之间仍轮询。填 0 表示关闭。': 'Ưu tiên tài khoản có gói điểm sắp hết hạn trong khoảng ngày đã chọn để tránh lãng phí; dùng gói hết hạn sớm trước. Nhập 0 để tắt.',
+        '启用临期优先': 'Bật ưu tiên điểm sắp hết hạn',
+        '积分数据刷新间隔（小时）': 'Chu kỳ làm mới dữ liệu điểm (giờ)',
+        '模型价格估算': 'Ước tính giá mô hình',
+        '按 OpenRouter 上同名模型的价格，把每条请求的 token 折算成人民币，供面板的「OpenRouter 价估算」列与「API 等价花费」卡片使用。': 'Dùng giá mô hình tương ứng trên OpenRouter để ước tính chi phí Token cho từng request.',
+        '默认开启': 'Bật mặc định',
+        '；关闭后不再向 OpenRouter 取价，也不再折算任何金额，相关列、卡片与取价控件一并隐藏（只留这个开关）。': '; khi tắt, ngừng lấy giá và tính chi phí; các cột, thẻ và điều khiển giá sẽ được ẩn.',
+        '重新打开会补算关闭期间的请求': 'Bật lại sẽ tính bù các request trong thời gian tắt',
+        '：那段请求按之后第一次取到的价折算并标': ': các request đó dùng giá lấy được lần đầu sau khi bật lại và được đánh dấu',
+        '，所以关掉再打开不会丢数。': ', vì vậy tắt rồi bật lại không làm mất dữ liệu.',
+        '价估算已关闭：不再取价、不再折算金额，价格列与「API 等价花费」卡片一并隐藏；重新打开后会补算关闭期间的请求。': 'Đã tắt ước tính giá: ngừng lấy giá và tính chi phí. Bật lại sẽ tính bù các request trong thời gian tắt.',
+        '定价刷新': 'Làm mới giá',
+        '网关每隔这段时间去 OpenRouter 取一次价：每个模型每份不同的价格存成一条': 'Cổng sẽ lấy giá từ OpenRouter theo chu kỳ; mỗi mức giá khác nhau của một mô hình được lưu thành một chính sách',
+        '定价策略': 'chính sách giá',
+        '（内容相同就复用同一条，不重复写），并声明「现在生效的是哪一条」。每条请求按它发生时生效的那一条计价，所以之后调价不会改写之前的数字；请求只记它引用的是哪条策略，不内嵌整份价格。取价时还没有价的模型，用之后第一次取到的价补算并标': '(nội dung giống nhau sẽ dùng chung chính sách). Mỗi request dùng giá có hiệu lực tại thời điểm phát sinh; thay đổi sau đó không sửa dữ liệu cũ.',
+        '。没人引用、又已经不作数的策略会被清掉（每个模型至少留一条，刚取到的那批不动）。取价间隔以': '. Chính sách cũ không còn được tham chiếu sẽ được dọn dẹp. Chu kỳ lấy giá tính bằng',
+        '分钟': 'phút',
+        '计，默认 5 分钟；填 0 表示不自动刷新（仍可用「立即取价」手动取一次）。': ', mặc định 5 phút; nhập 0 để tắt tự động làm mới (vẫn có thể lấy giá thủ công).',
+        '取价输入 = 内置目录': 'Nguồn giá = danh mục tích hợp',
+        '网关实时目录里新增的模型，上游新上架的名字无需改代码就会进入下一轮取价；两次取价之间就被调用的新模型，第一笔请求即按内存里的目录': 'Mô hình mới trong danh mục trực tiếp sẽ được tính giá ở chu kỳ tiếp theo; mô hình chưa có giá sẽ được xử lý khi có request đầu tiên',
+        '按需补价': 'lấy giá khi cần',
+        '。名字带渠道后缀（如': '. Tên có hậu tố kênh (ví dụ',
+        '）的模型默认按': ') mặc định dùng giá của mô hình gốc',
+        '向基准模型取价（要求唯一命中，命不中照旧显示未定价）；关掉开关即恢复「只有覆盖表与同名匹配才定价」。': ' (chỉ dùng khi tìm được một kết quả duy nhất; nếu không sẽ hiện chưa có giá). Tắt để chỉ dùng bảng ghi đè và tên khớp hoàn toàn.',
+        '启用价估算': 'Bật ước tính giá',
+        '刷新间隔（分钟）': 'Chu kỳ làm mới (phút)',
+        '立即取价': 'Lấy giá ngay',
+        '自动切换出站身份': 'Tự động chuyển danh tính gửi đi',
+        '本地网络工具': 'Công cụ mạng cục bộ',
+        '检测本机已安装的 AI 编程客户端，一键把它们的配置指向本网关；原始文件会先备份，随时可一键还原。': 'Phát hiện ứng dụng lập trình AI trên máy và cấu hình dùng cổng này. Tệp gốc được sao lưu và có thể khôi phục bất cứ lúc nào.',
+        '连接信息': 'Thông tin kết nối',
+        '写入各客户端配置时使用的网关地址、鉴权 Key 与默认模型。': 'Địa chỉ cổng, Key xác thực và mô hình mặc định dùng khi cấu hình ứng dụng.',
+        '网关地址': 'Địa chỉ cổng',
+        '默认模型': 'Mô hình mặc định',
+        '「全局 API Key」表示不在客户端配置里写入具体 Key，客户端沿用网关当前生效的全局 Key。': '「API Key chung」không ghi Key riêng vào cấu hình ứng dụng; ứng dụng sẽ dùng Key chung hiện tại của cổng.',
+        '本机客户端': 'Ứng dụng trên máy',
+        '检测到以下客户端安装在本机；点击「一键配置」即可让它改走本网关，原配置自动备份，可随时还原。': 'Đã phát hiện các ứng dụng sau. Chọn「Cấu hình」để chuyển sang dùng cổng này; cấu hình cũ được sao lưu.',
+        '其他客户端': 'Ứng dụng khác',
+        '任何支持 OpenAI 兼容或 Anthropic Messages 协议的客户端都可以手动接入本网关，把下面的地址填进客户端的 Base URL / API 地址即可；Key 到「设置」页复制。': 'Ứng dụng hỗ trợ giao thức OpenAI hoặc Anthropic Messages có thể kết nối thủ công bằng Base URL bên dưới; sao chép Key trong trang「Cài Đặt」.',
+        'OpenAI 兼容 Base URL': 'Base URL tương thích OpenAI',
+        '鉴权 Key 请前往「设置 → API Key 与出口绑定」页复制，填入客户端的 API Key / Token 字段。': 'Sao chép Key xác thực tại「Cài Đặt → API Key và cổng ra」rồi nhập vào trường API Key / Token của ứng dụng.',
+        '积分与套餐明细': 'Chi tiết điểm và gói dịch vụ',
+        '正在向上游同步最新积分与权益包明细…': 'Đang đồng bộ điểm và chi tiết gói dịch vụ mới nhất…',
+        '剩余可用积分': 'Điểm còn lại',
+        '已消耗积分': 'Điểm đã dùng',
+        '总额度容量': 'Tổng hạn mức',
+        '最近将过期': 'Sắp hết hạn',
+        '额度利用率:': 'Mức sử dụng hạn mức:',
+        '更新时间: -': 'Cập nhật lúc: -',
+        '套餐权益包明细': 'Chi tiết gói dịch vụ',
+        '共 0 个': 'Tổng 0 gói',
+        '全部': 'Tất cả',
+        '有剩余': 'Còn hạn mức',
+        '即将到期': 'Sắp hết hạn',
+        '已用完/过期': 'Đã dùng hết/hết hạn',
+        '最快到期优先': 'Ưu tiên sắp hết hạn',
+        '剩余额度最大': 'Hạn mức còn lại nhiều nhất',
+        '已用额度最多': 'Hạn mức đã dùng nhiều nhất',
+        '总容量最大': 'Tổng hạn mức lớn nhất',
+        '套餐包 / 来源与属性': 'Gói / nguồn và thuộc tính',
+        '到期倒计时 / 有效期': 'Thời gian đến hạn / thời hạn',
+        '总额度': 'Tổng hạn mức',
+        '已用': 'Đã dùng',
+        '剩余可用': 'Còn lại',
+        '利用率': 'Mức sử dụng',
+        '刷新明细': 'Làm mới chi tiết',
+        '关闭': 'Đóng',
+        '添加账号 (OAuth)': 'Thêm tài khoản (OAuth)',
+        '输入 0 / 输出 0 / 思考 0': 'Input 0 / Output 0 / thinking 0',
+        '请求数': 'Số request',
+        'GitHub 项目仓库': 'Kho dự án trên GitHub',
+        '切换语言': 'Đổi ngôn ngữ',
+        '切换语言 (简体中文 / 正體中文 / English)': 'Đổi ngôn ngữ (Tiếng Trung giản thể / phồn thể / English / Tiếng Việt)',
+        '切换颜色主题': 'Đổi giao diện sáng/tối',
+        '把尚未绑定出口的已启用账号依次分配到已启用的代理槽；已有绑定的账号不受影响': 'Lần lượt gán tài khoản đang bật và chưa có cổng ra vào các proxy đang bật; không thay đổi tài khoản đã được gán.',
+        '折叠 / 展开账号区': 'Thu gọn / mở rộng danh sách tài khoản',
+        '搜索包名/代码/来源…': 'Tìm tên gói/mã/nguồn…',
+        '查看 GitHub 项目仓库': 'Xem kho dự án trên GitHub',
+        '选择颜色主题': 'Chọn giao diện',
+        '逐个刷新所有账号的上游访问凭证（相当于对每个账号点一次「刷新凭证」）': 'Làm mới thông tin đăng nhập upstream cho từng tài khoản.',
+        '重新检测本机客户端': 'Quét lại ứng dụng trên máy',
+        '面板密码': 'Mật khẩu bảng điều khiển',
+        '颜色主题': 'Giao diện',
+        '已筛选': 'Đã lọc',
+        '全部模型合计 (Total)': 'Tất cả mô hình (Tổng)',
+        '筛选结果合计 (Filtered)': 'Kết quả đã lọc',
+        '剩余积分 · ': 'Điểm còn lại · ',
+        '复制登录链接': 'Sao chép liên kết đăng nhập',
+        '添加账号': 'Thêm tài khoản',
+        '登录链接': 'Liên kết đăng nhập',
+        '进入面板': 'Mở bảng điều khiển',
+        '本页导航': 'Điều hướng trang',
+        '回到顶部': 'Về đầu trang',
+        '版本': 'Phiên bản',
+        '范围': 'Phạm vi',
+        '类型': 'Loại',
+        '原因': 'Lý do',
+        '恢复时间': 'Thời gian khôi phục',
+        '启用': 'Bật',
+        '停用': 'Tắt',
+        '测试': 'Kiểm tra',
+        '刷新凭证': 'Làm mới thông tin đăng nhập',
+        '同步昵称': 'Đồng bộ biệt danh',
+        '出站身份：': 'Danh tính kết nối ra:',
+        '出站身份：WB = WorkBuddy 独立桌面客户端（默认），VSC = 官方 VSCode 插件，CLI = 官方 CodeBuddy CLI；三者对应不同的出站指纹与配额通道。': 'Danh tính kết nối ra: WB = ứng dụng WorkBuddy trên máy tính (mặc định), VSC = tiện ích VSCode chính thức, CLI = CodeBuddy CLI chính thức. Mỗi lựa chọn dùng dấu vân tay kết nối và hạn mức riêng.',
+        '出站身份：默认 WorkBuddy 桌面端 (WB) / 官方 VSCode 插件 (VSC) / 官方 CodeBuddy CLI (CLI)': 'Danh tính kết nối ra: ứng dụng WorkBuddy trên máy tính (WB) / tiện ích VSCode chính thức (VSC) / CodeBuddy CLI chính thức (CLI)',
+        '多个账号按会话粘性 + 轮询使用；某个账号被上游拒绝时自动切到下一个': 'Nhiều tài khoản được dùng theo tính liên tục của phiên và luân phiên; nếu upstream từ chối một tài khoản, hệ thống tự chuyển sang tài khoản tiếp theo.',
+        '会话粘性': 'tính liên tục của phiên',
+        '轮询使用': 'được dùng luân phiên',
+        '某个账号被上游拒绝时自动切到下一个': 'nếu upstream từ chối một tài khoản, hệ thống tự chuyển sang tài khoản tiếp theo',
+        '本地停用': 'Tắt cục bộ',
+        '面板手动停用，该账号不参与轮询': 'Tài khoản bị tắt thủ công trên bảng điều khiển, không tham gia luân phiên.',
+        '上游限流': 'Giới hạn từ upstream',
+        '熔断': 'Tạm ngắt để bảo vệ',
+        '降权': 'Giảm mức ưu tiên',
+        '日限额': 'Hạn mức ngày',
+        '积分限额': 'Hạn mức điểm',
+        '已停用': 'Đã tắt',
+        '已禁用': 'Đã tắt',
+        '已过期': 'Đã hết hạn',
+        '可用': 'Khả dụng',
+        '冷却': 'Đang chờ',
+        '临期': 'Sắp hết hạn',
+        '7天内到期': 'Sắp hết hạn trong 7 ngày',
+        '明细': 'Chi tiết',
+        '未查询': 'Chưa tra cứu',
+        '查询': 'Tra cứu',
+        '—（需手动启用）': '— (Cần bật thủ công)',
+        '当前没有禁用的账号或模型。': 'Hiện không có tài khoản hoặc mô hình nào bị tạm ngưng.',
+        '账号与凭证本身没问题，': 'tài khoản và thông tin đăng nhập vẫn hợp lệ, ',
+        '上游连续失败触发熔断，本窗口内不接单；': 'Nhiều lỗi upstream liên tiếp đã kích hoạt cơ chế bảo vệ; tài khoản tạm ngừng nhận request trong khoảng này; ',
+        '连续未知失败进入降权窗口，': 'Nhiều lỗi chưa xác định liên tiếp làm giảm mức ưu tiên trong ',
+        '后自动恢复': ' sau đó tự khôi phục',
+        '后恢复': ' sẽ khôi phục',
+        '连续软限流 ': 'Bị giới hạn nhẹ liên tiếp ',
+        ' 次，冷却时间按 2 倍递增': ' lần; thời gian chờ tăng gấp đôi',
+        '今日已用 ': 'Đã dùng hôm nay ',
+        ' / 上限 ': ' / giới hạn ',
+        ' token，暂停接单（本地 0 点恢复）': ' Token, tạm ngừng nhận request (đặt lại lúc 0 giờ địa phương)',
+        '今日已消费 ': 'Đã tiêu thụ hôm nay ',
+        ' 积分，仅免费模型可用（本地 0 点恢复）': ' điểm; chỉ mô hình miễn phí khả dụng (đặt lại lúc 0 giờ địa phương)',
+        '剩余积分低于保留线': 'Số điểm còn lại thấp hơn mức dự trữ',
+        '该模型配额耗尽（code 6004），同账号其他模型不受影响': 'Mô hình này đã hết hạn mức (mã 6004); các mô hình khác của cùng tài khoản không bị ảnh hưởng.',
+        '该模型今日已达限额，仅此模型受限（本地 0 点恢复）': 'Mô hình này đã chạm hạn mức hôm nay; chỉ mô hình này bị giới hạn (đặt lại lúc 0 giờ địa phương).',
+        ' tok 达限': ' Token đã chạm hạn mức',
+        '有 ': 'Có ',
+        ' 把 Key 没有绑定出口，它的积分由国际版与国内版两套价格相加而来，只能当量级看。': ' API Key chưa gắn với cổng ra; điểm được tính bằng cách cộng giá của hai khu vực, chỉ nên xem như ước tính.',
+        ' 把)': ' API Key)',
+        '面板 Key': 'Key trên bảng điều khiển',
+        '启动参数': 'Tham số khởi chạy',
+        '未归属': 'Chưa phân bổ',
+        '内置': 'Tích hợp sẵn',
+        '无调用': 'Không có request',
+        '切换前': 'Trước khi nâng cấp',
+        '（切换前）': '(Trước khi nâng cấp)',
+        '暂无 API Key 用量数据': 'Chưa có dữ liệu sử dụng API Key',
+        '（其他）': '(Khác)',
+        'Key 维度只从本次升级之后开始记录：更早的请求没有这个字段，会一直留在「(切换前)」里且不会再增长。': 'Việc phân bổ theo API Key chỉ được ghi nhận từ bản nâng cấp này. Request cũ không có thông tin đó nên luôn nằm trong mục “(Trước khi nâng cấp)” và sẽ không tăng thêm.',
+        '调用的模型分布': 'Phân bố mô hình đã gọi',
+        '状态': 'Trạng thái',
+        '请求': 'Request',
+        '总 token': 'Tổng Token',
+        '缓存': 'Bộ nhớ đệm',
+        '设备码: ': 'Mã thiết bị: ',
+        '由账号UID稳定派生的专属设备码，防多号关联风控': 'Mã thiết bị riêng được tạo ổn định từ UID tài khoản để hạn chế liên kết nhiều tài khoản.',
+        '从 Web 控制台同步最新昵称（改名后免重登）': 'Đồng bộ biệt danh mới nhất từ bảng điều khiển web (không cần đăng nhập lại sau khi đổi tên).',
+        '账号与凭证本身没问题，恢复后可继续用': 'tài khoản và thông tin đăng nhập vẫn hợp lệ; có thể tiếp tục dùng sau khi khôi phục.',
+        '其他': 'Khác',
+        '(其他)': '(Khác)'
+      };
   var HANT_PHRASES = {
     " · 周期已过": " · 週期已過",
     // 撞线（6004）相关：pill 的动态片段 + 禁用总览的列头 + pill 悬停标题。
@@ -2662,22 +3030,48 @@ button.page-nav-top:hover{background:var(--panel2);border-color:var(--accent);co
     }
     return out;
   }
+  var VI_KEYS = Object.keys(VI_DICT);
+  VI_KEYS.sort(function(a, b){ return b.length - a.length; });
+  var VI_BY_FIRST = {};
+  VI_KEYS.forEach(function(k){
+    var c = k.charAt(0);
+    if(!VI_BY_FIRST[c]) VI_BY_FIRST[c] = [];
+    VI_BY_FIRST[c].push(k);
+  });
+  function translateVi(text){
+    var s = String(text == null ? '' : text);
+    if(Object.prototype.hasOwnProperty.call(VI_DICT, s)) return VI_DICT[s];
+    var out = '';
+    var i = 0;
+    while(i < s.length){
+      var bucket = VI_BY_FIRST[s.charAt(i)];
+      var hit = null;
+      if(bucket){
+        for(var j = 0; j < bucket.length; j++){
+          if(s.substr(i, bucket[j].length) === bucket[j]){ hit = bucket[j]; break; }
+        }
+      }
+      if(hit){ out += VI_DICT[hit]; i += hit.length; }
+      else { out += s.charAt(i); i++; }
+    }
+    return out;
+  }
   var lang = 'zh';
   var langChosen = false;
   // Precedence: URL override > browser-local preference > instance default.
   try {
     var q = new URLSearchParams(window.location.search).get('lang');
-    if(q === 'en' || q === 'zh' || q === 'zh-Hant'){ lang = q; langChosen = true; }
+    if(q === 'en' || q === 'zh' || q === 'zh-Hant' || q === 'vi'){ lang = q; langChosen = true; }
   } catch(e){}
   if(!langChosen){
     try {
       var saved = localStorage.getItem(LANG_KEY);
-      if(saved === 'en' || saved === 'zh' || saved === 'zh-Hant'){ lang = saved; langChosen = true; }
+      if(saved === 'en' || saved === 'zh' || saved === 'zh-Hant' || saved === 'vi'){ lang = saved; langChosen = true; }
     } catch(e){}
   }
   if(!langChosen){
     var inst = document.documentElement.getAttribute('data-ui-language');
-    if(inst === 'en' || inst === 'zh' || inst === 'zh-Hant') lang = inst;
+    if(inst === 'en' || inst === 'zh' || inst === 'zh-Hant' || inst === 'vi') lang = inst;
   }
   // allowed() 的结果按元素缓存。观察者每收到一条 DOM 变动记录，都会从被改动的
   // 节点沿祖先链一路检查到根；EN 界面下这条链是每个 tick 都要重走一遍的固定开销
@@ -2716,6 +3110,7 @@ button.page-nav-top:hover{background:var(--panel2);border-color:var(--accent);co
     if(!HAN.test(cur)) return;
     var out;
     if(lang === 'en') out = translate(cur.replace(WS, ' '));
+    else if(lang === 'vi') out = translateVi(cur.replace(WS, ' '));
     else if(lang === 'zh-Hant') out = translateHant(cur.replace(WS, ' '));
     else return;
     if(out === cur) return;
@@ -2737,6 +3132,7 @@ button.page-nav-top:hover{background:var(--panel2);border-color:var(--accent);co
       if(!HAN.test(cur)) continue;
       var out;
       if(lang === 'en') out = translate(cur.replace(WS, ' '));
+      else if(lang === 'vi') out = translateVi(cur.replace(WS, ' '));
       else if(lang === 'zh-Hant') out = translateHant(cur.replace(WS, ' '));
       else continue;
       if(out === cur) continue;
@@ -2798,10 +3194,16 @@ button.page-nav-top:hover{background:var(--panel2);border-color:var(--accent);co
   function syncButtons(){
     var lbl = document.getElementById('langToggleLabel');
     var btn = document.getElementById('langToggleBtn');
-    if(lbl) lbl.textContent = (lang === 'en') ? '简' : (lang === 'zh-Hant' ? 'EN' : '繁');
-    if(btn) btn.title = (lang === 'en')
-      ? 'Switch language: English → 简体中文'
-      : (lang === 'zh-Hant' ? '切換語言：正體中文（台灣） → English' : '切换语言：简体中文 → 正體中文（台灣）');
+    if(lbl) lbl.textContent = (lang === 'en') ? '简' : (lang === 'zh-Hant' ? 'EN' : (lang === 'vi' ? 'VI' : '繁'));
+    if(btn){
+      btn.title = (lang === 'en')
+        ? 'Switch language: English → Vietnamese'
+        : (lang === 'vi' ? 'Đổi ngôn ngữ: Tiếng Việt → Tiếng Trung giản thể'
+          : (lang === 'zh-Hant' ? '切換語言：正體中文（台灣） → English' : '切换语言：简体中文 → 正體中文（台灣）'));
+      btn.setAttribute('aria-label', lang === 'en' ? 'Switch language'
+        : (lang === 'vi' ? 'Đổi ngôn ngữ'
+          : (lang === 'zh-Hant' ? '切換語言' : '切换语言')));
+    }
     var zh = document.getElementById('langOptZh');
     var hant = document.getElementById('langOptHant');
     var en = document.getElementById('langOptEn');
@@ -2810,12 +3212,12 @@ button.page-nav-top:hover{background:var(--panel2);border-color:var(--accent);co
     if(en && en.classList && en.classList.toggle) en.classList.toggle('active', lang === 'en');
   }
   function setLang(next){
-    lang = (next === 'en' || next === 'zh-Hant') ? next : 'zh';
+    lang = (next === 'en' || next === 'zh-Hant' || next === 'vi') ? next : 'zh';
     try { localStorage.setItem(LANG_KEY, lang); } catch(e){}
     document.documentElement.setAttribute('data-lang', lang);
-    document.documentElement.setAttribute('lang', lang === 'en' ? 'en' : (lang === 'zh-Hant' ? 'zh-Hant-TW' : 'zh-CN'));
+    document.documentElement.setAttribute('lang', lang === 'en' || lang === 'vi' ? lang : (lang === 'zh-Hant' ? 'zh-Hant-TW' : 'zh-CN'));
     observeOff();
-    if(lang === 'en' || lang === 'zh-Hant'){ restore(document.documentElement); walk(document.documentElement); observeOn(); }
+    if(lang !== 'zh'){ restore(document.documentElement); walk(document.documentElement); observeOn(); }
     else { restore(document.documentElement); }
     syncButtons();
   }
@@ -2825,21 +3227,22 @@ button.page-nav-top:hover{background:var(--panel2);border-color:var(--accent);co
   };
   window.toggleLang = function(evt){
     if(evt){ evt.preventDefault(); evt.stopPropagation(); }
-    setLang(lang === 'zh' ? 'zh-Hant' : (lang === 'zh-Hant' ? 'en' : 'zh'));
+    setLang(lang === 'zh' ? 'zh-Hant' : (lang === 'zh-Hant' ? 'en' : (lang === 'en' ? 'vi' : 'zh')));
   };
   window.WB_I18N = {
     translate: translate,
     translateHant: translateHant,
+    translateVi: translateVi,
     current: function(){ return lang; },
     set: setLang,
     apply: function(){ if(lang !== 'zh') walk(document.documentElement); }
   };
   var nativeConfirm = window.confirm;
   var nativeAlert = window.alert;
-  window.confirm = function(msg){ return nativeConfirm.call(window, lang === 'en' ? translate(msg) : (lang === 'zh-Hant' ? translateHant(msg) : msg)); };
-  window.alert = function(msg){ return nativeAlert.call(window, lang === 'en' ? translate(msg) : (lang === 'zh-Hant' ? translateHant(msg) : msg)); };
+  window.confirm = function(msg){ return nativeConfirm.call(window, lang === 'en' ? translate(msg) : (lang === 'vi' ? translateVi(msg) : (lang === 'zh-Hant' ? translateHant(msg) : msg))); };
+  window.alert = function(msg){ return nativeAlert.call(window, lang === 'en' ? translate(msg) : (lang === 'vi' ? translateVi(msg) : (lang === 'zh-Hant' ? translateHant(msg) : msg))); };
   document.documentElement.setAttribute('data-lang', lang);
-  document.documentElement.setAttribute('lang', lang === 'en' ? 'en' : (lang === 'zh-Hant' ? 'zh-Hant-TW' : 'zh-CN'));
+  document.documentElement.setAttribute('lang', lang === 'en' || lang === 'vi' ? lang : (lang === 'zh-Hant' ? 'zh-Hant-TW' : 'zh-CN'));
   function boot(){
     syncButtons();
     if(lang !== 'zh'){ walk(document.documentElement); observeOn(); }

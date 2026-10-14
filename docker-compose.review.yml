@@ -1,0 +1,23 @@
+# Isolated review stack for the custom/v1.4.7 branch.
+#
+# Deliberately separate from docker-compose.yml so the production "wb-proxy"
+# container (host :8788) is never touched. Host port is 8789 -> container 8788.
+#
+#   docker compose -f docker-compose.review.yml up -d --build
+#   docker compose -f docker-compose.review.yml down
+#
+# Review URL: http://localhost:8789
+services:
+  wb-proxy-review:
+    build: .
+    container_name: wb-proxy-review
+    restart: unless-stopped
+    ports:
+      - "8789:8788"
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8788
+        - TZ=Asia/Ho_Chi_Minh
+    volumes:
+      - ./accounts:/app/accounts
+      - ./usage:/app/usage

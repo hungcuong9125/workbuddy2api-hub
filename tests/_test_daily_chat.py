@@ -173,7 +173,7 @@ class WebChannelTests(unittest.TestCase):
             wb_accounts.urlopen = old
         self.assertTrue(res.get("ok"), res)
         self.assertTrue(res.get("web", {}).get("ok"), res)
-        self.assertIn("网页通道", res.get("msg", ""))
+        self.assertIn("kênh web", res.get("msg", ""))
         self.assertTrue(any(r.full_url.endswith("/console/as/conversations/") for r in calls),
                         [r.full_url for r in calls])
 
@@ -203,7 +203,7 @@ class WebChannelTests(unittest.TestCase):
         finally:
             wb_accounts.urlopen = old
         self.assertFalse(res.get("ok"), res)
-        self.assertIn("沙箱", res.get("error", ""))
+        self.assertIn("sandbox", res.get("error", ""))
 
     def test_daily_chat_skips_the_web_step_when_off(self):
         acc = self.account()
@@ -233,8 +233,8 @@ class WebChannelTests(unittest.TestCase):
             wb_accounts.urlopen = old
         self.assertFalse(res.get("ok"), res)         # 只有网页腿算数，它失败就是失败
         self.assertFalse(res.get("web", {}).get("ok"), res)
-        self.assertIn("网页通道失败", res.get("msg", ""))
-        self.assertIn("网页通道失败", res.get("error", ""))
+        self.assertIn("kênh web thất bại", res.get("msg", ""))
+        self.assertIn("Kênh web thất bại", res.get("error", ""))
         self.assertIsNone(acc.last_daily_chat)       # 今天不算做过
         self.assertTrue(acc.can_daily_chat())        # 下一次巡检还会重试
 
