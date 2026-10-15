@@ -92,7 +92,7 @@ vi.observer.callback([{ type: 'attributes', target: vi.label }]);
 assert.strictEqual(vi.labelAttrs['data-label'], 'Thời gian khôi phục');
 
 const screenshotStrings = [
-  ['本页导航', 'Điều hướng trang'],
+  ['本页导航', 'Điều hướng'],
   ['↑ 回到顶部', '↑ Về đầu trang'],
   ['版本', 'Phiên bản'],
   ['范围', 'Phạm vi'],
@@ -159,8 +159,8 @@ const screenshotStrings = [
   ['Request成功率', 'Request thành công'],
   ['请求成功率（国际版）', 'Request thành công (Quốc Tế)'],
   ['网关调用量（国际版）', 'Lượt gọi cổng (Quốc Tế)'],
-  ['流式', 'Truyền trực tuyến'],
-  ['非流式', 'Không truyền trực tuyến'],
+  ['流式', 'Streaming'],
+  ['非流式', 'Non-streaming'],
   ['跟随', 'Theo'],
   ['跟随 · 混合', 'Theo · kết hợp'],
   ['未定价模型', 'Mô hình chưa có giá'],
@@ -215,7 +215,7 @@ for (const source of mixedLanguageStrings) {
 // 文案：逐条锁定，防止以后回退。
 const localizedScreenshotStrings = [
   ["签到与活跃记录",
-    "Điểm danh và nhật ký hoạt động"],
+    "Nhật ký hoạt động"],
   ["显示条数:",
     "Số hàng hiển thị:"],
   ["共 376 条记录",
@@ -235,13 +235,13 @@ const localizedScreenshotStrings = [
   ["收起",
     "Thu gọn"],
   ["模型性能指标与用量一览",
-    "Tổng quan chỉ số hiệu năng và mức dùng mô hình"],
+    "Tổng quan hiệu năng và mức dùng mô hình"],
   ["当前版本暂无模型请求或性能数据",
     "Phiên bản hiện tại chưa có request mô hình hoặc dữ liệu hiệu năng"],
   ["生成速度：平均每秒吐字数 (tok/s)",
     "Tốc độ sinh: số token trung bình mỗi giây (tok/s)"],
   ["思考 Token：DeepSeek/R1 等推理模型的思考量",
-    "Thinking Token: lượng thinking của các mô hình suy luận như DeepSeek/R1"],
+    "Thinking Token: lượng thinking của các mô hình thinking như DeepSeek/R1"],
   ["总 Token 占比进度条",
     "Thanh tiến trình tỷ trọng Tổng Token"],
   ["融合首字延迟 (TTFT)、生成速度、耗时与 Token 统计 · 含国际版与国内版全部渠道",
@@ -269,7 +269,7 @@ const localizedScreenshotStrings = [
   ["(默认)",
     "(Mặc định)"],
   ["本地网络工具 (直通)",
-    "Công cụ mạng cục bộ (Truyền thẳng)"],
+    "Tool mạng cục bộ (Truyền thẳng)"],
   ["由网关代跑",
     "Cổng chạy thay"],
   ["剩余用量优先调度 (未启用)",
