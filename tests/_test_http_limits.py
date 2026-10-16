@@ -140,8 +140,10 @@ class NagleFlagTests(unittest.TestCase):
             server.shutdown()
             server.server_close()
             thread.join(timeout=5)
-        self.assertEqual(Probe.seen, [1],
-                         "TCP_NODELAY is not set on the accepted connection")
+        self.assertEqual(len(Probe.seen), 1,
+                         "the accepted connection was not inspected")
+        self.assertTrue(Probe.seen[0],
+                        "TCP_NODELAY is not set on the accepted connection")
 
 
 class BacklogTests(unittest.TestCase):

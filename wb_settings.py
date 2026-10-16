@@ -93,8 +93,8 @@ ACCOUNTS_SEPARATE_TAB_KEY = "accounts_separate_tab"
 # Instance-wide default UI language. The dashboard can override this per
 # browser with localStorage; this key is the fallback when no override exists.
 UI_LANGUAGE_KEY = "ui_language"
-UI_LANGUAGE_DEFAULT = "zh"
-UI_LANGUAGE_VALUES = ("zh", "zh-Hant", "en")
+UI_LANGUAGE_DEFAULT = "vi"
+UI_LANGUAGE_VALUES = ("zh", "zh-Hant", "en", "vi")
 
 # Whether the gateway checks GitHub for a newer release once a day. Missing key
 # reads as off - the opposite of the switches above - because turning it on
@@ -1075,7 +1075,7 @@ def set_pricing_enabled(accounts_dir, enabled):
 
 
 def ui_language(accounts_dir):
-    """Instance-wide default UI language (zh / zh-Hant / en)."""
+    """Instance-wide default UI language (zh / zh-Hant / en / vi)."""
     value = load(accounts_dir).get(UI_LANGUAGE_KEY)
     if isinstance(value, str) and value in UI_LANGUAGE_VALUES:
         return value
@@ -1085,7 +1085,7 @@ def ui_language(accounts_dir):
 def set_ui_language(accounts_dir, value):
     """Persist the instance-wide default UI language."""
     if not isinstance(value, str) or value not in UI_LANGUAGE_VALUES:
-        raise ValueError("ui_language must be zh, zh-Hant or en")
+        raise ValueError("ui_language must be zh, zh-Hant, en or vi")
     with _lock:
         data = load(accounts_dir)
         data[UI_LANGUAGE_KEY] = value
