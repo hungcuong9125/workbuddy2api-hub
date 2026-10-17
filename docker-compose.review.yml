@@ -1,4 +1,4 @@
-# Isolated review stack for the custom/v1.7.10 (Vietnamese) branch.
+# Isolated review stack for the custom/v1.7.12 (Vietnamese) branch.
 #
 # Deliberately separate from docker-compose.yaml so any production "wb-proxy"
 # container (host :8788) is never touched. Host port is 8789 -> container 8788.
@@ -10,7 +10,7 @@
 services:
   wb-proxy-review:
     build: .
-    image: wb-proxy:v1.7.10-vi
+    image: wb-proxy:v1.7.12-vi
     container_name: wb-proxy-review
     restart: unless-stopped
     ports:
