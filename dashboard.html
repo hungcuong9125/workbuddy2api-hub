@@ -801,7 +801,7 @@ button.page-nav-top:hover{background:var(--panel2);border-color:var(--accent);co
 #pageAnalytics .wrap{max-width:1320px;margin:0 auto;padding:14px 20px 40px}
 #pageAnalytics .pagehead{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
 #pageAnalytics h1.pagetitle{
-  margin:0;font-family:var(--serif);font-size:19px;font-weight:600;letter-spacing:.01em;
+  margin:0;font-size:19px;font-weight:600;letter-spacing:.01em;
   display:flex;align-items:baseline;gap:10px;
 }
 #pageAnalytics .pagesub{color:var(--dim);font-size:11.5px;margin-top:0}
@@ -3722,6 +3722,7 @@ button.page-nav-top:hover{background:var(--panel2);border-color:var(--accent);co
         '今日未领 (': 'Hôm nay chưa nhận (',
         '今日未打卡 (': 'Hôm nay chưa điểm danh (',
         ' 天)': ' ngày)',
+        '确定关闭网关服务？进程会退出，需要重新运行启动脚本才能再次使用。': 'Xác nhận tắt dịch vụ cổng? Tiến trình sẽ thoát, cần chạy lại script khởi động để dùng tiếp.',
         '各账号使用分布': 'Phân bố sử dụng theo tài khoản',
         '各模型使用分布': 'Phân bố sử dụng theo mô hình',
         ' 项': ' mục',
@@ -5052,7 +5053,7 @@ button.page-nav-top:hover{background:var(--panel2);border-color:var(--accent);co
   <div id="pageGateway" class="main-page">
   <!-- 页面头部：标题 + 一行说明，与其它页面的头部结构保持一致 -->
   <div style="margin-bottom:16px">
-    <h2 id="gatewayPageTitle" style="margin:0;font-size:17px;color:var(--fg);font-family:var(--serif);font-weight:600;letter-spacing:.02em">网关与账号</h2>
+    <h2 id="gatewayPageTitle" style="margin:0;font-size:17px;color:var(--fg);font-weight:600;letter-spacing:.02em">网关与账号</h2>
     <div id="gatewayPageDesc" style="font-size:12px;color:var(--dim);margin-top:4px">管理账号池与代理出口，查看当日调用量、估算花费、成功率、最近请求与网关模型清单。</div>
   </div>
   <!-- 版本中枢控制栏 (三列等高对齐网格) -->
@@ -5200,7 +5201,7 @@ button.page-nav-top:hover{background:var(--panel2);border-color:var(--accent);co
        版本视图切换（与网关页那两张出口卡片同一份状态，见 updateUI）。 -->
   <div id="accountsHeader" style="margin-bottom:16px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">
     <div>
-      <h2 style="margin:0;font-size:17px;color:var(--fg);font-family:var(--serif);font-weight:600;letter-spacing:.02em">账号</h2>
+      <h2 style="margin:0;font-size:17px;color:var(--fg);font-weight:600;letter-spacing:.02em">账号</h2>
       <div style="font-size:12px;color:var(--dim);margin-top:4px">管理账号池：添加/导入/导出、启用停用、凭证与积分刷新、代理出口绑定，以及签到与每日活跃记录。</div>
     </div>
     <!-- 版本视图切换：账号列表、「当前禁用」与签到记录都按当前视图区域取，所以
@@ -5315,7 +5316,7 @@ button.page-nav-top:hover{background:var(--panel2);border-color:var(--accent);co
   <div id="pageTasks" class="main-page">
   <!-- 页面头部：标题 + 一行说明，与其它页面的头部结构保持一致 -->
   <div style="margin-bottom:16px">
-    <h2 style="margin:0;font-size:17px;color:var(--fg);font-family:var(--serif);font-weight:600;letter-spacing:.02em">任务与福利</h2>
+    <h2 style="margin:0;font-size:17px;color:var(--fg);font-weight:600;letter-spacing:.02em">任务与福利</h2>
     <div style="font-size:12px;color:var(--dim);margin-top:4px">每日活跃打卡、Buddy 加油站、成长任务与福利积分总览。</div>
   </div>
   <!-- 国际版每日活跃福利 -->
@@ -5674,7 +5675,7 @@ button.page-nav-top:hover{background:var(--panel2);border-color:var(--accent);co
 
   <div id="pageSettings" class="main-page">
     <div style="margin-bottom:16px">
-      <h2 style="margin:0;font-size:17px;color:var(--fg);font-family:var(--serif);font-weight:600;letter-spacing:.02em">网关设置</h2>
+      <h2 style="margin:0;font-size:17px;color:var(--fg);font-weight:600;letter-spacing:.02em">网关设置</h2>
       <div style="font-size:12px;color:var(--dim);margin-top:4px">面板密码与界面语言、API Key 与出口绑定、代理槽与限额、价格估算、出站身份与本地网络工具。</div>
     </div>
 
@@ -6250,7 +6251,7 @@ button.page-nav-top:hover{background:var(--panel2);border-color:var(--accent);co
 
   <div id="pageAgents" class="main-page">
     <div style="margin-bottom:16px">
-      <h2 style="margin:0;font-size:17px;color:var(--fg);font-family:var(--serif);font-weight:600;letter-spacing:.02em">智能体配置</h2>
+      <h2 style="margin:0;font-size:17px;color:var(--fg);font-weight:600;letter-spacing:.02em">智能体配置</h2>
       <div style="font-size:12px;color:var(--dim);margin-top:4px">检测本机已安装的 AI 编程客户端，一键把它们的配置指向本网关；原始文件会先备份，随时可一键还原。</div>
     </div>
 
@@ -6319,7 +6320,7 @@ button.page-nav-top:hover{background:var(--panel2);border-color:var(--accent);co
   <div id="pageLogs" class="main-page">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:12px">
       <div>
-        <h2 style="margin:0;font-size:17px;color:var(--fg);font-family:var(--serif);font-weight:600;letter-spacing:.02em">网关运行日志</h2>
+        <h2 style="margin:0;font-size:17px;color:var(--fg);font-weight:600;letter-spacing:.02em">网关运行日志</h2>
         <div id="logPageHint" style="font-size:12px;color:var(--dim);margin-top:4px">实时捕获反向代理请求、流式转发、调度巡检、任务打卡与异常告警 (内存保留最新 2000 条)</div>
       </div>
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
