@@ -3722,6 +3722,25 @@ button.page-nav-top:hover{background:var(--panel2);border-color:var(--accent);co
         '今日未领 (': 'Hôm nay chưa nhận (',
         '今日未打卡 (': 'Hôm nay chưa điểm danh (',
         ' 天)': ' ngày)',
+        '总 ': 'Tổng ',
+        '分钟粒度': 'theo phút',
+        '小时粒度': 'theo giờ',
+        '天粒度': 'theo ngày',
+        '平均速度': 'Tốc độ trung bình',
+        '该区间暂无数据': 'Khoảng này chưa có dữ liệu',
+        '该区间暂无分布明细': 'Khoảng này chưa có chi tiết phân bổ',
+        '花费': 'Chi phí',
+        ' 天有活动 · 共 ': ' ngày hoạt động · Tổng ',
+        ' 次请求': ' lượt request',
+        '天有活动': 'ngày hoạt động',
+        '总请求': 'Tổng request',
+        '峰值单日': 'Cao nhất ngày',
+        '近一年 ': 'Một năm qua ',
+        '近 ': 'Gần ',
+        ' 个样本 · 成功率 ': ' mẫu · Tỷ lệ thành công ',
+        '粒度 · 总 ': 'độ chi tiết · Tổng ',
+        ' 请求': ' request',
+        '缓存复用 ': 'Tái sử dụng bộ nhớ đệm ',
         '全局默认值': 'mặc định chung',
         '温度 ': 'Nhiệt độ ',
         '默认 ': 'Mặc định ',
@@ -5682,6 +5701,7 @@ button.page-nav-top:hover{background:var(--panel2);border-color:var(--accent);co
             <option value="zh">简体中文</option>
             <option value="zh-Hant">正體中文（台灣）</option>
             <option value="en">English</option>
+            <option value="vi">Tiếng Việt</option>
           </select>
         </div>
         <button onclick="saveUiLanguage(this)">保存默认语言</button>
@@ -8411,7 +8431,7 @@ function activityStatusChip(a){
          + (status.message ? ' · ' + status.message : ''));
     return '<span class="' + cls + '" style="cursor:pointer" title="' + esc(tip) + '"'
       + ' onclick="openActivityHistory(&quot;' + uidAttr + '&quot;)">'
-      + esc(status.label + ' · ' + status.state) + '</span>';
+      + esc(status.state) + '</span>';
   }
 
   // 国内版双徽章渲染：主徽章保持「今日签到 · 成功/失败/已完成/无记录」，保证历史兼容；副徽章标明「成长计划」连登状态
@@ -11733,7 +11753,7 @@ function applyUiLanguageSelect(value){
   if(select) select.value = value || 'zh';
   const state = document.getElementById('setUiLanguageState');
   if(state){
-    const label = value === 'zh-Hant' ? '(正體中文)' : (value === 'en' ? '(English)' : '(简体中文)');
+    const label = value === 'zh-Hant' ? '(正體中文)' : (value === 'en' ? '(English)' : (value === 'vi' ? '(Tiếng Việt)' : '(简体中文)'));
     state.textContent = label;
     state.style.color = 'var(--dim)';
   }
