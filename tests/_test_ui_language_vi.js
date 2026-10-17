@@ -225,7 +225,7 @@ const localizedScreenshotStrings = [
   ["上一页",
     "Trang trước"],
   ["上下文窗口",
-    "Cửa sổ ngữ cảnh"],
+    "Context"],
   ["能力",
     "Năng lực"],
   ["当前范围没有请求数据",
