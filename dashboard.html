@@ -768,7 +768,7 @@ button.page-nav-top:hover{background:var(--panel2);border-color:var(--accent);co
 #pageAnalytics *{box-sizing:border-box}
 
 #pageAnalytics{
-  background:var(--bg); color:var(--fg); font-family:var(--sans);
+  background:var(--bg); color:var(--fg);
   font-size:13.5px; line-height:1.55; -webkit-font-smoothing:antialiased;
 }
 #pageAnalytics ::selection{background:var(--accent-soft)}
@@ -2800,7 +2800,7 @@ button.page-nav-top:hover{background:var(--panel2);border-color:var(--accent);co
         '日志落库': 'Ghi nhật ký vào DB',
         '国内签到': 'Điểm danh Trong Nước',
         '国际活跃': 'Hoạt động Quốc Tế',
-        '今日活动': 'Hoạt động hôm nay',
+        '今日活动': 'Hôm nay',
         '任务与福利': 'Nhiệm vụ và phúc lợi',
         '补签卡余额': 'Số dư thẻ bù điểm danh',
         '成长抽奖次数': 'Số lượt quay thưởng tăng trưởng',
@@ -3019,7 +3019,7 @@ button.page-nav-top:hover{background:var(--panel2);border-color:var(--accent);co
         '任务说明': 'Mô tả nhiệm vụ',
         '会员类型:': 'Loại thành viên:',
         '会话已失效，请重新输入密码': 'Phiên đã hết hiệu lực, vui lòng nhập lại mật khẩu',
-        '住宅': 'Nhà ở',
+        '住宅': 'Dân cư',
         '保存失败:': 'Lưu thất bại:',
         '保存槽位': 'Lưu slot',
         '修改失败:': 'Sửa thất bại:',
@@ -3722,6 +3722,31 @@ button.page-nav-top:hover{background:var(--panel2);border-color:var(--accent);co
         '今日未领 (': 'Hôm nay chưa nhận (',
         '今日未打卡 (': 'Hôm nay chưa điểm danh (',
         ' 天)': ' ngày)',
+        '全局默认值': 'mặc định chung',
+        '温度 ': 'Nhiệt độ ',
+        '默认 ': 'Mặc định ',
+        '可关闭思考': 'có thể tắt Thinking',
+        '不可关闭思考': 'không thể tắt Thinking',
+        '✓ 当前为通过 API 获取的最新数据': '✓ Dữ liệu mới nhất lấy qua API',
+        '刷新时间 ': 'Thời gian làm mới ',
+        '积分消耗': 'Điểm đã dùng',
+        '积分消耗（国内版）': 'Điểm đã dùng (Trong Nước)',
+        '积分消耗（国际版）': 'Điểm đã dùng (Quốc Tế)',
+        '估算价值: ': 'Giá trị ước tính: ',
+        '本机网络不可用: ': 'Mạng máy này không khả dụng: ',
+        '本机网络不通：': 'Mạng máy này không thông: ',
+        '（账号未被计入熔断）': ' (tài khoản không bị tính vào tạm ngắt)',
+        '本机网络正常': 'Mạng máy này bình thường',
+        '本机网络不通': 'Mạng máy này không thông',
+        '本机网络': 'Mạng máy này',
+        'DNS/路由失败': 'DNS/định tuyến thất bại',
+        '共测 ': 'Tổng ',
+        '通过 ': 'Đạt ',
+        '该区域没有已启用的账号。': 'Khu vực này không có tài khoản nào được bật.',
+        '该区域没有可用模型': 'Khu vực này không có mô hình khả dụng',
+        '默认：合并': 'Mặc định: Gộp',
+        '越南': 'Việt Nam',
+        '已成功刷新 ': 'đã làm mới thành công ',
         '该模型已被人工禁用': 'Mô hình này đã bị tắt thủ công',
         '（连续第 ': ' (lần thứ ',
         ' 次）': ' liên tiếp)',
@@ -5742,7 +5767,7 @@ button.page-nav-top:hover{background:var(--panel2);border-color:var(--accent);co
         <div>
           <h2 style="margin:0">账号限额 <em id="setLimitsState"></em></h2>
           <div style="font-size:12px;color:var(--dim);margin-top:4px">
-            五条护栏默认按<b>全局默认</b>生效，同时作用于<b>国际版</b>与<b>国内版</b>；需要时可单独给某一版本设值，留空即<b>继承全局</b>。每条护栏填 0 表示关闭该项。
+            五条护栏默认按 <b>全局默认值</b> 生效，同时作用于 <b>国际版</b> 与 <b>国内版</b>；需要时可单独给某一版本设值，留空即 <b>继承全局</b>。每条护栏填 0 表示关闭该项。
           </div>
         </div>
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
@@ -9126,7 +9151,7 @@ async function fetchCredits(btn){
     await loadAccounts();
     refresh();
     const count = (r.results || []).length;
-    toast('已成功刷新当前' + viewName + ' ' + count + ' 个账号的积分', 'ok');
+    toast(viewName + ' 已成功刷新 ' + count + ' 个账号的积分', 'ok');
   }catch(e){
     toast('刷新积分失败: ' + e.message, 'bad');
   }finally{
