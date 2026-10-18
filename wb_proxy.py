@@ -16812,6 +16812,15 @@ class Handler(BaseHTTPRequestHandler):
             pass
         log(fmt % args)
     def _json(self, code, obj):
+        # Panel POST routes such as /updates/check, /updates/install and
+        # /quota-scan/run take no parameters and never read the body. On a
+        # keep-alive connection that leftover body would be parsed as the next
+        # request line (a bogus 501 on an otherwise healthy connection), so
+        # drain it here unless the handler already consumed it.
+        if (getattr(self, "command", "") == "POST"
+                and not getattr(self, "_body_consumed", False)):
+            self._handle_expect_continue()
+            self._discard_body()
         body = json.dumps(obj, ensure_ascii=False).encode("utf-8")
         self.send_response(code)
         self.send_header("Content-Type", "application/json; charset=utf-8")
@@ -16918,16 +16927,19 @@ class Handler(BaseHTTPRequestHandler):
         try:
             if "chunked" in transfer_encoding:
                 self._drain_chunked_body()
+                self._body_consumed = True
                 return
             length = int(headers.get("Content-Length") or 0)
         except Exception:
             length = 0
         if length <= 0:
+            self._body_consumed = True
             return
         if length > MAX_PAYLOAD_BYTES:
             # The client announced a body we refuse (413). Reading it would
             # block until it finishes sending gigabytes, so close instead and
             # let it see the reply plus the disconnect.
+            self._body_consumed = True
             self.close_connection = True
             return
         remaining = length
@@ -16940,6 +16952,10 @@ class Handler(BaseHTTPRequestHandler):
         except Exception:
             # A short read means the peer went away; nothing left to align.
             pass
+        # Mark it drained: _json() also drains unread POST bodies, and reading
+        # the same Content-Length bytes twice would block until the client
+        # times out (the 401-then-good-request connection-reuse path).
+        self._body_consumed = True
     def _drain_chunked_body(self):
         """Consume a chunked body (terminated by a zero-length chunk)."""
         try:
