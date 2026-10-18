@@ -1742,14 +1742,14 @@ class Account(object):
             session = (self._web_conversation_get(conversation, "/session") or {}).get("data") or {}
         except Exception as exc:
             return {"ok": False, "conversation": conversation,
-                    "error": "session 查询失败: %s" % exc, "retryable": True}
+                    "error": "truy vấn session thất bại: %s" % exc, "retryable": True}
         link = session.get("link") or session.get("endpoint") or ""
         token = session.get("token") or ""
         session_id = session.get("sessionId") or session.get("session_id") or conversation
         cwd = session.get("cwd") or "/workspace"
         if not link or not token:
             return {"ok": False, "conversation": conversation,
-                    "error": "沙箱未就绪（没有 link/token）", "retryable": True}
+                    "error": "sandbox chưa sẵn sàng (thiếu link/token)", "retryable": True}
 
         result = wb_webagent.run_turn(
             link, token, session_id, cwd, prompt or DAILY_CHAT_WEB_PROMPT,
@@ -1759,7 +1759,7 @@ class Account(object):
             model=model)
         result["conversation"] = conversation
         if result.get("ok"):
-            result["msg"] = "网页通道会话跑完：%d 段输出，%d ms" % (
+            result["msg"] = "phiên kênh web chạy xong: %d đoạn, %d ms" % (
                 result.get("chunks") or 0, result.get("elapsed_ms") or 0)
         else:
             result["retryable"] = True
@@ -1835,7 +1835,7 @@ class Account(object):
                 self.fetch_credits()
             except Exception:
                 pass
-            result = {"ok": True, "msg": "每日活跃对话成功完成"}
+            result = {"ok": True, "msg": "Điểm danh hoạt động hàng ngày hoàn tất"}
             web_ok = True
             if web is None:
                 web = bool(self.path) and wb_settings.daily_chat_web(os.path.dirname(self.path))
@@ -1847,8 +1847,8 @@ class Account(object):
                     # 重试过就把轮数带上：光看「成功」分不清是首轮就跑完，还是
                     # 前几轮超时、多等了一轮才跑完（后者是慢，不是没跑）。
                     tries = res.get("attempts") or 1
-                    retried = "（重试 %d 次后）" % (tries - 1) if tries > 1 else ""
-                    result["msg"] = ("每日活跃对话成功完成（网页通道%s %s：%d 段输出，%d ms）"
+                    retried = " (sau khi thử lại %d lần)" % (tries - 1) if tries > 1 else ""
+                    result["msg"] = ("Điểm danh hoạt động hàng ngày hoàn tất (kênh web%s %s: %d đoạn, %d ms)"
                                      % (retried, res.get("status") or "completed",
                                         res.get("chunks") or 0, res.get("elapsed_ms") or 0))
                 else:
@@ -1856,10 +1856,10 @@ class Account(object):
                     # （#75/#59/#90）。面板与活动历史按 ok 画成功/失败，网页腿失败却
                     # 报成功的话，「今天这 30/50 积分没到账」在界面上一直看不见。
                     tries = res.get("attempts") or 1
-                    suffix = "（已重试 %d 次）" % (tries - 1) if tries > 1 else ""
+                    suffix = " (đã thử lại %d lần)" % (tries - 1) if tries > 1 else ""
                     result["ok"] = False
-                    result["error"] = "网页通道失败：%s%s" % (res.get("error"), suffix)
-                    result["msg"] = "每日活跃对话未完成（网页通道失败：%s%s）" % (
+                    result["error"] = "Kênh web thất bại: %s%s" % (res.get("error"), suffix)
+                    result["msg"] = "Điểm danh hoạt động hàng ngày chưa hoàn tất (kênh web thất bại: %s%s)" % (
                         res.get("error"), suffix)
             # 只有真正计入官方「每日活跃」的网页通道成功了才算今天做过：网页腿失败时
             # 若照写 lastDailyChat，当天后续巡检会直接跳过该账号，那天的 30/50 积分静默

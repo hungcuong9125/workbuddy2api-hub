@@ -165,8 +165,9 @@ const check = (label, cond, extra) => {
   window.VIEW_REALM = 'intl';
   api.renderAccounts();
   out = accountsOut();
-  check('an INTL account that completed today is labelled 今日活跃, not 今日签到',
-        (chipOf(out, '乙 · 国际') || '').includes('今日活跃 · 已完成')
+  check('an INTL account that completed today shows only its state',
+        (chipOf(out, '乙 · 国际') || '').includes('已完成')
+        && !(chipOf(out, '乙 · 国际') || '').includes('今日活跃 · ')
         && !(chipOf(out, '乙 · 国际') || '').includes('今日签到'),
         JSON.stringify(chipOf(out, '乙 · 国际')));
 
@@ -291,7 +292,8 @@ const check = (label, cond, extra) => {
   api.renderAccounts();
   out = accountsOut();
   check('the INTL view shows the completion on 乙, not on a CN row',
-        (chipOf(out, '乙 · 国际') || '').includes('今日活跃 · 已完成'),
+        (chipOf(out, '乙 · 国际') || '').includes('已完成')
+        && !(chipOf(out, '乙 · 国际') || '').includes('今日活跃 · '),
         JSON.stringify(chipOf(out, '乙 · 国际')));
 
   console.log();
