@@ -126,7 +126,7 @@ class Scheduler:
             import wb_window_probe
             wb_window_probe.run_due(self.pool, self.log)
         except Exception as exc:
-            self.log(f"窗口探针异常: {exc}")
+            self.log(f"Lỗi cửa sổ thăm dò: {exc}")
 
     def _run_quota_scans(self):
         """到点的模型额度主动查询，同样跑在独立线程里。
@@ -144,7 +144,7 @@ class Scheduler:
             import wb_quota_scan
             wb_quota_scan.run_due(self.pool, self.log)
         except Exception as exc:
-            self.log(f"额度查询异常: {exc}")
+            self.log(f"Lỗi tra cứu hạn mức: {exc}")
 
     def _next_wait(self):
         """下一轮巡检的等待时间：常规 30 秒，有窗口即将到点时提前醒来。
@@ -249,7 +249,7 @@ class Scheduler:
             # 的巡检/打卡再去「试探」一次，只会让同一台设备上的其他账号连坐。
             # 限制期限是持久化的（wb_accounts.note_restricted），重启后仍然有效。
             if getattr(acc, "restricted_until", 0.0) > time.time():
-                self.log(f"跳过受限账号 [{uid8}]：上游风控限制剩余 "
+                self.log(f"Bỏ qua tài khoản bị giới hạn [{uid8}]: thời gian giới hạn rủi ro thượng nguồn còn lại "
                          f"{int(acc.restricted_until - time.time())}s")
                 continue
             # 区域级连坐暂停期间（同一窗口内多个账号被限制）整轮都不碰上游。
@@ -259,7 +259,7 @@ class Scheduler:
             except Exception:
                 hold = 0.0
             if hold > 0:
-                self.log(f"跳过 [{uid8}]：{acc.realm} 区域风控暂停剩余 {int(hold)}s")
+                self.log(f"Bỏ qua [{uid8}]: tạm dừng rủi ro khu vực {acc.realm} còn lại {int(hold)}s")
                 continue
             # 1. 检查 Token 剩余寿命 (小于 2 小时自动刷新保活)
             exp = acc.expires_at or 0

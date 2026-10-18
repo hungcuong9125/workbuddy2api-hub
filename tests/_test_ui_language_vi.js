@@ -393,6 +393,43 @@ for (const [source, expected] of localizedScreenshotStrings) {
   assert.strictEqual(vi.window.WB_I18N.translateVi(source), expected, source);
 }
 
+// v1.7.14: updater, quota scan and window probe strings.
+const v1714Strings = [
+  ['安装状态', 'Trạng thái cài đặt'],
+  ['正在下载更新包', 'Đang tải gói cập nhật'],
+  ['更新失败，正在回滚', 'Cập nhật thất bại, đang hoàn tác'],
+  ['安装更新会短暂重启网关。账号与用量数据会保留。继续吗？',
+    'Cài đặt cập nhật sẽ khởi động lại cổng trong giây lát. Tài khoản và dữ liệu mức dùng sẽ được giữ nguyên. Tiếp tục?'],
+  ['模型额度窗口探针', 'Cửa sổ thăm dò hạn mức mô hình'],
+  ['模型额度定时主动查询', 'Tra cứu định kỳ chủ động hạn mức mô hình'],
+  ['到点自动请求', 'Tự động gửi request khi đến giờ'],
+  ['保存勾选', 'Lưu lựa chọn'],
+  ['立即查询', 'Tra cứu ngay'],
+  ['正常 (未达限额)', 'Bình thường (chưa đạt hạn mức)'],
+  ['已登记 429，交给窗口探针', 'Đã ghi nhận 429, giao cho cửa sổ thăm dò'],
+  ['暂无撞线样本。', 'Chưa có mẫu chạm trần.'],
+  ['复制为征集格式', 'Sao chép dạng thu thập'],
+  ['已有更新任务正在运行', 'Đã có tác vụ cập nhật đang chạy'],
+  ['上游风控限制', 'Giới hạn rủi ro từ thượng nguồn'],
+  ['登录已过期', 'Phiên đăng nhập đã hết hạn'],
+];
+for (const [source, expected] of v1714Strings) {
+  assert.strictEqual(vi.window.WB_I18N.translateVi(source), expected, source);
+}
+const v1714Generated = [
+  ['(已监视 3 个模型)', '(Đang theo dõi 3 mô hình)'],
+  [' · 待触发窗口 2 个，最近: glm-5.3（abcd1234）65m 后',
+    ' · Cửa sổ chờ kích hoạt 2 mục, gần nhất: glm-5.3(abcd1234)65m sau'],
+  [' · 额度查询 4 条，最近: glm-5.3 30 分钟 后',
+    ' · Tra cứu hạn mức 4 mục, gần nhất: glm-5.3 30 phút sau'],
+  ['已有 2 个勾选模型不在当前目录中（a, b），保存时保留',
+    'Đã có 2 mô hình đã chọn không có trong danh mục hiện tại (a, b), giữ lại khi lưu'],
+  ['已复制 3 组样本', 'Đã sao chép 3 nhóm mẫu'],
+];
+for (const [source, expected] of v1714Generated) {
+  assert.strictEqual(vi.window.WB_I18N.translateVi(source), expected, source);
+}
+
 const overridden = boot('zh', '?lang=vi');
 assert.strictEqual(overridden.window.WB_I18N.current(), 'vi', 'URL override can select Vietnamese');
 assert.strictEqual(overridden.window.WB_I18N.translateVi('每日 Token 限额'), 'Hạn mức Token hằng ngày');

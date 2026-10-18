@@ -56,10 +56,11 @@ class TLSVerifyError(RuntimeError):
 
 
 TLS_VERIFY_HINT = (
-    "TLS 证书校验失败：上游证书链里有本机不信任的证书。常见于公司代理、"
-    "Clash/Surge 等 HTTPS 解密，或 macOS 上 Python 没读到系统钥匙串里的根证书。"
-    "把签发该证书的根证书导出为 PEM，设置环境变量 "
-    "WB_CA_BUNDLE=/path/to/ca.pem 后重启网关；也可以设置 SSL_CERT_FILE。"
+    "Xác minh chứng chỉ TLS thất bại: chuỗi chứng chỉ của thượng nguồn có chứng chỉ "
+    "mà máy này không tin cậy. Thường gặp với proxy công ty, giải mã HTTPS của Clash/Surge, "
+    "hoặc Python trên macOS không đọc được chứng chỉ gốc trong keychain hệ thống. "
+    "Hãy xuất chứng chỉ gốc đã ký chứng chỉ đó ra PEM, đặt biến môi trường "
+    "WB_CA_BUNDLE=/path/to/ca.pem rồi khởi động lại cổng; cũng có thể đặt SSL_CERT_FILE."
 )
 
 
@@ -89,7 +90,7 @@ def is_tls_verify_error(exc):
 def tls_verify_hint(exc=None):
     if exc is None:
         return TLS_VERIFY_HINT
-    return "%s 原始错误：%s" % (TLS_VERIFY_HINT, exc)
+    return "%s lỗi gốc: %s" % (TLS_VERIFY_HINT, exc)
 
 
 def _retryable(exc):
@@ -1548,7 +1549,7 @@ class Account(object):
             err_msg = str(exc)
             if "401" in err_msg or "Authorization" in err_msg or "Unauthorized" in err_msg:
                 self.token_expired = True
-                self._set_last_error("登录已过期 (HTTP 401)，请重新登录")
+                self._set_last_error("Phiên đăng nhập đã hết hạn (HTTP 401), vui lòng đăng nhập lại")
             else:
                 self._set_last_error("refresh failed: %s" % exc)
             return False
@@ -2067,12 +2068,12 @@ class Account(object):
                                           timeout=15, proxy=self.proxy)
                     except Exception:
                         self.token_expired = True
-                        self._set_last_error("登录已过期，请重新登录")
-                        return {"ok": False, "error": "登录已过期，请在账号管理页重新扫码登录", "need_relogin": True}
+                        self._set_last_error("Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại")
+                        return {"ok": False, "error": "Phiên đăng nhập đã hết hạn, vui lòng quét mã đăng nhập lại trong trang quản lý tài khoản", "need_relogin": True}
                 else:
                     self.token_expired = True
-                    self._set_last_error("登录已过期，请重新登录")
-                    return {"ok": False, "error": "登录已过期，请在账号管理页重新扫码登录", "need_relogin": True}
+                    self._set_last_error("Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại")
+                    return {"ok": False, "error": "Phiên đăng nhập đã hết hạn, vui lòng quét mã đăng nhập lại trong trang quản lý tài khoản", "need_relogin": True}
             else:
                 raise
         if s_res.get("code") != 0:
@@ -2216,12 +2217,12 @@ class Account(object):
                                         timeout=30, proxy=self.proxy)
                     except Exception:
                         self.token_expired = True
-                        self._set_last_error("登录已过期，请重新登录")
-                        return {"ok": False, "error": "登录已过期，请在账号管理页重新扫码登录", "need_relogin": True}
+                        self._set_last_error("Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại")
+                        return {"ok": False, "error": "Phiên đăng nhập đã hết hạn, vui lòng quét mã đăng nhập lại trong trang quản lý tài khoản", "need_relogin": True}
                 else:
                     self.token_expired = True
-                    self._set_last_error("登录已过期，请重新登录")
-                    return {"ok": False, "error": "登录已过期，请在账号管理页重新扫码登录", "need_relogin": True}
+                    self._set_last_error("Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại")
+                    return {"ok": False, "error": "Phiên đăng nhập đã hết hạn, vui lòng quét mã đăng nhập lại trong trang quản lý tài khoản", "need_relogin": True}
             return {"ok": False, "error": err_str}
         data = res.get("data", {}).get("Response", {}).get("Data", {})
         accounts = data.get("Accounts") or []
@@ -2401,7 +2402,7 @@ class Account(object):
                 err = res.get("error", "")
                 if err and (_auth_failure_text(err) or "登录" in err):
                     self.token_expired = True
-                    self._set_last_error("登录已过期，请重新登录")
+                    self._set_last_error("Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại")
                     return res
             except Exception:
                 pass

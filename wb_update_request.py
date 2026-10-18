@@ -102,15 +102,15 @@ def status():
 def request_install(tag, current_version):
     """Queue a stable tag for the root updater; caller must panel-authenticate."""
     if not install_enabled():
-        raise UpdateRequestError("安装更新服务尚未配置")
+        raise UpdateRequestError("Dịch vụ cài đặt cập nhật chưa được cấu hình")
     target = _version_tuple(tag)
     current = _version_tuple("v" + str(current_version or "").strip().lstrip("v"))
     if target is None or current is None or target <= current:
-        raise UpdateRequestError("目标版本无效或不高于当前版本")
+        raise UpdateRequestError("Phiên bản đích không hợp lệ hoặc không cao hơn phiên bản hiện tại")
 
     existing = status()["installation"]
     if existing.get("state") in ACTIVE_STATES or os.path.exists(REQUEST_FILE):
-        raise UpdateRequestError("已有更新任务正在运行")
+        raise UpdateRequestError("Đã có tác vụ cập nhật đang chạy")
 
     payload = json.dumps({
         "tag": tag,
@@ -122,9 +122,9 @@ def request_install(tag, current_version):
     try:
         fd = os.open(REQUEST_FILE, flags, 0o600)
     except FileExistsError:
-        raise UpdateRequestError("已有更新任务正在运行")
+        raise UpdateRequestError("Đã có tác vụ cập nhật đang chạy")
     except OSError:
-        raise UpdateRequestError("无法提交更新任务，请检查更新服务状态")
+        raise UpdateRequestError("Không thể gửi tác vụ cập nhật, vui lòng kiểm tra trạng thái dịch vụ cập nhật")
     try:
         with os.fdopen(fd, "wb") as stream:
             stream.write(payload)
@@ -135,6 +135,6 @@ def request_install(tag, current_version):
             os.unlink(REQUEST_FILE)
         except OSError:
             pass
-        raise UpdateRequestError("提交更新任务失败")
+        raise UpdateRequestError("Gửi tác vụ cập nhật thất bại")
     return {"state": "queued", "version": "%d.%d.%d" % target,
-            "message": "更新任务已排队"}
+            "message": "Tác vụ cập nhật đã vào hàng đợi"}

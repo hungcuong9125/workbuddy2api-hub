@@ -426,6 +426,8 @@ export ANTHROPIC_API_KEY="你在看板设置中添加并绑定的API_Key"
 
 ### Unreleased
 
+- **Bản dịch tiếng Việt cho v1.7.14 / v1.7.14 越南语本地化**：合并 `custom/v1.7.12` 的越南语词条并补齐本版新增文案——更新检查与手动安装状态、模型额度窗口探针、模型额度定时主动查询、撞线样本复制，以及新增的账号状态与服务端日志；同时清理重复词条。
+
 已发布版本的完整记录（v1.4.5 ~ v1.7.14，含每版的 PR 归属）见 **[docs/CHANGELOG.md](docs/CHANGELOG.md)**。
 
 ## 七、致谢与引用声明 (Credits & References)

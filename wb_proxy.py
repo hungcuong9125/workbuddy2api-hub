@@ -12887,9 +12887,9 @@ def gateway_hint(status, message):
     if ("11140" in lower or "账号存在异常行为" in text
             or "account has been restricted" in lower
             or "unusual activity" in lower):
-        return ("上游已对该账号做账号级风控限制（403 / code 11140）；网关已让该账号"
-                "冷却并停止换号重试。请勿换号或高频重试（同设备账号会连坐），"
-                "按 WorkBuddy 官方渠道申诉，通常 1-3 个工作日自动解除。")
+        return ("Thượng nguồn đã áp dụng giới hạn rủi ro cấp tài khoản (403 / code 11140); cổng đã cho tài khoản này"
+                " tạm ngừng và dừng đổi tài khoản thử lại. Không đổi tài khoản hoặc thử lại liên tục (tài khoản cùng thiết bị có thể bị liên đới),"
+                " hãy khiếu nại qua kênh chính thức của WorkBuddy; thường tự mở lại sau 1-3 ngày làm việc.")
     if "no usable account" in lower or "no healthy account" in lower:
         return "no healthy account available in pool; check /status or retry later"
     if "本机网络不可用" in text or "local network unavailable" in lower:
@@ -13301,10 +13301,10 @@ def note_account_restriction(realm, uid="", now=None):
 
 def restriction_hold_message(realm, remaining):
     """整池暂停期间交给客户端的说明。"""
-    return ("上游风控已限制本区域账号（403 / code 11140，账号存在异常行为）。"
-            "网关已暂停派发 %d 秒，避免继续换号重试导致同设备账号连坐被封。"
-            "请勿换号或高频重试；按 WorkBuddy 官方渠道申诉（通常 1-3 个工作日"
-            "自动解除），解封后再恢复。 Upstream restricted the account(s); "
+    return ("Thượng nguồn đã giới hạn rủi ro các tài khoản trong khu vực này (403 / code 11140, tài khoản có hành vi bất thường)."
+            " Cổng đã tạm dừng phân phát %d giây để tránh tiếp tục đổi tài khoản thử lại khiến tài khoản cùng thiết bị bị liên đới."
+            " Không đổi tài khoản hoặc thử lại liên tục; hãy khiếu nại qua kênh chính thức của WorkBuddy (thường tự mở lại sau 1-3 ngày làm việc),"
+            " sau khi mở lại sẽ tiếp tục. Upstream restricted the account(s); "
             "dispatch paused %ds to avoid further bans."
             % (int(remaining), int(remaining)))
 
@@ -19250,11 +19250,11 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(503, {"ok": False, "msg": "更新检查未运行"})
         status = UPDATES.status()
         if status.get("last_error"):
-            return self._json(409, {"ok": False, "msg": "请先成功检查更新"})
+            return self._json(409, {"ok": False, "msg": "Hãy kiểm tra cập nhật thành công trước"})
         if not status.get("update_available"):
-            return self._json(409, {"ok": False, "msg": "当前没有可安装的新版本"})
+            return self._json(409, {"ok": False, "msg": "Hiện không có phiên bản mới để cài đặt"})
         if not status.get("latest_tag") or not status.get("release_url"):
-            return self._json(409, {"ok": False, "msg": "请先点击立即检查更新"})
+            return self._json(409, {"ok": False, "msg": "Hãy bấm Kiểm tra cập nhật ngay trước"})
         try:
             queued = wb_update_request.request_install(
                 status["latest_tag"], status["current_version"])
@@ -19280,15 +19280,15 @@ class Handler(BaseHTTPRequestHandler):
         try:
             import wb_quota_scan
             sent = wb_quota_scan.run_due(POOL, log=lambda msg: add_log_entry(
-                "[额度查询] %s" % msg, tag="scheduler"), force=True)
+                "[Tra cứu hạn mức] %s" % msg, tag="scheduler"), force=True)
         except Exception as exc:
             return self._error(500, "quota scan failed: %s" % exc,
                                "server_error")
         return self._json(200, {
             "ok": True,
             "sent": sent,
-            "msg": ("已查询 %d 条配额线" % sent) if sent
-                   else "没有需要查询的配额线（未勾选模型或都已到下一次查询时刻）",
+            "msg": ("Đã tra cứu %d đường hạn mức" % sent) if sent
+                   else "Không có đường hạn mức nào cần tra cứu (chưa chọn mô hình hoặc tất cả đều chưa đến giờ tra cứu tiếp theo)",
         })
 
     def _route_scheduler_toggle(self, payload):
