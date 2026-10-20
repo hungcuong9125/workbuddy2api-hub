@@ -275,7 +275,7 @@ def run_due(pool, log=None, limit=BATCH_LIMIT, now=None, force=False):
             try:
                 _scan(accounts_dir, account, model, log, now=stamp)
             except Exception as exc:
-                log("额度查询：账号 [%s] 的 %s 执行异常: %s"
+                log("Tra cứu hạn mức: tài khoản [%s] của %s gặp lỗi khi thực thi: %s"
                     % (str(account.uid)[:8], model, exc))
             time.sleep(SCAN_GAP)
         return sent
@@ -306,7 +306,7 @@ def _scan(accounts_dir, account, model, log, now=None):
         account.clear_model_cooldown(model)
         _record(accounts_dir, uid, model, now, last_scan=now, result="ok",
                 detail="")
-        log("✓ 额度查询：账号 [%s] 的 %s 正常（未达限额）" % (uid8, model))
+        log("✓ Tra cứu hạn mức: tài khoản [%s] của %s bình thường (chưa đạt hạn mức)" % (uid8, model))
         return "ok"
 
     row = _row(accounts_dir, uid, model) or {}
@@ -328,11 +328,11 @@ def _scan(accounts_dir, account, model, log, now=None):
         _record(accounts_dir, uid, model, now, last_scan=now, attempts=0,
                 result="throttled", detail=detail)
         if scheduled:
-            log("额度查询：账号 [%s] 的 %s 已达限额，已登记窗口（%s 到点）"
+            log("Tra cứu hạn mức: tài khoản [%s] của %s đã đạt hạn mức, đã ghi nhận cửa sổ (đến giờ %s)"
                 % (uid8, model,
                    time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(reset_at))))
         else:
-            log("额度查询：账号 [%s] 的 %s 已达限额，冷却至 %s"
+            log("Tra cứu hạn mức: tài khoản [%s] của %s đã đạt hạn mức, tạm ngừng đến %s"
                 % (uid8, model,
                    time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(reset_at))))
         return "throttled"
@@ -343,13 +343,13 @@ def _scan(accounts_dir, account, model, log, now=None):
         # 连续失败说明不是一次抖动：推迟到下一个周期，别一直重试。
         _record(accounts_dir, uid, model, now, last_scan=now, attempts=0,
                 result=result, detail=detail)
-        log("额度查询：账号 [%s] 的 %s 连续 %d 次失败，推迟到下一个周期（%s）"
-            % (uid8, model, attempts, detail or "无详情"))
+        log("Tra cứu hạn mức: tài khoản [%s] của %s thất bại %d lần liên tiếp, hoãn sang chu kỳ sau (%s)"
+            % (uid8, model, attempts, detail or "không có chi tiết"))
         return result
     _record(accounts_dir, uid, model, now, attempts=attempts,
             next_at=now + RETRY_DELAY, result=result, detail=detail)
-    log("额度查询：账号 [%s] 的 %s 未完成检查（%s），%d 秒后重试 (%d/%d)"
-        % (uid8, model, detail or "无详情", int(RETRY_DELAY), attempts,
+    log("Tra cứu hạn mức: tài khoản [%s] của %s chưa hoàn tất kiểm tra (%s), thử lại sau %d giây (%d/%d)"
+        % (uid8, model, detail or "không có chi tiết", int(RETRY_DELAY), attempts,
            MAX_ATTEMPTS))
     return result
 

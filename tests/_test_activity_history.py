@@ -326,7 +326,7 @@ class RecordingTests(IsolatedCase):
         self.assertTrue(res.get("web", {}).get("ok"), res)
         rows = self.rows()
         self.assertEqual(len(rows), 1, "网页通道那一步不该多记一行")
-        self.assertIn("网页通道", rows[0]["message"])
+        self.assertIn("kênh web", rows[0]["message"])
 
     def test_a_failed_web_substep_is_reported_in_the_same_row(self):
         account = self.account("intl", "intl-web-fail")
@@ -343,7 +343,7 @@ class RecordingTests(IsolatedCase):
         rows = self.rows()
         self.assertEqual(len(rows), 1)
         self.assertFalse(rows[0]["ok"])
-        self.assertIn("网页通道失败", rows[0]["message"])
+        self.assertIn("kênh web thất bại", rows[0]["message"])
 
     def test_a_direct_web_trigger_records_its_own_row(self):
         account = self.account("intl", "intl-3")

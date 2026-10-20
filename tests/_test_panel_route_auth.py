@@ -259,7 +259,7 @@ class PanelOnlyPostTests(BoundaryCase):
         status, payload, _raw = self.dispatch(
             "/updates/install", headers=self.session(), command="POST")
         self.assertEqual(status, 409)
-        self.assertEqual(payload.get("msg"), "当前没有可安装的新版本")
+        self.assertEqual(payload.get("msg"), "Hiện không có phiên bản mới để cài đặt")
 
 
 class RemoteAgentsTests(BoundaryCase):

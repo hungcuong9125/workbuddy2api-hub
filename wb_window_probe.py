@@ -264,7 +264,7 @@ def _run_due_locked(pool, accounts_dir, log, limit, now):
         model = str(row.get("model") or "")
         account = pool.get(uid)
         if account is None:
-            log("窗口探针：账号 [%s] 已不在池中，丢弃 %s 的窗口记录" % (uid[:8], model))
+            log("Cửa sổ thăm dò: tài khoản [%s] không còn trong pool, bỏ bản ghi cửa sổ của %s" % (uid[:8], model))
             drop(accounts_dir, uid, model)
             continue
         if not account.enabled or not account.access_token:
@@ -274,7 +274,7 @@ def _run_due_locked(pool, accounts_dir, log, limit, now):
         try:
             _fire(accounts_dir, account, model, log)
         except Exception as exc:
-            log("窗口探针：账号 [%s] 的 %s 执行异常: %s" % (uid[:8], model, exc))
+            log("Cửa sổ thăm dò: tài khoản [%s] của %s gặp lỗi khi thực thi: %s" % (uid[:8], model, exc))
         # 多个窗口同时到点时错开，别在同一秒向上游打一串请求。
         time.sleep(PROBE_GAP)
     return sent
@@ -299,7 +299,7 @@ def _fire(accounts_dir, account, model, log):
         # 只清该模型的冷却，账号级 cooldown_until（网络故障留下的）不动。
         account.clear_model_cooldown(model)
         drop(accounts_dir, uid, model)
-        log("✓ 窗口探针：账号 [%s] 的 %s 已开始新一轮计时（探针请求成功）"
+        log("✓ Cửa sổ thăm dò: tài khoản [%s] của %s đã bắt đầu chu kỳ mới (request thăm dò thành công)"
             % (uid8, model))
         return
 
@@ -307,7 +307,7 @@ def _fire(accounts_dir, account, model, log):
         # 上游给了更晚的重置点：这条配额线确实进入了新的等待期。
         _update(accounts_dir, uid, model, reset_at=reset_at, attempts=0,
                 last_result=detail)
-        log("窗口探针：账号 [%s] 的 %s 仍在限流，下一轮重置 %s"
+        log("Cửa sổ thăm dò: tài khoản [%s] của %s vẫn đang bị giới hạn, lần đặt lại tiếp theo %s"
             % (uid8, model,
                time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(reset_at))))
         return
@@ -316,14 +316,14 @@ def _fire(accounts_dir, account, model, log):
     attempts = int(row.get("attempts") or 0) + 1
     if attempts >= MAX_ATTEMPTS:
         drop(accounts_dir, uid, model)
-        log("窗口探针：账号 [%s] 的 %s 连续 %d 次未重置，放弃（下一次 429 会重新登记）"
+        log("Cửa sổ thăm dò: tài khoản [%s] của %s chưa được đặt lại %d lần liên tiếp, bỏ qua (lần 429 tiếp theo sẽ đăng ký lại)"
             % (uid8, model, attempts))
         return
     next_at = time.time() + RETRY_DELAY
     _update(accounts_dir, uid, model, reset_at=next_at, attempts=attempts,
             last_result=detail)
-    log("窗口探针：账号 [%s] 的 %s 尚未重置（%s），%d 秒后重试 (%d/%d)"
-        % (uid8, model, detail or "无详情", int(RETRY_DELAY), attempts, MAX_ATTEMPTS))
+    log("Cửa sổ thăm dò: tài khoản [%s] của %s chưa được đặt lại (%s), thử lại sau %d giây (%d/%d)"
+        % (uid8, model, detail or "không có chi tiết", int(RETRY_DELAY), attempts, MAX_ATTEMPTS))
 
 
 def _probe(account, model):
@@ -348,7 +348,7 @@ def _probe(account, model):
         payload = wb_proxy.build_upstream_body(body)
         data = json.dumps(payload, ensure_ascii=False).encode("utf-8")
     except Exception as exc:
-        return False, None, "构造请求失败: %s" % exc
+        return False, None, "Tạo request thất bại: %s" % exc
     req = urllib.request.Request(url, data=data, headers=headers, method="POST")
     try:
         with wb_accounts.urlopen(req, timeout=PROBE_TIMEOUT, proxy=account.proxy) as resp:

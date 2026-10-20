@@ -18,9 +18,10 @@ services:
     environment:
       - HOST=0.0.0.0
       - PORT=8788
-      # 留空则启动时自动生成高强度 API Key 写入 ./accounts/settings.json 并打印在启动日志中
+      # Điền API key của gateway vào đây; để trống (comment lại dòng dưới) thì container sẽ
+      # tự sinh API key lúc khởi động (ghi vào ./accounts/settings.json và in trong log khởi động).
       # - API_KEY=your_secret_key
-      - TZ=Asia/Shanghai
+      - TZ=Asia/Ho_Chi_Minh
     volumes:
       # 持久化数据目录：升级与重建容器时绝不丢失配置与用量
       - ./accounts:/app/accounts
