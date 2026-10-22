@@ -176,7 +176,7 @@ class CleanupTests(unittest.TestCase):
         acc = self.account("session-error", retry=False)
         res = self.run_web(stub, acc=acc)
         self.assertFalse(res.get("ok"))
-        self.assertIn("session 查询失败", res.get("error", ""))
+        self.assertIn("truy vấn session thất bại", res.get("error", ""))
         self.assertEqual(len(stub.actions("delete")), 1,
                          "会话已经建出来了，失败也必须收尾")
 
@@ -185,7 +185,7 @@ class CleanupTests(unittest.TestCase):
         acc = self.account("no-link", retry=False)
         res = self.run_web(stub, acc=acc)
         self.assertFalse(res.get("ok"))
-        self.assertIn("沙箱", res.get("error", ""))
+        self.assertIn("sandbox", res.get("error", ""))
         self.assertEqual(len(stub.actions("delete")), 1)
 
     # -- 10105：先清理再重试 -------------------------------------------------

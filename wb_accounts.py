@@ -96,10 +96,11 @@ class TLSVerifyError(RuntimeError):
 
 
 TLS_VERIFY_HINT = (
-    "TLS 证书校验失败：上游证书链里有本机不信任的证书。常见于公司代理、"
-    "Clash/Surge 等 HTTPS 解密，或 macOS 上 Python 没读到系统钥匙串里的根证书。"
-    "把签发该证书的根证书导出为 PEM，设置环境变量 "
-    "WB_CA_BUNDLE=/path/to/ca.pem 后重启网关；也可以设置 SSL_CERT_FILE。"
+    "Xác minh chứng chỉ TLS thất bại: chuỗi chứng chỉ của thượng nguồn có chứng chỉ "
+    "mà máy này không tin cậy. Thường gặp với proxy công ty, giải mã HTTPS của Clash/Surge, "
+    "hoặc Python trên macOS không đọc được chứng chỉ gốc trong keychain hệ thống. "
+    "Hãy xuất chứng chỉ gốc đã ký chứng chỉ đó ra PEM, đặt biến môi trường "
+    "WB_CA_BUNDLE=/path/to/ca.pem rồi khởi động lại cổng; cũng có thể đặt SSL_CERT_FILE."
 )
 
 
@@ -129,7 +130,7 @@ def is_tls_verify_error(exc):
 def tls_verify_hint(exc=None):
     if exc is None:
         return TLS_VERIFY_HINT
-    return "%s 原始错误：%s" % (TLS_VERIFY_HINT, exc)
+    return "%s lỗi gốc: %s" % (TLS_VERIFY_HINT, exc)
 
 
 def _retryable(exc):
@@ -1853,7 +1854,7 @@ class Account(object):
             err_msg = str(exc)
             if "401" in err_msg or "Authorization" in err_msg or "Unauthorized" in err_msg:
                 self.token_expired = True
-                self._set_last_error("登录已过期 (HTTP 401)，请重新登录")
+                self._set_last_error("Phiên đăng nhập đã hết hạn (HTTP 401), vui lòng đăng nhập lại")
             else:
                 self._set_last_error("refresh failed: %s" % exc)
             return False
@@ -2177,7 +2178,7 @@ class Account(object):
                 session = (self._web_conversation_get(conversation, "/session") or {}).get("data") or {}
             except Exception as exc:
                 return {"ok": False, "conversation": conversation,
-                        "error": "session 查询失败: %s" % exc, "retryable": True,
+                        "error": "truy vấn session thất bại: %s" % exc, "retryable": True,
                         "phase": "session"}
             link = session.get("link") or session.get("endpoint") or ""
             token = session.get("token") or ""
@@ -2185,7 +2186,7 @@ class Account(object):
             cwd = session.get("cwd") or "/workspace"
             if not link or not token:
                 return {"ok": False, "conversation": conversation,
-                        "error": "沙箱未就绪（没有 link/token）", "retryable": True,
+                        "error": "sandbox chưa sẵn sàng (thiếu link/token)", "retryable": True,
                         "phase": "session"}
 
             result = wb_webagent.run_turn(
@@ -2199,7 +2200,7 @@ class Account(object):
             result["phase"] = "turn"
             if result.get("ok"):
                 keep = True
-                result["msg"] = "网页通道会话跑完（%s）：%d 段输出，%d ms" % (
+                result["msg"] = "Phiên kênh web hoàn tất (%s): %d đoạn, %d ms" % (
                     model, result.get("chunks") or 0, result.get("elapsed_ms") or 0)
             else:
                 result["retryable"] = True
@@ -2407,7 +2408,7 @@ class Account(object):
                 self.fetch_credits()
             except Exception:
                 pass
-            result = {"ok": True, "msg": "每日活跃对话成功完成"}
+            result = {"ok": True, "msg": "Điểm danh hoạt động hàng ngày hoàn tất"}
             web_ok = True
             if web is None:
                 web = bool(self.path) and wb_settings.daily_chat_web(os.path.dirname(self.path))
@@ -2419,8 +2420,8 @@ class Account(object):
                     # 重试过就把轮数带上：光看「成功」分不清是首轮就跑完，还是
                     # 前几轮超时、多等了一轮才跑完（后者是慢，不是没跑）。
                     tries = res.get("attempts") or 1
-                    retried = "（重试 %d 次后）" % (tries - 1) if tries > 1 else ""
-                    result["msg"] = ("每日活跃对话成功完成（网页通道%s %s：%d 段输出，%d ms）"
+                    retried = " (sau khi thử lại %d lần)" % (tries - 1) if tries > 1 else ""
+                    result["msg"] = ("Điểm danh hoạt động hàng ngày hoàn tất (kênh web%s %s: %d đoạn, %d ms)"
                                      % (retried, res.get("status") or "completed",
                                         res.get("chunks") or 0, res.get("elapsed_ms") or 0))
                 else:
@@ -2428,10 +2429,10 @@ class Account(object):
                     # （#75/#59/#90）。面板与活动历史按 ok 画成功/失败，网页腿失败却
                     # 报成功的话，「今天这 30/50 积分没到账」在界面上一直看不见。
                     tries = res.get("attempts") or 1
-                    suffix = "（已重试 %d 次）" % (tries - 1) if tries > 1 else ""
+                    suffix = " (đã thử lại %d lần)" % (tries - 1) if tries > 1 else ""
                     result["ok"] = False
-                    result["error"] = "网页通道失败：%s%s" % (res.get("error"), suffix)
-                    result["msg"] = "每日活跃对话未完成（网页通道失败：%s%s）" % (
+                    result["error"] = "Kênh web thất bại: %s%s" % (res.get("error"), suffix)
+                    result["msg"] = "Điểm danh hoạt động hàng ngày chưa hoàn tất (kênh web thất bại: %s%s)" % (
                         res.get("error"), suffix)
             # 只有真正计入官方「每日活跃」的网页通道成功了才算今天做过：网页腿失败时
             # 若照写 lastDailyChat，当天后续巡检会直接跳过该账号，那天的 30/50 积分静默
@@ -2649,12 +2650,12 @@ class Account(object):
                                           timeout=15, proxy=self.proxy)
                     except Exception:
                         self.token_expired = True
-                        self._set_last_error("登录已过期，请重新登录")
-                        return {"ok": False, "error": "登录已过期，请在账号管理页重新扫码登录", "need_relogin": True}
+                        self._set_last_error("Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại")
+                        return {"ok": False, "error": "Phiên đăng nhập đã hết hạn, vui lòng quét mã đăng nhập lại trong trang quản lý tài khoản", "need_relogin": True}
                 else:
                     self.token_expired = True
-                    self._set_last_error("登录已过期，请重新登录")
-                    return {"ok": False, "error": "登录已过期，请在账号管理页重新扫码登录", "need_relogin": True}
+                    self._set_last_error("Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại")
+                    return {"ok": False, "error": "Phiên đăng nhập đã hết hạn, vui lòng quét mã đăng nhập lại trong trang quản lý tài khoản", "need_relogin": True}
             else:
                 raise
         if s_res.get("code") != 0:
@@ -2808,12 +2809,12 @@ class Account(object):
                                         timeout=30, proxy=self.proxy)
                     except Exception:
                         self.token_expired = True
-                        self._set_last_error("登录已过期，请重新登录")
-                        return {"ok": False, "error": "登录已过期，请在账号管理页重新扫码登录", "need_relogin": True}
+                        self._set_last_error("Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại")
+                        return {"ok": False, "error": "Phiên đăng nhập đã hết hạn, vui lòng quét mã đăng nhập lại trong trang quản lý tài khoản", "need_relogin": True}
                 else:
                     self.token_expired = True
-                    self._set_last_error("登录已过期，请重新登录")
-                    return {"ok": False, "error": "登录已过期，请在账号管理页重新扫码登录", "need_relogin": True}
+                    self._set_last_error("Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại")
+                    return {"ok": False, "error": "Phiên đăng nhập đã hết hạn, vui lòng quét mã đăng nhập lại trong trang quản lý tài khoản", "need_relogin": True}
             return {"ok": False, "error": err_str}
         data = res.get("data", {}).get("Response", {}).get("Data", {})
         accounts = data.get("Accounts") or []
@@ -3108,7 +3109,7 @@ class Account(object):
                 err = res.get("error", "")
                 if err and (_auth_failure_text(err) or "登录" in err):
                     self.token_expired = True
-                    self._set_last_error("登录已过期，请重新登录")
+                    self._set_last_error("Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại")
                     return res
             except Exception:
                 pass

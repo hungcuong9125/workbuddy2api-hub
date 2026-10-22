@@ -29,13 +29,16 @@ def check(label, cond, extra=""):
         print("  [FAIL] " + label + ("  " + str(extra) if extra else ""))
 
 
-check("default is Simplified Chinese", S.ui_language(_ACCOUNTS) == "zh")
+check("default is Vietnamese", S.ui_language(_ACCOUNTS) == "vi")
 check("set returns the stored value", S.set_ui_language(_ACCOUNTS, "zh-Hant") == "zh-Hant")
 check("read back Traditional Chinese", S.ui_language(_ACCOUNTS) == "zh-Hant")
 check("set English", S.set_ui_language(_ACCOUNTS, "en") == "en")
 check("read back English", S.ui_language(_ACCOUNTS) == "en")
 check("back to Simplified", S.set_ui_language(_ACCOUNTS, "zh") == "zh")
 check("read back Simplified", S.ui_language(_ACCOUNTS) == "zh")
+check("set Vietnamese", S.set_ui_language(_ACCOUNTS, "vi") == "vi")
+check("read back Vietnamese", S.ui_language(_ACCOUNTS) == "vi")
+check("back to English", S.set_ui_language(_ACCOUNTS, "en") == "en")
 
 for bad in ("", "zh-TW", "EN", None, True, 1):
     try:

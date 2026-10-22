@@ -141,19 +141,19 @@ class Scheduler:
         self._stop_event.clear()
         self._thread = threading.Thread(target=self._run_loop, daemon=True)
         self._thread.start()
-        self.log("后台定时调度器已启动")
+        self.log("Bộ lịch định kỳ nền đã khởi động")
 
     def stop(self):
         self._stop_event.set()
-        self.log("后台定时调度器已暂停")
+        self.log("Bộ lịch định kỳ nền đã tạm dừng")
 
     def _run_loop(self):
         # 启动后先休眠 10 秒等待主服务就绪，然后执行初次检查
         time.sleep(10)
         try:
-            self._execute_cycle("启动初次初始化巡检")
+            self._execute_cycle("khởi tạo kiểm tra lần đầu khi khởi động")
         except Exception as exc:
-            self.log(f"初次巡检异常: {exc}")
+            self.log(f"Lỗi kiểm tra lần đầu: {exc}")
         # 进程停过一段时间的话，重置时刻可能已经过去：启动就补一次窗口探针，
         # 把新一轮窗口的起点尽量抢回来。
         self._run_window_probes()
@@ -178,11 +178,11 @@ class Scheduler:
                     time.sleep(35)
                 # 到达设定的整点前 1 分钟内触发
                 if cur_min == 0 and cur_hour in self.all_hours:
-                    reason = f"整点排程命中 ({cur_hour}:00)"
+                    reason = f"trúng lịch giờ chẵn ({cur_hour}:00)"
                     try:
                         self._execute_cycle(reason)
                     except Exception as exc:
-                        self.log(f"排程执行异常: {exc}")
+                        self.log(f"Lỗi thực thi lịch trình: {exc}")
                     time.sleep(65) # 避开当前这一分钟重复触发
             # 模型额度窗口探针：不受 enabled 影响。窗口是按首次请求起算的，
             # 到点没人请求就不会开始新一轮，这件事跟签到/保活开关无关。
@@ -208,7 +208,7 @@ class Scheduler:
             import wb_window_probe
             wb_window_probe.run_due(self.pool, self.log)
         except Exception as exc:
-            self.log(f"窗口探针异常: {exc}")
+            self.log(f"Lỗi cửa sổ thăm dò: {exc}")
 
     def _run_quota_scans(self):
         """到点的模型额度主动查询，同样跑在独立线程里。
@@ -226,7 +226,7 @@ class Scheduler:
             import wb_quota_scan
             wb_quota_scan.run_due(self.pool, self.log)
         except Exception as exc:
-            self.log(f"额度查询异常: {exc}")
+            self.log(f"Lỗi tra cứu hạn mức: {exc}")
 
     def _next_wait(self):
         """下一轮巡检的等待时间：常规 30 秒，有窗口即将到点时提前醒来。
@@ -327,27 +327,27 @@ class Scheduler:
     def trigger_now(self):
         """手动立即触发一次调度检查。"""
         if self._run_lock.locked():
-            return {"ok": False, "msg": "已有巡检正在执行，请稍候再试"}
+            return {"ok": False, "msg": "Đang có lượt kiểm tra đang chạy, vui lòng chờ"}
         threading.Thread(target=self._execute_cycle,
-                         args=("手动立即触发", True), daemon=True).start()
-        return {"ok": True, "msg": "已触发后台调度执行"}
+                         args=("kích hoạt thủ công ngay", True), daemon=True).start()
+        return {"ok": True, "msg": "Đã kích hoạt thực thi lịch nền"}
 
-    def _execute_cycle(self, trigger_reason="周期巡检", force=False,
+    def _execute_cycle(self, trigger_reason="kiểm tra định kỳ", force=False,
                        daily_chat_only=False):
         if not self._run_lock.acquire(blocking=False):
-            self.log(f"跳过本次巡检 ({trigger_reason})：上一轮仍在执行")
+            self.log(f"Bỏ qua lượt kiểm tra này ({trigger_reason}): lượt trước vẫn đang chạy")
             return
         try:
             self._run_cycle(trigger_reason, force, daily_chat_only)
         finally:
             self._run_lock.release()
 
-    def _run_cycle(self, trigger_reason="周期巡检", force=False,
+    def _run_cycle(self, trigger_reason="kiểm tra định kỳ", force=False,
                    daily_chat_only=False):
         self.last_run_time = time.strftime("%Y-%m-%d %H:%M:%S")
-        self.log(f"开始执行任务 ({trigger_reason})...")
+        self.log(f"Bắt đầu thực thi nhiệm vụ ({trigger_reason})...")
         if not self.pool or not self.pool.accounts:
-            self.log("暂无可用的活跃账号，跳过本次巡检")
+            self.log("Tạm thời không có tài khoản hoạt động, bỏ qua lượt kiểm tra này")
             return
 
         refreshed_count = 0
@@ -378,7 +378,7 @@ class Scheduler:
             # 的巡检/打卡再去「试探」一次，只会让同一台设备上的其他账号连坐。
             # 限制期限是持久化的（wb_accounts.note_restricted），重启后仍然有效。
             if getattr(acc, "restricted_until", 0.0) > time.time():
-                self.log(f"跳过受限账号 [{uid8}]：上游风控限制剩余 "
+                self.log(f"Bỏ qua tài khoản bị giới hạn [{uid8}]: thời gian giới hạn rủi ro thượng nguồn còn lại "
                          f"{int(acc.restricted_until - time.time())}s")
                 continue
             # 区域级连坐暂停期间（同一窗口内多个账号被限制）整轮都不碰上游。
@@ -387,7 +387,7 @@ class Scheduler:
             except Exception:
                 hold = 0.0
             if hold > 0:
-                self.log(f"跳过 [{uid8}]：{acc.realm} 区域风控暂停剩余 {int(hold)}s")
+                self.log(f"Bỏ qua [{uid8}]: tạm dừng rủi ro khu vực {acc.realm} còn lại {int(hold)}s")
                 continue
             # Task participation is a separate switch from API dispatch: a
             # disabled account can still run check-in / growth / travel /
@@ -407,21 +407,21 @@ class Scheduler:
                     self.log(f"账号 [{uid8}] Token {detail}，执行主动保活刷新...")
                     if acc.refresh():
                         refreshed_count += 1
-                        self.log(f"✓ 账号 [{uid8}] Token 自动保活刷新成功")
+                        self.log(f"✓ Tài khoản [{uid8}] làm mới bảo lưu Token tự động thành công")
                     else:
-                        self.log(f"! 账号 [{uid8}] Token 保活刷新失败: {acc.last_error}")
+                        self.log(f"! Tài khoản [{uid8}] làm mới bảo lưu Token thất bại: {acc.last_error}")
 
             # 2. 如果是国内版账号，检查每日签到与猫猫旅行
             if acc.realm == "cn" and task_active:
                 if run_checkin:
                     if acc.can_checkin():
-                        self.log(f"检测到国内版账号 [{uid8}] 今日尚未签到，执行自动签到...")
+                        self.log(f"Phát hiện tài khoản Trong Nước [{uid8}] chưa điểm danh hôm nay, thực hiện điểm danh tự động...")
                         res = acc.checkin(trigger="scheduler")
                         if res.get("ok"):
                             checkin_count += 1
-                            self.log(f"✓ 账号 [{uid8}] 自动签到成功: {res.get('msg')}")
+                            self.log(f"✓ Tài khoản [{uid8}] điểm danh tự động thành công: {res.get('msg')}")
                         else:
-                            self.log(f"! 账号 [{uid8}] 自动签到未成功: {res.get('error') or res.get('msg')}")
+                            self.log(f"! Tài khoản [{uid8}] điểm danh tự động chưa thành công: {res.get('error') or res.get('msg')}")
                         time.sleep(1.0)
 
                     if acc.can_report_activity():
@@ -439,7 +439,7 @@ class Scheduler:
                     tr = do_cat_travel(acc)
                     if tr.get("action") in ("claim", "depart"):
                         travel_count += 1
-                        self.log(f"🐱 账号 [{uid8}] 猫猫日常处理: {tr.get('msg')}")
+                        self.log(f"🐱 Tài khoản [{uid8}] xử lý mèo hàng ngày: {tr.get('msg')}")
                     time.sleep(1.0)
 
                     # 连登管家闭环（补签保连登 -> 礼包/补偿 -> 连登兑换 -> 自动抽奖）
@@ -465,7 +465,7 @@ class Scheduler:
         if daily_chat_targets:
             daily_chat_count = self._run_daily_chat_batch(daily_chat_targets)
 
-        self.log(f"巡检完成：Token保活 {refreshed_count} 个，国内签到 {checkin_count} 个，活跃上报 {report_count} 个，猫猫日常 {travel_count} 个，国际活跃 {daily_chat_count} 个")
+        self.log(f"Hoàn tất kiểm tra: Token bảo lưu {refreshed_count}, điểm danh Trong Nước {checkin_count}, báo cáo hoạt động {report_count}, mèo hàng ngày {travel_count}, hoạt động Quốc Tế {daily_chat_count}")
 
     def _daily_chat_concurrency(self):
         directory = getattr(self.pool, "dir", "") or ""
@@ -479,7 +479,7 @@ class Scheduler:
     def _run_one_daily_chat(self, acc):
         """Run one account's daily activity; returns whether it succeeded."""
         uid8 = acc.uid[:8] if acc.uid else "?"
-        self.log(f"检测到国际版账号 [{uid8}] 今日尚未活跃，执行每日活跃打卡对话...")
+        self.log(f"Phát hiện tài khoản Quốc Tế [{uid8}] hôm nay chưa hoạt động, thực hiện điểm danh hoạt động hàng ngày...")
         try:
             res = acc.daily_chat(trigger="scheduler")
         except Exception as exc:
@@ -488,9 +488,9 @@ class Scheduler:
         if res.get("ok"):
             # 成功时也把网页通道那一轮的结果带上（completed：N 段输出），
             # 光看「成功」分不清是真跑完了还是只有桌面腿过了（issue #236）。
-            self.log(f"✓ 账号 [{uid8}] 每日活跃对话成功: {res.get('msg')}")
+            self.log(f"✓ Tài khoản [{uid8}] điểm danh hoạt động hàng ngày thành công: {res.get('msg')}")
             return True
-        self.log(f"! 账号 [{uid8}] 每日活跃对话失败: {res.get('error') or res.get('msg')}")
+        self.log(f"! Tài khoản [{uid8}] điểm danh hoạt động hàng ngày thất bại: {res.get('error') or res.get('msg')}")
         return False
 
     def _run_daily_chat_batch(self, accounts):
@@ -558,11 +558,11 @@ class Scheduler:
         travel = _hhmm(self.travel_hours)
         keepalive = _hhmm(self.keepalive_hours)
         cat = _hhmm(self.cat_hours)
-        mode_cn = ("整点排程 (签到 %s · 猫猫旅行 %s · 每日活跃上报 · "
-                   "Token保活 %s · 夜猫 %s) + 模型额度窗口探针"
+        mode_cn = ("Lịch giờ chẵn (điểm danh %s · mèo đi du lịch %s · báo cáo hoạt động hằng ngày · "
+                   "bảo lưu Token %s · mèo đêm %s) + dò cửa sổ hạn mức mô hình"
                    % (checkin, travel, keepalive, cat))
-        mode_intl = ("账号 Token 自动保活与凭证常驻 (每日 %s 集中巡检) "
-                     "+ 模型额度窗口探针" % keepalive)
+        mode_intl = ("Token tài khoản tự động bảo lưu và thông tin đăng nhập thường trực (kiểm tra tập trung hằng ngày %s) "
+                     "+ dò cửa sổ hạn mức mô hình" % keepalive)
         return {
             "enabled": self.enabled,
             "mode": mode_cn,
