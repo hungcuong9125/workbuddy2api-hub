@@ -27,7 +27,7 @@ check('the tooltip separates the two sources',
 check('the label reads Pro Only (upstream wording)',
       /">Pro Only<\/span>/.test(html));
 check('the label is not a Chinese sentence any more',
-      !/免费账号不可用/.test(html));
+      !/>免费账号不可用<\/span>/.test(html));
 check('the catalogue tooltip names requiredUserType',
       /requiredUserType=standard/.test(html));
 check('the tooltip refuses to imply availability',

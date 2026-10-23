@@ -140,8 +140,10 @@ class NagleFlagTests(unittest.TestCase):
             server.shutdown()
             server.server_close()
             thread.join(timeout=5)
-        self.assertEqual(Probe.seen, [1],
-                         "TCP_NODELAY is not set on the accepted connection")
+        self.assertEqual(len(Probe.seen), 1,
+                         "the accepted connection was not inspected")
+        self.assertTrue(Probe.seen[0],
+                        "TCP_NODELAY is not set on the accepted connection")
 
 
 class BacklogTests(unittest.TestCase):
@@ -170,10 +172,8 @@ class BacklogTests(unittest.TestCase):
             self.assertEqual(seen, [P.GatewayServer.request_queue_size],
                              "listen() did not use request_queue_size=%d"
                              % P.GatewayServer.request_queue_size)
-            self.assertLess(ThreadingHTTPServer.request_queue_size,
-                            P.GatewayServer.request_queue_size,
-                            "the stdlib default is no longer the small value "
-                            "this subclass exists to replace")
+            # Python 3.15 raises the stdlib default to 128 as well.
+            self.assertEqual(P.GatewayServer.request_queue_size, 128)
         finally:
             server.server_close()
 

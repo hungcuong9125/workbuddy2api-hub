@@ -155,17 +155,7 @@ python tests/run_all.py            # 全部套件
 python tests/run_all.py realm      # 只跑名字里含 realm 的
 ```
 
-- 209 个套件：156 个 Python + 53 个 JS；JS 需要 PATH 上有 `node`，缺失时会跳过并提示。
-- 211 个套件：158 个 Python + 53 个 JS；JS 需要 PATH 上有 `node`，缺失时会跳过并提示。
-- 211 个套件：157 个 Python + 54 个 JS；JS 需要 PATH 上有 `node`，缺失时会跳过并提示。
-- 211 个套件：158 个 Python + 53 个 JS；JS 需要 PATH 上有 `node`，缺失时会跳过并提示。
-- 211 个套件：157 个 Python + 54 个 JS；JS 需要 PATH 上有 `node`，缺失时会跳过并提示。
-- 226 个套件：167 个 Python + 59 个 JS；JS 需要 PATH 上有 `node`，缺失时会跳过并提示。
-- 211 个套件：158 个 Python + 53 个 JS；JS 需要 PATH 上有 `node`，缺失时会跳过并提示。
-- 211 个套件：157 个 Python + 54 个 JS；JS 需要 PATH 上有 `node`，缺失时会跳过并提示。
-- 211 个套件：158 个 Python + 53 个 JS；JS 需要 PATH 上有 `node`，缺失时会跳过并提示。
-- 212 个套件：158 个 Python + 54 个 JS；JS 需要 PATH 上有 `node`，缺失时会跳过并提示。
-- 211 个套件：158 个 Python + 53 个 JS；JS 需要 PATH 上有 `node`，缺失时会跳过并提示。
+- 227 个套件：167 个 Python + 60 个 JS；JS 需要 PATH 上有 `node`，缺失时会跳过并提示。
 - `tests/_mobile_check.py` 是独立的 Playwright 手机/桌面布局检查器（需自行安装 Playwright），按需手动运行，不在上面的套件集里。
 - CI（`.github/workflows/tests.yml`）跑同一条命令：Ubuntu 上 python 3.9 与 3.12（3.9 是本项目声称的最低版本），Windows 上 python 3.12；推送 `v*` tag 时额外断言 **tag == 源码版本**（`-ci` 演练 tag 豁免）。
 
@@ -527,6 +517,10 @@ export ANTHROPIC_API_KEY="你在看板设置中添加并绑定的API_Key"
 - **11-128：身份句 + 品牌的组合指纹改为中性句**（#533 / #537 / #539）：上游对 `You are an AI agent powered by DeepSeek Harness.`、`You are a coding agent powered by the deepseek-v4.1-flash model.`、`You are an AI assistant built on DeepSeek.` 这类「自我介绍句式 + 品牌」做大小写不敏感的连续子串匹配，命中即 400 / code 11-128；单独品牌词、改词或去掉句式都放行。现在把 system / developer 里的这类整句改写为 `You are a helpful AI assistant.`，不依赖具体品牌；user / assistant / tool 里的同名文本保持原样（用户数据）。补了大小写、两句变体、`built on` 变体、内嵌、幂等、作用域测试。 / The upstream channel check rejects the combination of a client self-introduction and a brand (`You are an AI agent powered by DeepSeek Harness.`, `You are a coding agent powered by the deepseek-v4.1-flash model.`, `You are an AI assistant built on DeepSeek.`) with 400 / code 11-128. The sanitizer now replaces that whole sentence in system / developer messages with `You are a helpful AI assistant.`, independent of the brand; the same text in user / assistant / tool messages is left alone.
 
 - **模型清单标出「Pro Only」改由目录 tier 表驱动**（#505）：上游 `/v3/config` 的 `modelTiers[]` 里 `requiredUserType: standard` 的模型，`/v1/models` 每条带 `entitlement`（`source: "catalog"`、`required`、`at` = 该 realm 目录的刷新时刻），面板在倍率旁显示「Pro Only」胶囊（与上游徽章同名），hover 给出声明来源、刷新时刻与「仅标记不可用，未标记不代表可用」。数据源就是调度器拦人用的那份 tier map，所以标注与实际拦截不可能互相矛盾——被门控的模型在本地就被拒，请求根本不发往上游。原先「撞到 11158 才写标、成功即撤标」的运行时通道因此一直空着（v1.7.19 起免费账号已经打不到上游），本次连同 `wb_entitlements.py` 与 `accounts/model_entitlements.json` 一起删除，不再有第二套事实来源；标签仍然单向，只标不可用，没有标注 ≠ 可用。新增 3 项 Python 断言与 6 项 JS 断言。 / The "Pro Only" label on the model list is now driven by the catalogue tier map rather than a runtime 11158: `/v1/models` marks every model whose `modelTiers[]` entry says `requiredUserType: standard` with `entitlement` (`source: "catalog"`, `required`, and `at` = when that realm's catalogue was last refreshed), and the panel shows a "Pro Only" pill (the upstream badge wording) next to the multiplier with a tooltip naming the source, the refresh time and "only blocked models are labelled; an unlabelled model is not a promise". The data is the same tier map the scheduler uses to refuse the request, so the label and the actual gate cannot disagree - a gated model is refused locally and never reaches the upstream. That is also why the old runtime channel (record on 11158, clear on a later success) had gone quiet: since v1.7.19 a free account no longer reaches the upstream with a gated model. It is removed together with `wb_entitlements.py` and `accounts/model_entitlements.json`, so there is no second source of truth. The label stays one-way: it never claims availability. Three Python assertions and six JS assertions added.
+
+- **Bản dịch tiếng Việt cho v1.7.14 / v1.7.14 越南语本地化**：合并 `custom/v1.7.12` 的越南语词条并补齐本版新增文案——更新检查与手动安装状态、模型额度窗口探针、模型额度定时主动查询、撞线样本复制，以及新增的账号状态与服务端日志；同时清理重复词条。
+
+- **模型清单标出「免费账号不可用」**（#505，运行时部分）：上游返回 `11158`（model not allowed for user type）时写入 `accounts/model_entitlements.json`，同一 `(realm, model)` 后续成功请求自动撤标；`11102` / `11134` 不记。`/v1/models` 每条带 `entitlement` 字段，面板在倍率旁显示「免费账号不可用」胶囊，hover 给出 code / userType / 检测时刻，24 小时后自动过期。刷新清单时的主动探测尚未接（需要采样口径）。
 
 - **OpenRouter 估价可按模型校准**（#514）：`usage/pricing-markup.json` 支持 `{模型: 系数}`，估算金额乘以该系数，便于把 OR 的 top-provider 参考价校准到官方价；文件缺失、损坏或非正数按 1.0，策略历史不改写。新增 5 项测试。
 

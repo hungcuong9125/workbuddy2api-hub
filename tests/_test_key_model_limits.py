@@ -131,7 +131,7 @@ check("the explanation lists what is allowed", "deepseek/*" in blocked, blocked)
 check("no key entry means no restriction", anonymous._key_model_error("gpt-5.6-terra") == "")
 modelless = restricted._key_model_error("")
 check("a limited key sending no model is refused", bool(modelless), modelless)
-check("the explanation says no model was named", "未指定模型" in modelless, modelless)
+check("the explanation says no model was named", "chưa chỉ định mô hình" in modelless, modelless)
 check("an unrestricted key sending no model still passes",
       unrestricted._key_model_error("") == "")
 
