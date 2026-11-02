@@ -118,7 +118,7 @@ check(zh.label.textContent === 'EN', '正體中文時按鈕應提示 EN');
 check(zh.btn.title.includes('正體中文'), '正體中文時 title 應提到正體中文');
 check(zh.storage.getItem('wb-lang') === 'zh-Hant', '偏好應寫入 localStorage');
 
-// 4. 正體 → English → 簡中，一輪循環。
+// 4. 正體 → English → Vietnamese → 簡中，一輪循環。
 zh.win.toggleLang();
 check(zh.win.WB_I18N.current() === 'en', '正體後 toggle 應到 en');
 check(zh.htmlEl.getAttribute('lang') === 'en', 'en 時 html lang 應為 en');
@@ -126,7 +126,13 @@ check(zh.storage.getItem('wb-lang') === 'en', 'en 偏好應寫入 localStorage')
 check(zh.label.textContent === '简', 'en 時按鈕應提示「简」');
 
 zh.win.toggleLang();
-check(zh.win.WB_I18N.current() === 'zh', 'en 後 toggle 應回到 zh');
+check(zh.win.WB_I18N.current() === 'vi', 'en 後 toggle 應到 vi');
+check(zh.htmlEl.getAttribute('lang') === 'vi', 'vi 時 html lang 應為 vi');
+check(zh.storage.getItem('wb-lang') === 'vi', 'vi 偏好應寫入 localStorage');
+check(zh.label.textContent === 'VI', 'vi 時按鈕應提示 VI');
+
+zh.win.toggleLang();
+check(zh.win.WB_I18N.current() === 'zh', 'vi 後 toggle 應回到 zh');
 check(zh.htmlEl.getAttribute('lang') === 'zh-CN', '回到簡中時 html lang 應為 zh-CN');
 check(zh.storage.getItem('wb-lang') === 'zh', '回到簡中時偏好應為 zh');
 check(zh.text.data === '网关设置', '回到簡中時 DOM 應還原原文');
