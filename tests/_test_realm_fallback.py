@@ -219,8 +219,8 @@ class PanelTests(unittest.TestCase):
         ]
         for phrase in phrases:
             # 正文 + DICT + HANT_PHRASES
-            self.assertEqual(self.html.count(phrase), 3,
-                             "「%s」应当在正文、英文词典、繁体词典里各出现一次"
+            self.assertEqual(self.html.count(phrase), 4,
+                             "「%s」应当在正文、英文词典、繁体词典、越南语词典里各出现一次"
                              % phrase)
 
 

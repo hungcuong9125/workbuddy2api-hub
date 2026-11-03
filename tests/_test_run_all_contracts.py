@@ -206,7 +206,7 @@ def _descendants(root, table=None):
     if table is None:
         return [root]
     children = {}
-    for pid, parent in table.items():
+    for pid, parent in sorted(table.items()):
         children.setdefault(parent, []).append(pid)
     levels, frontier, seen = [], [root], {root}
     while frontier:

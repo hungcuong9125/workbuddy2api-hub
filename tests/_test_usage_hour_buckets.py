@@ -390,6 +390,7 @@ _t.time = lambda: FROZEN
 sys.path.insert(0, __ROOT__)
 import wb_proxy as P
 import wb_pricing
+P.ACCOUNTS_DIR = os.environ["ACCOUNTS_DIR"]
 wb_pricing.set_data_dir(P.USAGE_DIR)
 wb_pricing.set_settings_dir(P.ACCOUNTS_DIR)
 

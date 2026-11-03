@@ -280,7 +280,7 @@ class Restricted403DispatchTests(unittest.TestCase):
             with self.assertRaises(P.RateLimited) as ctx:
                 P.open_upstream(dict(PAYLOAD), target_realm="intl")
             self.assertEqual(len(upstream.calls), 2)
-            self.assertIn("暂停", ctx.exception.message)
+            self.assertIn("tạm dừng", ctx.exception.message)
         finally:
             wb_accounts.urlopen = real_urlopen
 
