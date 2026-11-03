@@ -204,8 +204,8 @@ class FallbackTests(StubCase):
         res = acc.daily_chat(web=True)
 
         self.assertFalse(res.get("ok"), res)
-        self.assertIn("网页通道失败", res.get("msg") or "")
-        self.assertIn("网页通道失败", res.get("error") or "")
+        self.assertIn("kênh web thất bại", res.get("msg") or "")
+        self.assertIn("Kênh web thất bại", res.get("error") or "")
         self.assertEqual(self.reported, [])
         self.assertNotIn("web_fallback", res)
         self.assertIsNone(acc.last_daily_chat)
@@ -221,7 +221,7 @@ class FallbackTests(StubCase):
         res = acc.daily_chat(web=True)
 
         self.assertFalse(res.get("ok"), res)
-        self.assertIn("网页通道失败", res.get("msg") or "")
+        self.assertIn("kênh web thất bại", res.get("msg") or "")
         self.assertEqual(self.reported, [])
         self.assertIsNone(acc.last_daily_chat)
 
@@ -235,7 +235,7 @@ class FallbackTests(StubCase):
         res = acc.daily_chat(web=True)
 
         self.assertFalse(res.get("ok"), res)
-        self.assertIn("网页通道失败", res.get("msg") or "")
+        self.assertIn("kênh web thất bại", res.get("msg") or "")
         self.assertEqual(len(self.reported), 1)
         self.assertIsNone(acc.last_daily_chat)
         self.assertTrue(acc.can_daily_chat())
