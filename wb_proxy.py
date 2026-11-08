@@ -12510,7 +12510,7 @@ def model_entry(mid, meta, realm=None):
     if mid == "glm-5.3-flash":
         # 强制修正：上游元数据虽宣告支持多模态，但后端实际未接入视觉通道（见 issue #315）
         vision = False
-        item["vision_note"] = "上游宣告多模态但实际通道不支持读图，已修正为纯文本" 
+        item["vision_note"] = "Thượng nguồn khai báo hỗ trợ đa phương tiện nhưng thực tế chưa nối kênh nhìn, đã ép sửa thành văn bản thuần" 
     tools = bool(meta.get("supportsToolCall"))
     thinks = bool(meta.get("supportsReasoning"))
     inputs = ["text"] + (["image"] if vision else [])
@@ -15009,11 +15009,11 @@ def key_open_kwargs(entry):
 
 def key_model_message(entry, model):
     """Explain a per-key model restriction the same way the global ban does."""
-    name = (entry or {}).get("name") or "未命名"
-    allowed = "、".join((entry or {}).get("models") or []) or "-"
-    asked = str(model or "").strip() or "(未指定模型)"
-    return ("API Key「%s」的模型限制不允許 %s。該 Key 目前允許：%s。"
-            "請在看板「設置」頁修改這個 Key 的模型限制，或改用允許該模型的 Key。"
+    name = (entry or {}).get("name") or "Chưa đặt tên"
+    allowed = ", ".join((entry or {}).get("models") or []) or "-"
+    asked = str(model or "").strip() or "(chưa chỉ định mô hình)"
+    return ("API Key「%s」không cho phép mô hình %s. Key này hiện cho phép: %s."
+            " Vui lòng chỉnh giới hạn mô hình của Key trong trang「Cài Đặt」hoặc dùng Key được phép."
             % (name, asked, allowed))
 
 
@@ -15608,9 +15608,9 @@ def gateway_hint(status, message):
     if ("11140" in lower or "账号存在异常行为" in text
             or "account has been restricted" in lower
             or "unusual activity" in lower):
-        return ("上游已对该账号做账号级风控限制（403 / code 11140）；网关已让该账号"
-                "冷却并停止换号重试。请勿换号或高频重试（同设备账号会连坐），"
-                "按 WorkBuddy 官方渠道申诉，通常 1-3 个工作日自动解除。")
+        return ("Thượng nguồn đã áp dụng giới hạn rủi ro cấp tài khoản (403 / code 11140); cổng đã cho tài khoản này"
+                " tạm ngừng và dừng đổi tài khoản thử lại. Không đổi tài khoản hoặc thử lại liên tục (tài khoản cùng thiết bị có thể bị liên đới),"
+                " hãy khiếu nại qua kênh chính thức của WorkBuddy; thường tự mở lại sau 1-3 ngày làm việc.")
     if "no usable account" in lower or "no healthy account" in lower:
         return "no healthy account available in pool; check /status or retry later"
     if "本机网络不可用" in text or "local network unavailable" in lower:
@@ -16592,10 +16592,10 @@ def note_account_restriction(realm, uid="", now=None):
 
 def restriction_hold_message(realm, remaining):
     """整池暂停期间交给客户端的说明。"""
-    return ("上游风控已限制本区域账号（403 / code 11140，账号存在异常行为）。"
-            "网关已暂停派发 %d 秒，避免继续换号重试导致同设备账号连坐被封。"
-            "请勿换号或高频重试；按 WorkBuddy 官方渠道申诉（通常 1-3 个工作日"
-            "自动解除），解封后再恢复。 Upstream restricted the account(s); "
+    return ("Thượng nguồn đã giới hạn rủi ro các tài khoản trong khu vực này (403 / code 11140, tài khoản có hành vi bất thường)."
+            " Cổng đã tạm dừng phân phát %d giây để tránh tiếp tục đổi tài khoản thử lại khiến tài khoản cùng thiết bị bị liên đới."
+            " Không đổi tài khoản hoặc thử lại liên tục; hãy khiếu nại qua kênh chính thức của WorkBuddy (thường tự mở lại sau 1-3 ngày làm việc),"
+            " sau khi mở lại sẽ tiếp tục. Upstream restricted the account(s); "
             "dispatch paused %ds to avoid further bans."
             % (int(remaining), int(remaining)))
 
@@ -21443,11 +21443,11 @@ class Handler(BaseHTTPRequestHandler):
         owner = exclusive_realm(model)
         if not owner or owner == realm:
             return ""
-        name = (self.key_entry or {}).get("name") or "当前 Key"
-        served = "国内版" if owner == "cn" else "国际版"
-        used = "国内版" if realm == "cn" else "国际版"
-        return ("模型 %s 只在%s提供，但「%s」绑定的是%s出口。"
-                "请改用对应出口的 Key，或把该 Key 的出口改为「跟随面板切换」。"
+        name = (self.key_entry or {}).get("name") or "Key hiện tại"
+        served = "Trong Nước" if owner == "cn" else "Quốc Tế"
+        used = "Trong Nước" if realm == "cn" else "Quốc Tế"
+        return ("Mô hình %s chỉ cung cấp tại %s, nhưng「%s」được gán cho cổng xuất %s。"
+                "Vui lòng dùng Key của cổng xuất tương ứng, hoặc đổi cổng xuất của Key này thành「theo bảng điều khiển chuyển đổi」。"
                 % (model, served, name, used))
     def _banned_model_error(self, model):
         """被封锁的模型直接报错，不碰上游、不扣任何点数。"""
@@ -21481,7 +21481,7 @@ class Handler(BaseHTTPRequestHandler):
             return ""
         return ("API Key「%s」的账号限制不允许账号 %s。"
                 "请在看板「设置」页修改这个 Key 的允许账号，或改用允许该账号的 Key。"
-                % ((entry or {}).get("name") or "未命名", account.uid))
+                % ((entry or {}).get("name") or "Chưa đặt tên", account.uid))
 
     def _request_realm(self, explicit=None):
         """Pick the upstream exit for this request.
@@ -21634,12 +21634,12 @@ class Handler(BaseHTTPRequestHandler):
         if is_media_route and not wb_pool_scope.entry_allows(
                 wb_pool_scope.SCOPE_MEDIA):
             return self._error(
-                403, "这个入口只服务文本模型；图片 / 视频请走媒体号池的入口",
+                403, "Lối vào này chỉ phục vụ mô hình văn bản; tạo ảnh / video vui lòng dùng lối vào nhóm tài khoản media",
                 "pool_boundary")
         if is_text_route and not wb_pool_scope.entry_allows(
                 wb_pool_scope.SCOPE_TEXT):
             return self._error(
-                503, "这个入口只服务图片 / 视频生成；文本模型请走文本号池的入口",
+                503, "Lối vào này chỉ phục vụ tạo ảnh / video; mô hình văn bản vui lòng dùng lối vào nhóm tài khoản văn bản",
                 "pool_boundary")
         # The standalone configurator, for clients on machines that do not run
         # the gateway. Served before the panel gate and deliberately without a
@@ -22190,7 +22190,7 @@ class Handler(BaseHTTPRequestHandler):
         cn_accounts = [a for a in cn_accounts
                        if texts is None or texts.allows(a)]
         if not cn_accounts:
-            return self._json_panel(200, {"tasks": [], "summary": {}, "accounts": [], "msg": "未找到参与任务的国内版账号"})
+            return self._json_panel(200, {"tasks": [], "summary": {}, "accounts": [], "msg": "Không tìm thấy tài khoản Trong Nước tham gia nhiệm vụ"})
         uid = (query.get("uid") or [None])[0]
         acc = None
         if uid and uid != "all":
@@ -22212,7 +22212,7 @@ class Handler(BaseHTTPRequestHandler):
     def _get_scheduler(self):
         if not self._authorized():
             return
-        return self._json_panel(200, SCHEDULER.status() if SCHEDULER else {"enabled": False, "msg": "未运行"})
+        return self._json_panel(200, SCHEDULER.status() if SCHEDULER else {"enabled": False, "msg": "Chưa chạy"})
 
     def _get_pricing(self):
         if not self._authorized():
@@ -22230,7 +22230,7 @@ class Handler(BaseHTTPRequestHandler):
             "variant_inherit": wb_settings.pricing_variant_inherit(ACCOUNTS_DIR),
             "overrides_file": wb_pricing.overrides_path(),
             "policies_file": wb_pricing.policies_path(),
-            "timeline": wb_pricing.timeline_path(), "msg": "未运行",
+            "timeline": wb_pricing.timeline_path(), "msg": "Chưa chạy",
         })
 
     def _get_settings(self):
@@ -22649,7 +22649,7 @@ class Handler(BaseHTTPRequestHandler):
                        else representative_account(
                            realm=realm, scope=wb_pool_scope.SCOPE_MEDIA))
             if account is None:
-                detail = medias.empty_detail(realm) if medias is not None else "该区没有可用账号。"
+                detail = medias.empty_detail(realm) if medias is not None else "Khu vực này không có tài khoản khả dụng."
                 raise wb_media.MediaError("NO_ROUTE", detail)
             payload = wb_media_client._get_json(
                 account, wb_media_client.CONFIG_PATH,
@@ -22681,7 +22681,7 @@ class Handler(BaseHTTPRequestHandler):
         allowed = self._key_allowed_accounts()
         _, medias = _ensure_pools()
         if medias is None:
-            raise wb_media.MediaError("UPSTREAM", "账号池未加载")
+            raise wb_media.MediaError("UPSTREAM", "Nhóm tài khoản chưa được nạp")
         pinned = pinned_account()
         if pinned is not None:
             try:
@@ -22717,7 +22717,7 @@ class Handler(BaseHTTPRequestHandler):
                         "没有账号付得起这次调用（预估 %g 积分）：%s"
                         % (cost_hint, "；".join(skipped)))
                 raise wb_media.MediaError(
-                    "UPSTREAM", "没有可用账号跑这次媒体请求；"
+                    "UPSTREAM", "Không có tài khoản khả dụng cho yêu cầu media này; "
                     + medias.empty_detail(realm))
             ok, reason = media_budget_ok(account, cost_hint)
             if ok:
@@ -22764,7 +22764,7 @@ class Handler(BaseHTTPRequestHandler):
         """媒体 POST 的入口：开关 → 参数 → 限流 → 并发槽 → 选号 → 发请求 → 记账。"""
         if not wb_pool_scope.entry_allows(wb_pool_scope.SCOPE_MEDIA):
             return self._error(
-                403, "这个入口只服务文本模型；图片 / 视频请走媒体号池的入口",
+                403, "Lối vào này chỉ phục vụ mô hình văn bản; tạo ảnh / video vui lòng dùng lối vào nhóm tài khoản media",
                 "pool_boundary")
         if path in ("/v1/videos", "/videos"):
             # 生视频是异步任务，流程与生图完全不同（提交 / 轮询 / 下载），单独一条。
@@ -23141,7 +23141,7 @@ class Handler(BaseHTTPRequestHandler):
             return
         if not wb_pool_scope.entry_allows(wb_pool_scope.SCOPE_MEDIA):
             return self._error(
-                403, "这个入口只服务文本模型；图片 / 视频请走媒体号池的入口",
+                403, "Lối vào này chỉ phục vụ mô hình văn bản; tạo ảnh / video vui lòng dùng lối vào nhóm tài khoản media",
                 "pool_boundary")
         try:
             limit = int((query.get("limit") or ["50"])[0])
@@ -23180,7 +23180,7 @@ class Handler(BaseHTTPRequestHandler):
             return
         if not wb_pool_scope.entry_allows(wb_pool_scope.SCOPE_MEDIA):
             return self._error(
-                403, "这个入口只服务文本模型；图片 / 视频请走媒体号池的入口",
+                403, "Lối vào này chỉ phục vụ mô hình văn bản; tạo ảnh / video vui lòng dùng lối vào nhóm tài khoản media",
                 "pool_boundary")
         config = self._media_config()
         realm = (query.get("realm") or [None])[0] or config["realm"]
@@ -23544,8 +23544,8 @@ class Handler(BaseHTTPRequestHandler):
             # browser with localStorage; this value is the fallback when no
             # browser-local preference exists.
             raw = payload.get("ui_language")
-            if not isinstance(raw, str) or raw not in ("zh", "zh-Hant", "en"):
-                return self._error(400, "ui_language must be zh, zh-Hant or en",
+            if not isinstance(raw, str) or raw not in wb_settings.UI_LANGUAGE_VALUES:
+                return self._error(400, "ui_language must be zh, zh-Hant, en or vi",
                                    "invalid_request_error")
             reply["ui_language"] = wb_settings.set_ui_language(ACCOUNTS_DIR, raw)
         if "pricing_variant_inherit" in payload:
@@ -24947,13 +24947,13 @@ class Handler(BaseHTTPRequestHandler):
 
     def _route_tasks_run(self, payload):
         if not POOL:
-            return self._json_panel(200, {"ok": False, "msg": "账号池不可用"})
+            return self._json_panel(200, {"ok": False, "msg": "Nhóm tài khoản không khả dụng"})
         invalidate_tasks_cache()          # 跑完任务状态就变了，别再端旧快照
         uid = payload.get("uid")
         if uid and uid != "all":
             target = POOL.get(uid)
             if not target or target.realm != "cn":
-                return self._json_panel(200, {"ok": False, "msg": "未找到指定的国内版账号"})
+                return self._json_panel(200, {"ok": False, "msg": "Không tìm thấy tài khoản Trong Nước được chỉ định"})
             targets = [target]
         else:
             targets = POOL.task_accounts("cn")
@@ -24961,7 +24961,7 @@ class Handler(BaseHTTPRequestHandler):
         targets = [a for a in targets
                    if a is not None and (texts is None or texts.allows(a))]
         if not targets:
-            return self._json_panel(200, {"ok": False, "msg": "未找到参与任务的国内版账号"})
+            return self._json_panel(200, {"ok": False, "msg": "Không tìm thấy tài khoản Trong Nước tham gia nhiệm vụ"})
         from wb_tasks import run_growth_tasks
         claim = payload.get("claim", True) is not False
         combined_logs = []
@@ -24969,7 +24969,7 @@ class Handler(BaseHTTPRequestHandler):
         for i, acc in enumerate(targets):
             uid_str = acc.uid[:8] if acc.uid else "?"
             nick = acc.nickname or uid_str
-            combined_logs.append(f"====== 正在为账号 [{nick} ({acc.uid})] 执行全自动成长任务 ({i+1}/{len(targets)}) ======")
+            combined_logs.append(f"====== Đang thực thi tự động nhiệm vụ phát triển cho tài khoản [{nick} ({acc.uid})] ({i+1}/{len(targets)}) ======")
             res = run_growth_tasks(acc, gap=1.0, claim=claim)
             # run_growth_tasks() reports its total as "earned_credit";
             # reading the old "credit_added" name silently summed zeros
@@ -24979,8 +24979,8 @@ class Handler(BaseHTTPRequestHandler):
                 combined_logs.append(f"  {l}")
             if i < len(targets) - 1:
                 time.sleep(1.5)
-        combined_logs.append(f"====== 全部 {len(targets)} 个账号任务执行完毕，累计新增积分: +{total_credit} ======")
-        add_log_entry(f"[任务福利] 批量成长任务执行完成，共 {len(targets)} 个账号，新增积分 +{total_credit}", tag="tasks")
+        combined_logs.append(f"====== Hoàn tất thực thi nhiệm vụ cho {len(targets)} tài khoản, tích lũy điểm mới: +{total_credit} ======")
+        add_log_entry(f"[Phúc lợi nhiệm vụ] Hoàn tất chạy hàng loạt nhiệm vụ phát triển, tổng {len(targets)} tài khoản, điểm mới +{total_credit}", tag="tasks")
         return self._json_panel(200, {
             "ok": True,
             "credit_added": total_credit,
@@ -24990,7 +24990,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def _route_tasks_claim(self, payload):
         if not POOL:
-            return self._json_panel(200, {"ok": False, "msg": "账号池不可用"})
+            return self._json_panel(200, {"ok": False, "msg": "Nhóm tài khoản không khả dụng"})
         uid = payload.get("uid")
         code = str(payload.get("code") or "").strip()
         if not uid or uid == "all":
@@ -24999,10 +24999,10 @@ class Handler(BaseHTTPRequestHandler):
             return self._json_panel(200, {"ok": False, "msg": "缺少任务代码"})
         target = POOL.get(uid)
         if not target or target.realm != "cn":
-            return self._json_panel(200, {"ok": False, "msg": "未找到指定的国内版账号"})
+            return self._json_panel(200, {"ok": False, "msg": "Không tìm thấy tài khoản Trong Nước được chỉ định"})
         texts, _ = _ensure_pools()
         if texts is not None and not texts.allows(target):
-            return self._json_panel(200, {"ok": False, "msg": "该账号属于媒体号池，不执行文本任务"})
+            return self._json_panel(200, {"ok": False, "msg": "Tài khoản này thuộc nhóm tài khoản media, không thực thi nhiệm vụ văn bản"})
         from wb_tasks import claim_task
         res = claim_task(target, code)
         invalidate_tasks_cache()
@@ -25014,13 +25014,13 @@ class Handler(BaseHTTPRequestHandler):
 
     def _route_tasks_streak_bonus(self, payload):
         if not POOL:
-            return self._json_panel(200, {"ok": False, "msg": "账号池不可用"})
+            return self._json_panel(200, {"ok": False, "msg": "Nhóm tài khoản không khả dụng"})
         invalidate_tasks_cache()
         uid = payload.get("uid")
         if uid and uid != "all":
             target = POOL.get(uid)
             if not target or target.realm != "cn":
-                return self._json_panel(200, {"ok": False, "msg": "未找到指定的国内版账号"})
+                return self._json_panel(200, {"ok": False, "msg": "Không tìm thấy tài khoản Trong Nước được chỉ định"})
             targets = [target]
         else:
             targets = POOL.task_accounts("cn")
@@ -25028,7 +25028,7 @@ class Handler(BaseHTTPRequestHandler):
         targets = [a for a in targets
                    if a is not None and (texts is None or texts.allows(a))]
         if not targets:
-            return self._json_panel(200, {"ok": False, "msg": "未找到参与任务的国内版账号"})
+            return self._json_panel(200, {"ok": False, "msg": "Không tìm thấy tài khoản Trong Nước tham gia nhiệm vụ"})
         from wb_tasks import run_streak_bonus
         results = []
         for i, acc in enumerate(targets):
@@ -25043,13 +25043,13 @@ class Handler(BaseHTTPRequestHandler):
 
     def _route_tasks_travel(self, payload):
         if not POOL:
-            return self._json_panel(200, {"ok": False, "msg": "账号池不可用"})
+            return self._json_panel(200, {"ok": False, "msg": "Nhóm tài khoản không khả dụng"})
         invalidate_tasks_cache()          # 同上：旅行会改任务/体力状态
         uid = payload.get("uid")
         if uid and uid != "all":
             target = POOL.get(uid)
             if not target or target.realm != "cn":
-                return self._json_panel(200, {"ok": False, "msg": "未找到指定的国内版账号"})
+                return self._json_panel(200, {"ok": False, "msg": "Không tìm thấy tài khoản Trong Nước được chỉ định"})
             targets = [target]
         else:
             targets = POOL.task_accounts("cn")
@@ -25057,7 +25057,7 @@ class Handler(BaseHTTPRequestHandler):
         targets = [a for a in targets
                    if a is not None and (texts is None or texts.allows(a))]
         if not targets:
-            return self._json_panel(200, {"ok": False, "msg": "未找到参与任务的国内版账号"})
+            return self._json_panel(200, {"ok": False, "msg": "Không tìm thấy tài khoản Trong Nước tham gia nhiệm vụ"})
         from wb_tasks import do_cat_travel
         results = []
         for i, acc in enumerate(targets):
@@ -25104,11 +25104,11 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(503, {"ok": False, "msg": "更新检查未运行"})
         status = UPDATES.status()
         if status.get("last_error"):
-            return self._json(409, {"ok": False, "msg": "请先成功检查更新"})
+            return self._json(409, {"ok": False, "msg": "Hãy kiểm tra cập nhật thành công trước"})
         if not status.get("update_available"):
-            return self._json(409, {"ok": False, "msg": "当前没有可安装的新版本"})
+            return self._json(409, {"ok": False, "msg": "Hiện không có phiên bản mới để cài đặt"})
         if not status.get("latest_tag") or not status.get("release_url"):
-            return self._json(409, {"ok": False, "msg": "请先点击立即检查更新"})
+            return self._json(409, {"ok": False, "msg": "Hãy bấm Kiểm tra cập nhật ngay trước"})
         try:
             host = self.server.server_address[0]
             lan = host not in ("127.0.0.1", "::1", "localhost")
@@ -25144,7 +25144,7 @@ class Handler(BaseHTTPRequestHandler):
     def _route_scheduler_trigger(self, payload):
         if SCHEDULER:
             return self._json_panel(200, SCHEDULER.trigger_now())
-        return self._json(200, {"ok": False, "msg": "调度器未初始化"})
+        return self._json(200, {"ok": False, "msg": "Bộ lịch chưa khởi tạo"})
 
     def _route_quota_scan_run(self):
         """Check the watched quota lines right now, ignoring the 6h interval.
@@ -25158,23 +25158,23 @@ class Handler(BaseHTTPRequestHandler):
         try:
             import wb_quota_scan
             sent = wb_quota_scan.run_due(POOL, log=lambda msg: add_log_entry(
-                "[额度查询] %s" % msg, tag="scheduler"), force=True)
+                "[Tra cứu hạn mức] %s" % msg, tag="scheduler"), force=True)
         except Exception as exc:
             return self._error(500, "quota scan failed: %s" % exc,
                                "server_error")
         return self._json(200, {
             "ok": True,
             "sent": sent,
-            "msg": ("已查询 %d 条配额线" % sent) if sent
-                   else "没有需要查询的配额线（未勾选模型或都已到下一次查询时刻）",
+            "msg": ("Đã tra cứu %d đường hạn mức" % sent) if sent
+                   else "Không có đường hạn mức nào cần tra cứu (chưa chọn mô hình hoặc tất cả đều chưa đến giờ tra cứu tiếp theo)",
         })
 
     def _route_scheduler_toggle(self, payload):
         if SCHEDULER:
             SCHEDULER.enabled = not SCHEDULER.enabled
-            SCHEDULER.log(f"用户切换调度器状态为: {'启用' if SCHEDULER.enabled else '暂停'}")
+            SCHEDULER.log(f"Người dùng chuyển trạng thái bộ lịch thành: {'bật' if SCHEDULER.enabled else 'tạm dừng'}")
             return self._json_panel(200, SCHEDULER.status())
-        return self._json(200, {"ok": False, "msg": "调度器未初始化"})
+        return self._json(200, {"ok": False, "msg": "Bộ lịch chưa khởi tạo"})
 
     def _route_pricing_refresh(self, payload):
         # Fetching takes tens of seconds, so it runs on its own thread and the
@@ -25343,7 +25343,7 @@ class Handler(BaseHTTPRequestHandler):
                 continue
             res = account.daily_chat_web(trigger="manual")
             nick = account.nickname or account.uid[:8]
-            log(f"[任务福利] 账号 [{nick}] 网页通道打卡: {res.get('conversation') if res.get('ok') else res.get('error')}",
+            log(f"[Phúc lợi nhiệm vụ] Tài khoản [{nick}] điểm danh qua kênh web: {res.get('conversation') if res.get('ok') else res.get('error')}",
                 level="INFO" if res.get("ok") else "WARN", tag="tasks")
             results.append({"uid": account.uid, "nickname": account.nickname, **res})
         return self._json_panel(200, {"results": results, "accounts": account_views()})
@@ -25513,7 +25513,7 @@ class Handler(BaseHTTPRequestHandler):
         if texts is not None and not texts.allows(account):
             return self._error(
                 400,
-                "账号 %s 属于媒体号池，不发起文本模型请求，不能做文本测试"
+                "Tài khoản %s thuộc nhóm tài khoản media, không gửi yêu cầu mô hình văn bản, không thể kiểm thử văn bản"
                 % account.uid[:8],
                 "invalid_request_error")
         model = payload.get("model") or TEST_MODEL_DEFAULT
@@ -26456,7 +26456,7 @@ class Handler(BaseHTTPRequestHandler):
             reset_restriction_state()
             return self._json(200, {
                 "ok": True,
-                "message": "风控连坐暂停已立即解除 / Restriction hold cleared",
+                "message": "Tạm dừng phong tỏa liên đới đã được gỡ ngay lập tức / Restriction hold cleared",
                 "restriction_holds": {},
             })
         if path == "/updates/check":
@@ -26553,7 +26553,7 @@ class Handler(BaseHTTPRequestHandler):
                 return
             if not wb_pool_scope.entry_allows(wb_pool_scope.SCOPE_MEDIA):
                 return self._error(
-                    403, "这个入口只服务文本模型；图片 / 视频请走媒体号池的入口",
+                    403, "Lối vào này chỉ phục vụ mô hình văn bản; tạo ảnh / video vui lòng dùng lối vào nhóm tài khoản media",
                     "pool_boundary")
             self._handle_expect_continue()
             self._discard_body()
@@ -26589,11 +26589,11 @@ class Handler(BaseHTTPRequestHandler):
             return
         if is_media_route and not wb_pool_scope.entry_allows(wb_pool_scope.SCOPE_MEDIA):
             return self._error(
-                403, "这个入口只服务文本模型；图片 / 视频请走媒体号池的入口",
+                403, "Lối vào này chỉ phục vụ mô hình văn bản; tạo ảnh / video vui lòng dùng lối vào nhóm tài khoản media",
                 "pool_boundary")
         if not is_media_route and not wb_pool_scope.entry_allows(wb_pool_scope.SCOPE_TEXT):
             return self._error(
-                503, "这个入口只服务图片 / 视频生成；文本模型请走文本号池的入口",
+                503, "Lối vào này chỉ phục vụ tạo ảnh / video; mô hình văn bản vui lòng dùng lối vào nhóm tài khoản văn bản",
                 "pool_boundary")
         # Fail closed until the Anthropic-to-Chat bridge has verified prompt-cache
         # parity. Reject before forwarding or recording any paid usage.
@@ -26627,7 +26627,7 @@ class Handler(BaseHTTPRequestHandler):
         # Check per-key concurrency limit (#359)
         key_ok, cur_key_conc, max_key_conc = _acquire_key_slot(self.key_entry)
         if not key_ok:
-            key_name = (self.key_entry or {}).get("name") or self._key_id() or "当前 Key"
+            key_name = (self.key_entry or {}).get("name") or self._key_id() or "Key hiện tại"
             message = ("Rate limit reached: API key '%s' reached its concurrency limit (%d in flight); retry shortly"
                        % (key_name, max_key_conc))
             record_error(payload.get("model") or "unknown", 429, message,
@@ -27403,11 +27403,11 @@ def _probe_running_instance(args):
             print()
             raise SystemExit(1)
         print()
-        print(f"  [已有一个反代在 {args.port} 端口运行，无需重复启动]")
-        print(f"  账号: {existing.get('uid', '?')} @ {existing.get('domain', '?')}")
-        print(f"  看板: http://127.0.0.1:{args.port}/")
+        print(f"  [Đã có một proxy ngược chạy trên cổng {args.port}, không cần khởi động lại]")
+        print(f"  Tài khoản: {existing.get('uid', '?')} @ {existing.get('domain', '?')}")
+        print(f"  Bảng điều khiển: http://127.0.0.1:{args.port}/")
         print()
-        print("  如果要重启: 先把原来那个窗口关掉（或结束 python 进程），再运行本程序。")
+        print("  Nếu muốn khởi động lại: hãy đóng cửa sổ cũ (hoặc kết thúc tiến trình python), rồi chạy lại chương trình này.")
         print()
         # Return True so main() stops here. A bare return gives None, which
         # main() reads as "no running copy" and it would carry on to bind the
@@ -27546,7 +27546,7 @@ def _log_startup_summary(args, api_key_generated):
     media_total = len(medias.accounts()) if medias else 0
     text_ready = texts.count_ready() if texts else 0
     media_ready = medias.count_ready() if medias else 0
-    log("accounts   : %d total (文本号池 %d/%d, 媒体号池 %d/%d)"
+    log("accounts   : %d total (nhóm văn bản %d/%d, nhóm media %d/%d)"
         % (len(POOL.accounts), text_ready, text_total,
            media_ready, media_total))
     for account in POOL.accounts:

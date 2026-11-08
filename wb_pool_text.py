@@ -199,8 +199,8 @@ class TextPool(object):
             return None
         if not scope_mod.entry_allows(scope_mod.SCOPE_TEXT):
             raise PoolBoundaryBlocked(
-                "这个入口只服务图片 / 视频生成，不发起文本模型请求；"
-                "文本模型请走文本号池的入口。",
+                "Lối vào này chỉ phục vụ tạo ảnh / video, không gửi yêu cầu mô hình văn bản; "
+                "mô hình văn bản vui lòng dùng lối vào nhóm tài khoản văn bản。",
                 scope=scope_mod.boundary() or "", wanted=scope_mod.SCOPE_TEXT)
         if scope_mod.separation_enabled() and \
                 scope_mod.account_scope(account) == scope_mod.SCOPE_MEDIA:

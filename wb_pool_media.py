@@ -79,10 +79,10 @@ class MediaPool(object):
     def empty_detail(self, realm=None):
         """媒体号池为空时的报错正文：直接告诉使用者下一步怎么做。"""
         if self.pool is None:
-            return "账号池未加载。"
+            return "Nhóm tài khoản chưa được nạp."
         if scope_mod.separation_enabled() and \
                 not scope_mod.entry_allows(scope_mod.SCOPE_MEDIA):
-            return "这个入口只服务文本模型，不提供图片 / 视频生成。"
+            return "Lối vào này chỉ phục vụ mô hình văn bản, không cung cấp tạo ảnh / video."
         text_accounts = 0
         lock = getattr(self.pool, "_lock", None)
         if lock is None:
@@ -97,12 +97,12 @@ class MediaPool(object):
                     scope_mod.account_scope(account) == scope_mod.SCOPE_TEXT:
                 text_accounts += 1
         if scope_mod.separation_enabled() and text_accounts > 0:
-            return ("媒体号池里没有账号：当前%s的账号 %d 个属于文本号池。"
-                    "图片 / 视频只能用媒体号池的号，请在看板把用于画图的账号设为「媒体号池」。"
-                    % ("该出口" if realm else "全部出口", text_accounts))
+            return ("Nhóm media không có tài khoản: hiện có %d tài khoản%s thuộc nhóm văn bản."
+                    "Tạo ảnh / video chỉ dùng được tài khoản nhóm media, vui lòng vào bảng điều khiển đặt các tài khoản dùng để vẽ thành 「nhóm media」。"
+                    % (text_accounts, " của cổng ra này" if realm else " ở tất cả các cổng ra"))
         if scope_mod.separation_enabled():
-            return "媒体号池里没有账号：请先导入用于图片 / 视频生成的账号，并在看板设为「媒体号池」。"
-        return "没有可用账号。"
+            return "Nhóm media không có tài khoản: vui lòng trước hết nhập tài khoản dùng để tạo ảnh / video, rồi trong bảng điều khiển đặt thành 「nhóm media」。"
+        return "Không có tài khoản khả dụng."
 
     # ---------------------------------------------------------------- 准入
     def require(self, account):
@@ -111,8 +111,8 @@ class MediaPool(object):
             return None
         if not scope_mod.entry_allows(scope_mod.SCOPE_MEDIA):
             raise PoolBoundaryBlocked(
-                "这个入口只服务文本模型，不提供图片 / 视频生成；"
-                "画图与生视频请走媒体号池的入口。",
+                "Lối vào này chỉ phục vụ mô hình văn bản, không cung cấp tạo ảnh / video; "
+                "vẽ ảnh và tạo video vui lòng dùng lối vào nhóm tài khoản media。",
                 scope=scope_mod.boundary() or "", wanted=scope_mod.SCOPE_MEDIA)
         if scope_mod.separation_enabled() and \
                 scope_mod.account_scope(account) == scope_mod.SCOPE_TEXT:

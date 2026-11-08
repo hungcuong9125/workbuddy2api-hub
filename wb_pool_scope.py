@@ -196,8 +196,8 @@ def describe_uid(account, scope):
 def text_violation(account):
     """媒体号池的账号被要求跑文本模型时的标准异常。"""
     return ScopeViolation(
-        "账号 %s 属于媒体号池，已禁止发起文本模型请求（防止文本账号被风控连坐）。"
-        "请改用文本号池的账号，或先在看板把这个账号改回文本号池。"
+        "Tài khoản %s thuộc nhóm tài khoản media, đã chặn yêu cầu mô hình văn bản (tránh tài khoản văn bản bị phong tỏa liên đới)."
+        "Vui lòng dùng tài khoản nhóm văn bản, hoặc trước hết trong bảng điều khiển đổi tài khoản này về nhóm văn bản。"
         % describe_uid(account, SCOPE_TEXT),
         uid=str(getattr(account, "uid", "") or ""),
         scope=SCOPE_MEDIA,
@@ -208,8 +208,8 @@ def text_violation(account):
 def media_violation(account):
     """文本号池的账号被要求跑图片 / 视频生成时的标准异常。"""
     return ScopeViolation(
-        "账号 %s 属于文本号池，不参与图片 / 视频生成。"
-        "请把用于画图 / 生视频的账号在看板里设为媒体号池。"
+        "Tài khoản %s thuộc nhóm tài khoản văn bản, không tham gia tạo ảnh / video. "
+        "Vui lòng trong bảng điều khiển đặt các tài khoản dùng để vẽ / tạo video thành nhóm media。"
         % describe_uid(account, SCOPE_MEDIA),
         uid=str(getattr(account, "uid", "") or ""),
         scope=SCOPE_TEXT,

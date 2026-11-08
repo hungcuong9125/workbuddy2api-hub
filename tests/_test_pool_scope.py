@@ -80,7 +80,9 @@ class DispatchTests(unittest.TestCase):
     def test_empty_media_pool_does_not_fall_back(self):
         self.pool.accounts = [self.text]
         self.assertIsNone(self.medias.pick(realm="cn"))
-        self.assertIn("文本号池", self.medias.empty_detail("cn"))
+        # 越南语定制：报错正文已本地化（zh 原文是「文本号池」）。
+        # Vietnamese customization: the detail text is localized (zh was 文本号池).
+        self.assertIn("nhóm văn bản", self.medias.empty_detail("cn"))
 
     def test_counts_are_per_pool(self):
         self.assertEqual(self.texts.count_ready("cn"), 1)

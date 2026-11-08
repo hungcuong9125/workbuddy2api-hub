@@ -414,7 +414,7 @@ class PanelRequestTests(unittest.TestCase):
         with mock.patch.object(R, "install_enabled", return_value=False):
             with self.assertRaises(R.UpdateRequestError) as caught:
                 R.request_rollback("1.0.0", "2.0.0")
-        self.assertIn("尚未配置", str(caught.exception))
+        self.assertIn("chưa được cấu hình", str(caught.exception))
 
 
 class PortableRequestRollbackTests(unittest.TestCase):

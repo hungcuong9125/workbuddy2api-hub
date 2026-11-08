@@ -8,7 +8,7 @@ RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /wb-tls-bridge .
 FROM python:3.11-alpine
 
 # Set environment
-ENV PYTHONUNBUFFERED=1     HOST=0.0.0.0     PORT=8788     API_KEY=     TZ=Asia/Shanghai
+ENV PYTHONUNBUFFERED=1     HOST=0.0.0.0     PORT=8788     API_KEY=     TZ=Asia/Ho_Chi_Minh
 
 WORKDIR /app
 

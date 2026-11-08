@@ -449,7 +449,10 @@ class NoAccountTests(unittest.TestCase):
         # 5xx = 没有可用账号；关键是不能是 200（那意味着真的发了请求）。
         self.assertGreaterEqual(status, 500)
         text = json.dumps(body, ensure_ascii=False)
-        self.assertTrue("账号" in text or "account" in text.lower(), text)
+        # 越南语定制：报错正文已本地化为「tài khoản」（账号）。
+        # Vietnamese customization: the error text is localized as "tài khoản".
+        self.assertTrue("账号" in text or "account" in text.lower()
+                        or "tài khoản" in text, text)
 
     def test_video_request_stops_at_account_selection(self):
         status, body, _ = _ON.json("POST", "/v1/videos", {"prompt": "海边日落", "seconds": 5})

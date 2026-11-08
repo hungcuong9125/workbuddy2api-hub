@@ -194,8 +194,14 @@ class ChatPathTests(unittest.TestCase):
         self.original_pool = P.POOL
         self.original_urlopen = A.urlopen
         P.POOL = self.pool
+        # 出站级退避是自定义分支的可选开关（读的是真实 accounts/settings.json）。
+        # 本套件钉的是「账号熔断」口径，所以这里显式关掉它，避免本机开关影响结果。
+        self._egress_patch = mock.patch.object(
+            P.wb_settings, "egress_backoff_enabled", return_value=False)
+        self._egress_patch.start()
 
     def tearDown(self):
+        self._egress_patch.stop()
         P.POOL = self.original_pool
         A.urlopen = self.original_urlopen
 
